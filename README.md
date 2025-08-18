@@ -3,7 +3,7 @@
 <div align="center">
   <img src="https://xbooking.netlify.app/xbookinglogonew1.png" alt="XBooking Logo" width="200"/>
   
-  **The world's leading platform for discovering and booking premium workspaces**
+  **An innovative new platform for discovering and booking premium workspaces**
   
   ![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)
   ![Django](https://img.shields.io/badge/Django-4.0+-green.svg)
@@ -14,7 +14,7 @@
 
 ## 🚀 About XBooking
 
-XBooking is a revolutionary workspace booking platform that connects professionals with premium workspaces across 50+ cities worldwide. Our backend API powers the seamless booking experience, from instant workspace discovery to secure payment processing.
+XBooking is an innovative new workspace booking platform that connects professionals with premium workspaces across 50+ cities worldwide. Our backend API powers the seamless booking experience, from instant workspace discovery to secure payment processing.
 
 **Live Platform**: [https://xbooking.netlify.app/](https://xbooking.netlify.app/)
 
