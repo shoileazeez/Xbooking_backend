@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xbooking API Documentation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 1rem;
+        }
+        
+        .about-section {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .about-section h2 {
+            color: #2c3e50;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 0.5rem;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+        
+        .feature {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .feature h3 {
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+        
+        .api-section {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .api-section h2 {
+            color: #2c3e50;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 0.5rem;
+        }
+        
+        .endpoint {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            transition: transform 0.3s ease;
+        }
+        
+        .endpoint:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .endpoint h3 {
+            color: #2c3e50;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .method {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin-right: 1rem;
+        }
+        
+        .method.post {
+            background: #28a745;
+            color: white;
+        }
+        
+        .url {
+            font-family: 'Courier New', monospace;
+            background: #e9ecef;
+            padding: 0.5rem;
+            border-radius: 5px;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+        
+        .code-block {
+            background: #2d3748;
+            color: #f7fafc;
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+        
+        .response-example {
+            margin-top: 1rem;
+        }
+        
+        .base-url {
+            background: rgba(102, 126, 234, 0.1);
+            padding: 1rem;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            margin-bottom: 2rem;
+        }
+        
+        .base-url h3 {
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+        
+        .base-url code {
+            background: #667eea;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 1.1rem;
+        }
+        
+        .footer {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Interactive Testing Styles */
+        .test-section {
+            background: rgba(255, 255, 255, 0.98);
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        
+        .test-section h4 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e9ecef;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group input:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .test-button {
+            background: #667eea;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-right: 1rem;
+        }
+        
+        .test-button:hover {
+            background: #5a6fd8;
+        }
+        
+        .test-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .clear-button {
+            background: #6c757d;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        
+        .clear-button:hover {
+            background: #5a6268;
+        }
+        
+        .response-container {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .response-success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .response-error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        
+        .response-loading {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .tab {
+            padding: 0.5rem 1rem;
+            background: #f8f9fa;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-right: 0.25rem;
+        }
+        
+        .tab.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .container {
+                padding: 10px;
+            }
+            
+            .header, .about-section, .api-section, .footer {
+                padding: 1rem;
+            }
+            
+            .test-section {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header Section -->
+        <div class="header">
+            <h1>🏢 Xbooking API</h1>
+            <p>Discover and book premium workspaces instantly. From hot desks to private offices, find your ideal work environment with XBooking's seamless platform</p>
+            <p><strong>Work from anywhere, anytime.</strong></p>
+        </div>
+
+        <!-- About Xbooking Section -->
+        <div class="about-section">
+            <h2>About Xbooking</h2>
+            <p>Xbooking was born from a simple frustration: finding the perfect workspace shouldn't be complicated. Our platform connects thousands of professionals with their ideal work environments across 50+ cities worldwide.</p>
+            
+            <p>We combine cutting-edge technology with human-centered design to deliver seamless experiences for both workspace seekers and providers. From AI-powered recommendations to real-time availability, we're building the future of flexible work.</p>
+
+            <div class="features">
+                <div class="feature">
+                    <h3>⚡ Instant Booking</h3>
+                    <p>Book your perfect workspace in seconds with our streamlined booking process.</p>
+                </div>
+                <div class="feature">
+                    <h3>🤖 AI-Powered Matching</h3>
+                    <p>Get personalized workspace recommendations based on your preferences and work style.</p>
+                </div>
+                <div class="feature">
+                    <h3>🔒 Secure Payments</h3>
+                    <p>Safe and secure payment processing with multiple payment options including Paystack and Flutterwave.</p>
+                </div>
+                <div class="feature">
+                    <h3>📱 Mobile First</h3>
+                    <p>Access XBooking anywhere, anytime with our responsive mobile-first design.</p>
+                </div>
+                <div class="feature">
+                    <h3>🌍 Global Network</h3>
+                    <p>Access premium workspaces in 50+ cities worldwide with consistent quality standards.</p>
+                </div>
+                <div class="feature">
+                    <h3>📊 Usage Analytics</h3>
+                    <p>Track your workspace usage patterns and optimize your productivity with detailed insights.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- API Documentation Section -->
+        <div class="api-section">
+            <h2>API Documentation & Testing</h2>
+            
+            <div class="base-url">
+                <h3>Base URL</h3>
+                <code id="baseUrl">http://127.0.0.1:8000/api</code>
+                <p style="margin-top: 0.5rem; color: #666;">All API endpoints are relative to this base URL</p>
+            </div>
+
+            <!-- User Registration Endpoint -->
+            <div class="endpoint">
+                <h3>User Registration</h3>
+                <div>
+                    <span class="method post">POST</span>
+                    <span class="url">/user/register/</span>
+                </div>
+                
+                <p><strong>Description:</strong> Register a new user account with email verification and automatic avatar generation.</p>
+                
+                <h4>Request Body:</h4>
+                <div class="code-block">
+{
+  "full_name": "John Doe",
+  "email": "john.doe@example.com",
+  "password": "SecurePass123!",
+  "confirm_password": "SecurePass123!"
+}
+                </div>
+                
+                <h4>Password Requirements:</h4>
+                <ul style="margin: 1rem 0; padding-left: 2rem;">
+                    <li>At least 8 characters long</li>
+                    <li>Contains at least one uppercase letter</li>
+                    <li>Contains at least one lowercase letter</li>
+                    <li>Contains at least one digit</li>
+                    <li>Contains at least one special character (!@#$%^&*()_+-=[]{}|;:,.<>?)</li>
+                </ul>
+                
+                <!-- Interactive Testing Section for Registration -->
+                <div class="test-section">
+                    <h4>🧪 Test Registration Endpoint</h4>
+                    <div class="form-group">
+                        <label for="reg-fullname">Full Name:</label>
+                        <input type="text" id="reg-fullname" placeholder="John Doe" value="John Doe">
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-email">Email:</label>
+                        <input type="email" id="reg-email" placeholder="john.doe@example.com" value="john.doe@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-password">Password:</label>
+                        <input type="password" id="reg-password" placeholder="SecurePass123!" value="SecurePass123!">
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-confirm-password">Confirm Password:</label>
+                        <input type="password" id="reg-confirm-password" placeholder="SecurePass123!" value="SecurePass123!">
+                    </div>
+                    <button class="test-button" onclick="testRegistration()">Test Registration</button>
+                    <button class="clear-button" onclick="clearRegistrationForm()">Clear Form</button>
+                    <div id="registration-response" class="response-container" style="display: none;"></div>
+                </div>
+                
+                <div class="response-example">
+                    <h4>Success Response (201):</h4>
+                    <div class="code-block">
+{
+  "success": true,
+  "message": "Registration was successful",
+  "user": {
+    "user_id": "123e4567-e89b-12d3-a456-426614174000",
+    "user_email": "john.doe@example.com",
+    "full_name": "John Doe",
+    "avatar_url": "https://api.dicebear.com/9.x/personas/svg?seed=john.doe%40example.com&size=200&radius=20"
+  },
+  "token": {
+    "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+    "refresh_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+  }
+}
+                    </div>
+                </div>
+                
+                <div class="response-example">
+                    <h4>Error Response (400):</h4>
+                    <div class="code-block">
+{
+  "success": false,
+  "message": "Registration Failed",
+  "error": {
+    "email": ["Email already exists"],
+    "password": ["Password must be at least 8 characters long"]
+  }
+}
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Login Endpoint -->
+            <div class="endpoint">
+                <h3>User Login</h3>
+                <div>
+                    <span class="method post">POST</span>
+                    <span class="url">/user/login/</span>
+                </div>
+                
+                <p><strong>Description:</strong> Authenticate user credentials and return access tokens for API access.</p>
+                
+                <h4>Request Body:</h4>
+                <div class="code-block">
+{
+  "email": "john.doe@example.com",
+  "password": "SecurePass123!"
+}
+                </div>
+                
+                <!-- Interactive Testing Section for Login -->
+                <div class="test-section">
+                    <h4>🧪 Test Login Endpoint</h4>
+                    <div class="form-group">
+                        <label for="login-email">Email:</label>
+                        <input type="email" id="login-email" placeholder="john.doe@example.com" value="john.doe@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Password:</label>
+                        <input type="password" id="login-password" placeholder="SecurePass123!" value="SecurePass123!">
+                    </div>
+                    <button class="test-button" onclick="testLogin()">Test Login</button>
+                    <button class="clear-button" onclick="clearLoginForm()">Clear Form</button>
+                    <div id="login-response" class="response-container" style="display: none;"></div>
+                </div>
+                
+                <div class="response-example">
+                    <h4>Success Response (200):</h4>
+                    <div class="code-block">
+{
+  "success": true,
+  "message": "Login was successful",
+  "user": {
+    "user_id": "123e4567-e89b-12d3-a456-426614174000",
+    "user_email": "john.doe@example.com",
+    "full_name": "John Doe",
+    "avatar_url": "https://api.dicebear.com/9.x/personas/svg?seed=john.doe%40example.com&size=200&radius=20"
+  },
+  "token": {
+    "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+    "refresh_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+  }
+}
+                    </div>
+                </div>
+                
+                <div class="response-example">
+                    <h4>Error Response (400):</h4>
+                    <div class="code-block">
+{
+  "success": false,
+  "message": "Login failed",
+  "errors": {
+    "non_field_errors": ["Invalid email or password"]
+  }
+}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Authentication Info -->
+            <div class="endpoint">
+                <h3>🔐 Authentication</h3>
+                <p>Most API endpoints require authentication. Include the access token in the Authorization header:</p>
+                <div class="code-block">
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
+                </div>
+                
+                <p><strong>Token Expiry:</strong> Access tokens expire after 30 minutes. Use the refresh token to obtain new access tokens when needed.</p>
+            </div>
+
+            <!-- Response Format Info -->
+            <div class="endpoint">
+                <h3>📋 Response Format</h3>
+                <p>All API responses follow a consistent format:</p>
+                <ul style="margin: 1rem 0; padding-left: 2rem;">
+                    <li><strong>success:</strong> Boolean indicating if the request was successful</li>
+                    <li><strong>message:</strong> Human-readable message describing the result</li>
+                    <li><strong>data/user:</strong> Response data (varies by endpoint)</li>
+                    <li><strong>error/errors:</strong> Error details (only present on failure)</li>
+                </ul>
+            </div>
+
+            <!-- Status Codes -->
+            <div class="endpoint">
+                <h3>📊 HTTP Status Codes</h3>
+                <ul style="margin: 1rem 0; padding-left: 2rem;">
+                    <li><strong>200 OK:</strong> Successful request</li>
+                    <li><strong>201 Created:</strong> Resource created successfully</li>
+                    <li><strong>400 Bad Request:</strong> Invalid request data</li>
+                    <li><strong>401 Unauthorized:</strong> Authentication required</li>
+                    <li><strong>403 Forbidden:</strong> Access denied</li>
+                    <li><strong>404 Not Found:</strong> Resource not found</li>
+                    <li><strong>500 Internal Server Error:</strong> Server error</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>&copy; 2025 Xbooking. All rights reserved.</p>
+            <p>Visit our main platform: <a href="https://xbooking.netlify.app/" target="_blank">xbooking.netlify.app</a></p>
+            <p>Contact: <a href="mailto:hello@xbooking.com">hello@xbooking.com</a></p>
+        </div>
+    </div>
+
+    <script>
+        // Get the base URL dynamically
+        const baseUrl = `${window.location.protocol}//${window.location.host}/api`;
+        document.getElementById('baseUrl').textContent = baseUrl;
+
+        // Test Registration Function
+        async function testRegistration() {
+            const button = document.querySelector('button[onclick="testRegistration()"]');
+            const responseDiv = document.getElementById('registration-response');
+            
+            // Get form data
+            const fullName = document.getElementById('reg-fullname').value;
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
+            const confirmPassword = document.getElementById('reg-confirm-password').value;
+            
+            // Validate inputs
+            if (!fullName || !email || !password || !confirmPassword) {
+                showResponse(responseDiv, 'Please fill in all fields', 'error');
+                return;
+            }
+            
+            // Prepare request data
+            const requestData = {
+                full_name: fullName,
+                email: email,
+                password: password,
+                confirm_password: confirmPassword
+            };
+            
+            // Show loading state
+            button.disabled = true;
+            button.textContent = 'Testing...';
+            showResponse(responseDiv, 'Sending request...', 'loading');
+            
+            try {
+                const response = await fetch(`${baseUrl}/user/register/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                const data = await response.json();
+                
+                // Format response for display
+                const formattedResponse = `Status: ${response.status} ${response.statusText}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
+                
+                if (response.ok) {
+                    showResponse(responseDiv, formattedResponse, 'success');
+                } else {
+                    showResponse(responseDiv, formattedResponse, 'error');
+                }
+                
+            } catch (error) {
+                showResponse(responseDiv, `Error: ${error.message}`, 'error');
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Test Registration';
+            }
+        }
+
+        // Test Login Function
+        async function testLogin() {
+            const button = document.querySelector('button[onclick="testLogin()"]');
+            const responseDiv = document.getElementById('login-response');
+            
+            // Get form data
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            
+            // Validate inputs
+            if (!email || !password) {
+                showResponse(responseDiv, 'Please fill in all fields', 'error');
+                return;
+            }
+            
+            // Prepare request data
+            const requestData = {
+                email: email,
+                password: password
+            };
+            
+            // Show loading state
+            button.disabled = true;
+            button.textContent = 'Testing...';
+            showResponse(responseDiv, 'Sending request...', 'loading');
+            
+            try {
+                const response = await fetch(`${baseUrl}/user/login/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                const data = await response.json();
+                
+                // Format response for display
+                const formattedResponse = `Status: ${response.status} ${response.statusText}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
+                
+                if (response.ok) {
+                    showResponse(responseDiv, formattedResponse, 'success');
+                } else {
+                    showResponse(responseDiv, formattedResponse, 'error');
+                }
+                
+            } catch (error) {
+                showResponse(responseDiv, `Error: ${error.message}`, 'error');
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Test Login';
+            }
+        }
+
+        // Helper function to show responses
+        function showResponse(container, message, type) {
+            container.style.display = 'block';
+            container.textContent = message;
+            container.className = `response-container response-${type}`;
+        }
+
+        // Clear form functions
+        function clearRegistrationForm() {
+            document.getElementById('reg-fullname').value = '';
+            document.getElementById('reg-email').value = '';
+            document.getElementById('reg-password').value = '';
+            document.getElementById('reg-confirm-password').value = '';
+            document.getElementById('registration-response').style.display = 'none';
+        }
+
+        function clearLoginForm() {
+            document.getElementById('login-email').value = '';
+            document.getElementById('login-password').value = '';
+            document.getElementById('login-response').style.display = 'none';
+        }
+
+        // Get CSRF token function
+        function getCsrfToken() {
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                const [name, value] = cookie.trim().split('=');
+                if (name === 'csrftoken') {
+                    return value;
+                }
+            }
+            return '';
+        }
+
+        // Generate random test data
+        function generateTestEmail() {
+            const timestamp = Date.now();
+            return `testuser${timestamp}@example.com`;
+        }
+
+        // Add a button to generate test data
+        document.addEventListener('DOMContentLoaded', function() {
+            // You can add more interactive features here
+            console.log('Xbooking API Documentation loaded successfully!');
+        });
+    </script>
+</body>
+</html>
