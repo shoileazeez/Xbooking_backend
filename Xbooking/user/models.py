@@ -23,3 +23,16 @@ class User(models.Model):
  
     def check_password(self, raw_password):
         return check_password(raw_password, self.password)
+
+
+class VerificationCode(models.Model):
+    user = models.ForeignKey(User, on_delete = models.CASCADE)
+    code = models.CharField(max_length = 6)
+    created_at = models.DateTimeField(_("created_at"), default = timezone.now)
+    is_used = models.BooleanField(default = False)
+    
+    def __str__(self):
+        return f"Verification code for {self.user.email}"
+    
+    class Meta:
+        ordering = ['-created_at']

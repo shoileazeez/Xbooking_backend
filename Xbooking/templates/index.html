@@ -561,6 +561,190 @@
                 </div>
             </div>
 
+            <!-- Forget Password Endpoint -->
+            <div class="endpoint">
+                <h3>Forget Password</h3>
+                <div>
+                    <span class="method post">POST</span>
+                    <span class="url">/user/forget-password/</span>
+                </div>
+                
+                <p><strong>Description:</strong> Request a password reset by sending a verification code to the user's email address.</p>
+                
+                <h4>Request Body:</h4>
+                <div class="code-block">
+{
+  "email": "john.doe@example.com"
+}
+                </div>
+                
+                <!-- Interactive Testing Section for Forget Password -->
+                <div class="test-section">
+                    <h4>🧪 Test Forget Password Endpoint</h4>
+                    <div class="form-group">
+                        <label for="forget-email">Email:</label>
+                        <input type="email" id="forget-email" placeholder="john.doe@example.com" value="john.doe@example.com">
+                    </div>
+                    <button class="test-button" onclick="testForgetPassword()">Send Reset Code</button>
+                    <button class="clear-button" onclick="clearForgetPasswordForm()">Clear Form</button>
+                    <div id="forget-password-response" class="response-container" style="display: none;"></div>
+                </div>
+                
+                <div class="response-example">
+                    <h4>Success Response (200):</h4>
+                    <div class="code-block">
+{
+  "success": true,
+  "message": "Password reset code sent successfully. Please check your email."
+}
+                    </div>
+                </div>
+                
+                <div class="response-example">
+                    <h4>Error Response (400):</h4>
+                    <div class="code-block">
+{
+  "success": false,
+  "message": "Password reset failed",
+  "errors": {
+    "email": ["User with this email does not exist"]
+  }
+}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resend Password Reset Code Endpoint -->
+            <div class="endpoint">
+                <h3>Resend Password Reset Code</h3>
+                <div>
+                    <span class="method post">POST</span>
+                    <span class="url">/user/resend-password-reset/</span>
+                </div>
+                
+                <p><strong>Description:</strong> Resend the password reset verification code if the previous one expired or was not received.</p>
+                
+                <h4>Request Body:</h4>
+                <div class="code-block">
+{
+  "email": "john.doe@example.com"
+}
+                </div>
+                
+                <!-- Interactive Testing Section for Resend Password Reset -->
+                <div class="test-section">
+                    <h4>🧪 Test Resend Password Reset Endpoint</h4>
+                    <div class="form-group">
+                        <label for="resend-email">Email:</label>
+                        <input type="email" id="resend-email" placeholder="john.doe@example.com" value="john.doe@example.com">
+                    </div>
+                    <button class="test-button" onclick="testResendPasswordReset()">Resend Code</button>
+                    <button class="clear-button" onclick="clearResendPasswordResetForm()">Clear Form</button>
+                    <div id="resend-password-reset-response" class="response-container" style="display: none;"></div>
+                </div>
+                
+                <div class="response-example">
+                    <h4>Success Response (200):</h4>
+                    <div class="code-block">
+{
+  "success": true,
+  "message": "New password reset code sent successfully. Please check your email."
+}
+                    </div>
+                </div>
+                
+                <div class="response-example">
+                    <h4>Error Response (400):</h4>
+                    <div class="code-block">
+{
+  "success": false,
+  "message": "Resend failed",
+  "errors": {
+    "non_field_errors": ["Please wait 5 minutes before requesting a new code"]
+  }
+}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Password Reset Confirm Endpoint -->
+            <div class="endpoint">
+                <h3>Password Reset Confirm</h3>
+                <div>
+                    <span class="method post">POST</span>
+                    <span class="url">/user/password-reset-confirm/</span>
+                </div>
+                
+                <p><strong>Description:</strong> Confirm password reset using the verification code and set a new password.</p>
+                
+                <h4>Request Body:</h4>
+                <div class="code-block">
+{
+  "email": "john.doe@example.com",
+  "verification_code": "123456",
+  "new_password": "NewSecurePass123!",
+  "confirm_new_password": "NewSecurePass123!"
+}
+                </div>
+                
+                <h4>Password Requirements:</h4>
+                <ul style="margin: 1rem 0; padding-left: 2rem;">
+                    <li>At least 8 characters long</li>
+                    <li>Contains at least one uppercase letter</li>
+                    <li>Contains at least one lowercase letter</li>
+                    <li>Contains at least one digit</li>
+                    <li>Contains at least one special character (!@#$%^&*()_+-=[]{}|;:,.<>?)</li>
+                </ul>
+                
+                <!-- Interactive Testing Section for Password Reset Confirm -->
+                <div class="test-section">
+                    <h4>🧪 Test Password Reset Confirm Endpoint</h4>
+                    <div class="form-group">
+                        <label for="reset-email">Email:</label>
+                        <input type="email" id="reset-email" placeholder="john.doe@example.com" value="john.doe@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="reset-code">Verification Code:</label>
+                        <input type="text" id="reset-code" placeholder="123456" maxlength="6">
+                    </div>
+                    <div class="form-group">
+                        <label for="reset-new-password">New Password:</label>
+                        <input type="password" id="reset-new-password" placeholder="NewSecurePass123!" value="NewSecurePass123!">
+                    </div>
+                    <div class="form-group">
+                        <label for="reset-confirm-password">Confirm New Password:</label>
+                        <input type="password" id="reset-confirm-password" placeholder="NewSecurePass123!" value="NewSecurePass123!">
+                    </div>
+                    <button class="test-button" onclick="testPasswordResetConfirm()">Reset Password</button>
+                    <button class="clear-button" onclick="clearPasswordResetConfirmForm()">Clear Form</button>
+                    <div id="password-reset-confirm-response" class="response-container" style="display: none;"></div>
+                </div>
+                
+                <div class="response-example">
+                    <h4>Success Response (200):</h4>
+                    <div class="code-block">
+{
+  "success": true,
+  "message": "Password reset successful. You can now login with your new password."
+}
+                    </div>
+                </div>
+                
+                <div class="response-example">
+                    <h4>Error Response (400):</h4>
+                    <div class="code-block">
+{
+  "success": false,
+  "message": "Password reset failed",
+  "errors": {
+    "verification_code": ["Invalid or expired verification code"],
+    "new_password": ["Password does not meet requirements"]
+  }
+}
+                    </div>
+                </div>
+            </div>
+
             <!-- Authentication Info -->
             <div class="endpoint">
                 <h3>🔐 Authentication</h3>
@@ -726,6 +910,171 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
             }
         }
 
+        // Test Forget Password Function
+        async function testForgetPassword() {
+            const button = document.querySelector('button[onclick="testForgetPassword()"]');
+            const responseDiv = document.getElementById('forget-password-response');
+            
+            // Get form data
+            const email = document.getElementById('forget-email').value;
+            
+            // Validate inputs
+            if (!email) {
+                showResponse(responseDiv, 'Please enter an email address', 'error');
+                return;
+            }
+            
+            // Prepare request data
+            const requestData = {
+                email: email
+            };
+            
+            // Show loading state
+            button.disabled = true;
+            button.textContent = 'Sending...';
+            showResponse(responseDiv, 'Sending request...', 'loading');
+            
+            try {
+                const response = await fetch(`${baseUrl}/user/forget-password/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                const data = await response.json();
+                
+                // Format response for display
+                const formattedResponse = `Status: ${response.status} ${response.statusText}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
+                
+                if (response.ok) {
+                    showResponse(responseDiv, formattedResponse, 'success');
+                } else {
+                    showResponse(responseDiv, formattedResponse, 'error');
+                }
+                
+            } catch (error) {
+                showResponse(responseDiv, `Error: ${error.message}`, 'error');
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Send Reset Code';
+            }
+        }
+
+        // Test Resend Password Reset Function
+        async function testResendPasswordReset() {
+            const button = document.querySelector('button[onclick="testResendPasswordReset()"]');
+            const responseDiv = document.getElementById('resend-password-reset-response');
+            
+            // Get form data
+            const email = document.getElementById('resend-email').value;
+            
+            // Validate inputs
+            if (!email) {
+                showResponse(responseDiv, 'Please enter an email address', 'error');
+                return;
+            }
+            
+            // Prepare request data
+            const requestData = {
+                email: email
+            };
+            
+            // Show loading state
+            button.disabled = true;
+            button.textContent = 'Resending...';
+            showResponse(responseDiv, 'Sending request...', 'loading');
+            
+            try {
+                const response = await fetch(`${baseUrl}/user/resend-password-reset/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                const data = await response.json();
+                
+                // Format response for display
+                const formattedResponse = `Status: ${response.status} ${response.statusText}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
+                
+                if (response.ok) {
+                    showResponse(responseDiv, formattedResponse, 'success');
+                } else {
+                    showResponse(responseDiv, formattedResponse, 'error');
+                }
+                
+            } catch (error) {
+                showResponse(responseDiv, `Error: ${error.message}`, 'error');
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Resend Code';
+            }
+        }
+
+        // Test Password Reset Confirm Function
+        async function testPasswordResetConfirm() {
+            const button = document.querySelector('button[onclick="testPasswordResetConfirm()"]');
+            const responseDiv = document.getElementById('password-reset-confirm-response');
+            
+            // Get form data
+            const email = document.getElementById('reset-email').value;
+            const verificationCode = document.getElementById('reset-code').value;
+            const newPassword = document.getElementById('reset-new-password').value;
+            const confirmNewPassword = document.getElementById('reset-confirm-password').value;
+            
+            // Validate inputs
+            if (!email || !verificationCode || !newPassword || !confirmNewPassword) {
+                showResponse(responseDiv, 'Please fill in all fields', 'error');
+                return;
+            }
+            
+            // Prepare request data
+            const requestData = {
+                email: email,
+                verification_code: verificationCode,
+                new_password: newPassword,
+                confirm_new_password: confirmNewPassword
+            };
+            
+            // Show loading state
+            button.disabled = true;
+            button.textContent = 'Resetting...';
+            showResponse(responseDiv, 'Sending request...', 'loading');
+            
+            try {
+                const response = await fetch(`${baseUrl}/user/password-reset-confirm/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                const data = await response.json();
+                
+                // Format response for display
+                const formattedResponse = `Status: ${response.status} ${response.statusText}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
+                
+                if (response.ok) {
+                    showResponse(responseDiv, formattedResponse, 'success');
+                } else {
+                    showResponse(responseDiv, formattedResponse, 'error');
+                }
+                
+            } catch (error) {
+                showResponse(responseDiv, `Error: ${error.message}`, 'error');
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Reset Password';
+            }
+        }
+
         // Helper function to show responses
         function showResponse(container, message, type) {
             container.style.display = 'block';
@@ -746,6 +1095,24 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
             document.getElementById('login-email').value = '';
             document.getElementById('login-password').value = '';
             document.getElementById('login-response').style.display = 'none';
+        }
+
+        function clearForgetPasswordForm() {
+            document.getElementById('forget-email').value = '';
+            document.getElementById('forget-password-response').style.display = 'none';
+        }
+
+        function clearResendPasswordResetForm() {
+            document.getElementById('resend-email').value = '';
+            document.getElementById('resend-password-reset-response').style.display = 'none';
+        }
+
+        function clearPasswordResetConfirmForm() {
+            document.getElementById('reset-email').value = '';
+            document.getElementById('reset-code').value = '';
+            document.getElementById('reset-new-password').value = '';
+            document.getElementById('reset-confirm-password').value = '';
+            document.getElementById('password-reset-confirm-response').style.display = 'none';
         }
 
         // Get CSRF token function

@@ -12,6 +12,9 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
+import os
+from decouple import config
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -20,12 +23,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-m(*^j-pbbi4$@-_wkjs=#trl5d%1m&8*4d&p-3zhh=w$la#nir'
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-m(*^j-pbbi4$@-_wkjs=#trl5d%1m&8*4d&p-3zhh=w$la#nir')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=lambda v: [s.strip() for s in v.split(',')])
 
 
 # Application definition
@@ -45,6 +48,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     "corsheaders.middleware.CorsMiddleware",
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -119,28 +123,70 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = config('STATIC_URL', default='/static/')
+STATIC_ROOT = BASE_DIR / config('STATIC_ROOT', default='staticfiles')
+
+# Additional locations of static files
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
+
+# Static files finders
+STATICFILES_FINDERS = [
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+]
+
+# WhiteNoise configuration for serving static files in production
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Media files (User uploaded content)
+MEDIA_URL = config('MEDIA_URL', default='/media/')
+MEDIA_ROOT = BASE_DIR / config('MEDIA_ROOT', default='media')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# CORS_ALLOWED_ORIGINS = [
-#     "https://example.com",
-#     "https://sub.example.com",
-#     "http://localhost:8080",
-#     "http://127.0.0.1:9000",
-# ]
+# Email Configuration
+EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
 
-CORS_ALLOW_ALL_ORIGINS = True
+# Mailjet Configuration
+MAILJET_API_KEY = config('MAILJET_API_KEY', default='')
+MAILJET_SECRET_KEY = config('MAILJET_SECRET_KEY', default='')
+
+# SMTP Configuration (for Mailjet)
+if EMAIL_BACKEND == 'django.core.mail.backends.smtp.EmailBackend':
+    EMAIL_HOST = config('EMAIL_HOST', default='in-v3.mailjet.com')
+    EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
+    EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
+    EMAIL_HOST_USER = MAILJET_API_KEY
+    EMAIL_HOST_PASSWORD = MAILJET_SECRET_KEY
+
+# Default From Email
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='shoabdulazeez@gmail.com')
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
+
+
+
+# CORS Configuration
+CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', default=True, cast=bool)
+
+# If CORS_ALLOW_ALL_ORIGINS is False, use specific origins
+if not CORS_ALLOW_ALL_ORIGINS:
+    CORS_ALLOWED_ORIGINS = config(
+        'CORS_ALLOWED_ORIGINS', 
+        default='http://localhost:3000,http://127.0.0.1:3000',
+        cast=lambda v: [s.strip() for s in v.split(',')]
+    )
 
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
-    "ROTATE_REFRESH_TOKENS": True,
-    "BLACKLIST_AFTER_ROTATION": True,
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=config('ACCESS_TOKEN_LIFETIME_MINUTES', default=30, cast=int)),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=config('REFRESH_TOKEN_LIFETIME_DAYS', default=1, cast=int)),
+    "ROTATE_REFRESH_TOKENS": config('ROTATE_REFRESH_TOKENS', default=True, cast=bool),
+    "BLACKLIST_AFTER_ROTATION": config('BLACKLIST_AFTER_ROTATION', default=True, cast=bool),
     "ALGORITHM": "HS256",
     "SIGNING_KEY": SECRET_KEY,
     "AUTH_HEADER_TYPES": ("Bearer",),
