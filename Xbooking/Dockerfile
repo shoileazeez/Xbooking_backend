@@ -39,6 +39,7 @@ RUN mkdir -p /app/staticfiles /app/media /app/static \
 USER django
 
 # Run migrations and collect static files
+RUN python manage.py migrate --noinput || echo "Migration failed, continuing..."
 RUN python manage.py collectstatic --noinput --clear || echo "Static files collection failed, continuing..."
 
 # Health check
