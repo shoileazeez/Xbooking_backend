@@ -2,6 +2,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from user.serializers import ForgetPasswordSerializer
+from rest_framework.permissions import AllowAny
+from drf_spectacular.utils import extend_schema
 
 
 class ForgetPasswordView(APIView):
@@ -13,7 +15,13 @@ class ForgetPasswordView(APIView):
         "email": "user@example.com"
     }
     """
+    permission_classes = [AllowAny]
+    serializer_class = ForgetPasswordSerializer
     
+    @extend_schema(
+        request=ForgetPasswordSerializer,
+        description="Request password reset - sends reset link to email"
+    )
     def post(self, request):
         """
         Handle password reset request

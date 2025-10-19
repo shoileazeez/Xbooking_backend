@@ -1,9 +1,10 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework_simplejwt.tokens import RefreshToken
+from user.utils import get_tokens_for_user
 from user.serializers import UserSerializers
 from rest_framework.permissions import AllowAny
+from drf_spectacular.utils import extend_schema
 
 
 class UserRegistrationView(APIView):
@@ -11,13 +12,19 @@ class UserRegistrationView(APIView):
     User registration endpoint
     """
     permission_classes = [AllowAny]
+    serializer_class = UserSerializers
     
+    @extend_schema(
+        request=UserSerializers,
+        responses={201: UserSerializers},
+        description="Register a new user account"
+    )
     def post(self, request):
         serializer = UserSerializers(data = request.data)
         try:
             if serializer.is_valid():
                 user = serializer.save()
-                refresh_token = RefreshToken.for_user(user)
+                jwt_tokens = get_tokens_for_user(user)
                 return Response({
                     "success": True,
                     "message": "Registration was succesful",
@@ -27,10 +34,7 @@ class UserRegistrationView(APIView):
                         "full_name": user.full_name,
                         "avatar_url": user.avatar_url
                     },
-                    "token":{
-                        "access_token": str(refresh_token.access_token),
-                        "refresh_token": str(refresh_token)   
-                    },
+                    "token":jwt_tokens
                     }, status = status.HTTP_201_CREATED
                 )
             else:

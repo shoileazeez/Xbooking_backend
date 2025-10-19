@@ -1,22 +1,28 @@
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import RefreshToken
 from user.serializers import LoginSerializers
 from rest_framework.permissions import AllowAny
 from user.models import User
 import datetime
+from user.utils import get_tokens_for_user
+from drf_spectacular.utils import extend_schema
 
 class UserLoginView(APIView):
     permission_classes = [AllowAny]
+    serializer_class = LoginSerializers
     
+    @extend_schema(
+        request=LoginSerializers,
+        description="User login - returns JWT access and refresh tokens"
+    )
     def post(self, request):
         serializer = LoginSerializers(data=request.data)
         if serializer.is_valid():
             user = serializer.validated_data['user']
             user.last_login = datetime.datetime.now()
             user.save()
-            refresh_token = RefreshToken.for_user(user)
+            jwt_tokens = get_tokens_for_user(user)
             return Response({
                 "success": True,
                 "message":"Login was succesful",
@@ -26,10 +32,7 @@ class UserLoginView(APIView):
                     "full_name": user.full_name,
                     "avatar_url": user.avatar_url
                 },
-                "token":{
-                    "access_token": str(refresh_token.access_token),
-                    "refresh_token": str(refresh_token)
-                }
+                "token": jwt_tokens
             }, status=status.HTTP_200_OK)
         else:
             return Response({

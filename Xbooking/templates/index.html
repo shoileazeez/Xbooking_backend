@@ -135,6 +135,11 @@
             color: white;
         }
         
+        .method.get {
+            background: #17a2b8;
+            color: white;
+        }
+        
         .url {
             font-family: 'Courier New', monospace;
             background: #e9ecef;
@@ -199,7 +204,6 @@
             text-decoration: underline;
         }
 
-        /* Interactive Testing Styles */
         .test-section {
             background: rgba(255, 255, 255, 0.98);
             border: 2px solid #667eea;
@@ -303,34 +307,6 @@
             border: 1px solid #ffeaa7;
             color: #856404;
         }
-        
-        .tabs {
-            display: flex;
-            margin-bottom: 1rem;
-            border-bottom: 2px solid #e9ecef;
-        }
-        
-        .tab {
-            padding: 0.5rem 1rem;
-            background: #f8f9fa;
-            border: none;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-            margin-right: 0.25rem;
-        }
-        
-        .tab.active {
-            background: #667eea;
-            color: white;
-        }
-        
-        .tab-content {
-            display: none;
-        }
-        
-        .tab-content.active {
-            display: block;
-        }
 
         @media (max-width: 768px) {
             .header h1 {
@@ -353,14 +329,12 @@
 </head>
 <body>
     <div class="container">
-        <!-- Header Section -->
         <div class="header">
             <h1>🏢 Xbooking API</h1>
             <p>An innovative new platform for discovering and booking premium workspaces</p>
             <p><strong>Work from anywhere, anytime.</strong></p>
         </div>
 
-        <!-- About Xbooking Section -->
         <div class="about-section">
             <h2>About Xbooking</h2>
             <p>Xbooking was born from a simple frustration: finding the perfect workspace shouldn't be complicated. Our innovative new platform is designed to connect professionals with their ideal work environments as we expand across cities worldwide.</p>
@@ -395,7 +369,6 @@
             </div>
         </div>
 
-        <!-- API Documentation Section -->
         <div class="api-section">
             <h2>API Documentation & Testing</h2>
             
@@ -405,7 +378,6 @@
                 <p style="margin-top: 0.5rem; color: #666;">All API endpoints are relative to this base URL</p>
             </div>
 
-            <!-- User Registration Endpoint -->
             <div class="endpoint">
                 <h3>User Registration</h3>
                 <div>
@@ -416,14 +388,12 @@
                 <p><strong>Description:</strong> Register a new user account with email verification and automatic avatar generation.</p>
                 
                 <h4>Request Body:</h4>
-                <div class="code-block">
-{
+                <div class="code-block">{
   "full_name": "John Doe",
   "email": "john.doe@example.com",
   "password": "SecurePass123!",
   "confirm_password": "SecurePass123!"
-}
-                </div>
+}</div>
                 
                 <h4>Password Requirements:</h4>
                 <ul style="margin: 1rem 0; padding-left: 2rem;">
@@ -434,24 +404,23 @@
                     <li>Contains at least one special character (!@#$%^&*()_+-=[]{}|;:,.<>?)</li>
                 </ul>
                 
-                <!-- Interactive Testing Section for Registration -->
                 <div class="test-section">
                     <h4>🧪 Test Registration Endpoint</h4>
                     <div class="form-group">
                         <label for="reg-fullname">Full Name:</label>
-                        <input type="text" id="reg-fullname" placeholder="John Doe" value="John Doe">
+                        <input type="text" id="reg-fullname" placeholder="John Doe">
                     </div>
                     <div class="form-group">
                         <label for="reg-email">Email:</label>
-                        <input type="email" id="reg-email" placeholder="john.doe@example.com" value="john.doe@example.com">
+                        <input type="email" id="reg-email" placeholder="john.doe@example.com">
                     </div>
                     <div class="form-group">
                         <label for="reg-password">Password:</label>
-                        <input type="password" id="reg-password" placeholder="SecurePass123!" value="SecurePass123!">
+                        <input type="password" id="reg-password" placeholder="SecurePass123!">
                     </div>
                     <div class="form-group">
                         <label for="reg-confirm-password">Confirm Password:</label>
-                        <input type="password" id="reg-confirm-password" placeholder="SecurePass123!" value="SecurePass123!">
+                        <input type="password" id="reg-confirm-password" placeholder="SecurePass123!">
                     </div>
                     <button class="test-button" onclick="testRegistration()">Test Registration</button>
                     <button class="clear-button" onclick="clearRegistrationForm()">Clear Form</button>
@@ -460,40 +429,35 @@
                 
                 <div class="response-example">
                     <h4>Success Response (201):</h4>
-                    <div class="code-block">
-{
+                    <div class="code-block">{
   "success": true,
   "message": "Registration was successful",
   "user": {
     "user_id": "123e4567-e89b-12d3-a456-426614174000",
     "user_email": "john.doe@example.com",
     "full_name": "John Doe",
-    "avatar_url": "https://api.dicebear.com/9.x/personas/svg?seed=john.doe%40example.com&size=200&radius=20"
+    "avatar_url": "https://api.dicebear.com/9.x/personas/svg?seed=john.doe%40example.com"
   },
   "token": {
     "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
     "refresh_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
   }
-}
-                    </div>
+}</div>
                 </div>
                 
                 <div class="response-example">
                     <h4>Error Response (400):</h4>
-                    <div class="code-block">
-{
+                    <div class="code-block">{
   "success": false,
   "message": "Registration Failed",
   "error": {
     "email": ["Email already exists"],
     "password": ["Password must be at least 8 characters long"]
   }
-}
-                    </div>
+}</div>
                 </div>
             </div>
 
-            <!-- User Login Endpoint -->
             <div class="endpoint">
                 <h3>User Login</h3>
                 <div>
@@ -504,23 +468,20 @@
                 <p><strong>Description:</strong> Authenticate user credentials and return access tokens for API access.</p>
                 
                 <h4>Request Body:</h4>
-                <div class="code-block">
-{
+                <div class="code-block">{
   "email": "john.doe@example.com",
   "password": "SecurePass123!"
-}
-                </div>
+}</div>
                 
-                <!-- Interactive Testing Section for Login -->
                 <div class="test-section">
                     <h4>🧪 Test Login Endpoint</h4>
                     <div class="form-group">
                         <label for="login-email">Email:</label>
-                        <input type="email" id="login-email" placeholder="john.doe@example.com" value="john.doe@example.com">
+                        <input type="email" id="login-email" placeholder="john.doe@example.com">
                     </div>
                     <div class="form-group">
                         <label for="login-password">Password:</label>
-                        <input type="password" id="login-password" placeholder="SecurePass123!" value="SecurePass123!">
+                        <input type="password" id="login-password" placeholder="SecurePass123!">
                     </div>
                     <button class="test-button" onclick="testLogin()">Test Login</button>
                     <button class="clear-button" onclick="clearLoginForm()">Clear Form</button>
@@ -529,39 +490,95 @@
                 
                 <div class="response-example">
                     <h4>Success Response (200):</h4>
-                    <div class="code-block">
-{
+                    <div class="code-block">{
   "success": true,
   "message": "Login was successful",
   "user": {
     "user_id": "123e4567-e89b-12d3-a456-426614174000",
     "user_email": "john.doe@example.com",
     "full_name": "John Doe",
-    "avatar_url": "https://api.dicebear.com/9.x/personas/svg?seed=john.doe%40example.com&size=200&radius=20"
+    "avatar_url": "https://api.dicebear.com/9.x/personas/svg?seed=john.doe%40example.com"
   },
   "token": {
     "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
     "refresh_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
   }
-}
-                    </div>
+}</div>
                 </div>
                 
                 <div class="response-example">
                     <h4>Error Response (400):</h4>
-                    <div class="code-block">
-{
+                    <div class="code-block">{
   "success": false,
   "message": "Login failed",
   "errors": {
     "non_field_errors": ["Invalid email or password"]
   }
-}
-                    </div>
+}</div>
                 </div>
             </div>
 
-            <!-- Forget Password Endpoint -->
+            <div class="endpoint">
+                <h3>Google Auth</h3>
+                <div>
+                    <span class="method post">POST</span>
+                    <span class="url">/user/auth/google/</span>
+                </div>
+                <p><strong>Description:</strong> Authenticate or register a user using a Google OAuth code. Returns JWT tokens and user info.</p>
+                <h4>Request Body:</h4>
+                <div class="code-block">{
+  "code": "GOOGLE_OAUTH_CODE"
+}</div>
+                <div class="test-section">
+                    <h4>🧪 Test Google Auth Endpoint</h4>
+                    <div class="form-group">
+                        <label for="google-code">Google OAuth Code:</label>
+                        <input type="text" id="google-code" placeholder="Paste Google OAuth code here">
+                    </div>
+                    <button class="test-button" onclick="testGoogleAuth()">Test Google Auth</button>
+                    <button class="clear-button" onclick="clearGoogleAuthForm()">Clear Form</button>
+                    <div id="google-auth-response" class="response-container" style="display: none;"></div>
+                </div>
+                <div class="response-example">
+                    <h4>Success Response (200):</h4>
+                    <div class="code-block">{
+  "success": true,
+  "message": "Login successful",
+  "user": {
+    "user_id": "123e4567-e89b-12d3-a456-426614174000",
+    "user_email": "john.doe@example.com",
+    "full_name": "John Doe",
+    "avatar_url": "https://lh3.googleusercontent.com/a-/AOh14Gg..."
+  },
+  "token": {
+    "access": "access_token_here",
+    "refresh": "refresh_token_here"
+  }
+}</div>
+                </div>
+            </div>
+
+            <div class="endpoint">
+                <h3>Profile</h3>
+                <div>
+                    <span class="method get">GET</span>
+                    <span class="url">/user/profile/</span>
+                </div>
+                <p><strong>Description:</strong> Retrieve the authenticated user's profile information. Requires JWT authentication.</p>
+                <h4>Headers:</h4>
+                <div class="code-block">Authorization: Bearer &lt;access_token&gt;</div>
+                <div class="test-section">
+                    <h4>🧪 Test Profile Endpoint</h4>
+                    <div class="form-group">
+                        <label for="profile-token">Access Token:</label>
+                        <input type="text" id="profile-token" placeholder="Paste access token here">
+                    </div>
+                    <button class="test-button" onclick="testProfile()">Test Profile</button>
+                    <button class="clear-button" onclick="clearProfileForm()">Clear Form</button>
+                    <div id="profile-response" class="response-container" style="display: none;"></div>
+                </div>
+            </div>
+
             <div class="endpoint">
                 <h3>Forget Password</h3>
                 <div>
@@ -572,49 +589,22 @@
                 <p><strong>Description:</strong> Request a password reset by sending a verification code to the user's email address.</p>
                 
                 <h4>Request Body:</h4>
-                <div class="code-block">
-{
+                <div class="code-block">{
   "email": "john.doe@example.com"
-}
-                </div>
+}</div>
                 
-                <!-- Interactive Testing Section for Forget Password -->
                 <div class="test-section">
                     <h4>🧪 Test Forget Password Endpoint</h4>
                     <div class="form-group">
                         <label for="forget-email">Email:</label>
-                        <input type="email" id="forget-email" placeholder="john.doe@example.com" value="john.doe@example.com">
+                        <input type="email" id="forget-email" placeholder="john.doe@example.com">
                     </div>
                     <button class="test-button" onclick="testForgetPassword()">Send Reset Code</button>
                     <button class="clear-button" onclick="clearForgetPasswordForm()">Clear Form</button>
                     <div id="forget-password-response" class="response-container" style="display: none;"></div>
                 </div>
-                
-                <div class="response-example">
-                    <h4>Success Response (200):</h4>
-                    <div class="code-block">
-{
-  "success": true,
-  "message": "Password reset code sent successfully. Please check your email."
-}
-                    </div>
-                </div>
-                
-                <div class="response-example">
-                    <h4>Error Response (400):</h4>
-                    <div class="code-block">
-{
-  "success": false,
-  "message": "Password reset failed",
-  "errors": {
-    "email": ["User with this email does not exist"]
-  }
-}
-                    </div>
-                </div>
             </div>
 
-            <!-- Resend Password Reset Code Endpoint -->
             <div class="endpoint">
                 <h3>Resend Password Reset Code</h3>
                 <div>
@@ -625,49 +615,22 @@
                 <p><strong>Description:</strong> Resend the password reset verification code if the previous one expired or was not received.</p>
                 
                 <h4>Request Body:</h4>
-                <div class="code-block">
-{
+                <div class="code-block">{
   "email": "john.doe@example.com"
-}
-                </div>
+}</div>
                 
-                <!-- Interactive Testing Section for Resend Password Reset -->
                 <div class="test-section">
                     <h4>🧪 Test Resend Password Reset Endpoint</h4>
                     <div class="form-group">
                         <label for="resend-email">Email:</label>
-                        <input type="email" id="resend-email" placeholder="john.doe@example.com" value="john.doe@example.com">
+                        <input type="email" id="resend-email" placeholder="john.doe@example.com">
                     </div>
                     <button class="test-button" onclick="testResendPasswordReset()">Resend Code</button>
                     <button class="clear-button" onclick="clearResendPasswordResetForm()">Clear Form</button>
                     <div id="resend-password-reset-response" class="response-container" style="display: none;"></div>
                 </div>
-                
-                <div class="response-example">
-                    <h4>Success Response (200):</h4>
-                    <div class="code-block">
-{
-  "success": true,
-  "message": "New password reset code sent successfully. Please check your email."
-}
-                    </div>
-                </div>
-                
-                <div class="response-example">
-                    <h4>Error Response (400):</h4>
-                    <div class="code-block">
-{
-  "success": false,
-  "message": "Resend failed",
-  "errors": {
-    "non_field_errors": ["Please wait 5 minutes before requesting a new code"]
-  }
-}
-                    </div>
-                </div>
             </div>
 
-            <!-- Password Reset Confirm Endpoint -->
             <div class="endpoint">
                 <h3>Password Reset Confirm</h3>
                 <div>
@@ -678,30 +641,18 @@
                 <p><strong>Description:</strong> Confirm password reset using the verification code and set a new password.</p>
                 
                 <h4>Request Body:</h4>
-                <div class="code-block">
-{
+                <div class="code-block">{
   "email": "john.doe@example.com",
   "verification_code": "123456",
   "new_password": "NewSecurePass123!",
   "confirm_new_password": "NewSecurePass123!"
-}
-                </div>
+}</div>
                 
-                <h4>Password Requirements:</h4>
-                <ul style="margin: 1rem 0; padding-left: 2rem;">
-                    <li>At least 8 characters long</li>
-                    <li>Contains at least one uppercase letter</li>
-                    <li>Contains at least one lowercase letter</li>
-                    <li>Contains at least one digit</li>
-                    <li>Contains at least one special character (!@#$%^&*()_+-=[]{}|;:,.<>?)</li>
-                </ul>
-                
-                <!-- Interactive Testing Section for Password Reset Confirm -->
                 <div class="test-section">
                     <h4>🧪 Test Password Reset Confirm Endpoint</h4>
                     <div class="form-group">
                         <label for="reset-email">Email:</label>
-                        <input type="email" id="reset-email" placeholder="john.doe@example.com" value="john.doe@example.com">
+                        <input type="email" id="reset-email" placeholder="john.doe@example.com">
                     </div>
                     <div class="form-group">
                         <label for="reset-code">Verification Code:</label>
@@ -709,54 +660,693 @@
                     </div>
                     <div class="form-group">
                         <label for="reset-new-password">New Password:</label>
-                        <input type="password" id="reset-new-password" placeholder="NewSecurePass123!" value="NewSecurePass123!">
+                        <input type="password" id="reset-new-password" placeholder="NewSecurePass123!">
                     </div>
                     <div class="form-group">
                         <label for="reset-confirm-password">Confirm New Password:</label>
-                        <input type="password" id="reset-confirm-password" placeholder="NewSecurePass123!" value="NewSecurePass123!">
+                        <input type="password" id="reset-confirm-password" placeholder="NewSecurePass123!">
                     </div>
                     <button class="test-button" onclick="testPasswordResetConfirm()">Reset Password</button>
                     <button class="clear-button" onclick="clearPasswordResetConfirmForm()">Clear Form</button>
                     <div id="password-reset-confirm-response" class="response-container" style="display: none;"></div>
                 </div>
+            </div>
+
+            <!-- Workspace API Endpoints Section -->
+            <h2 style="color: #2c3e50; font-size: 2rem; margin-top: 3rem; margin-bottom: 1rem; border-bottom: 3px solid #667eea; padding-bottom: 0.5rem;">Workspace API Documentation</h2>
+            <p style="margin-bottom: 1.5rem; font-size: 1.1rem; color: #555;">Manage workspaces, branches, and spaces for your organization. Build hierarchical workspace structures with role-based access control.</p>
+
+            <!-- Workspace Creation -->
+            <div class="endpoint">
+                <h3>Create Workspace</h3>
+                <div>
+                    <span class="method post">POST</span>
+                    <span class="url">/workspace/workspaces/create/</span>
+                </div>
+                
+                <p><strong>Description:</strong> Create a new workspace. The authenticated user becomes the workspace admin.</p>
+                <p><strong>Permissions:</strong> Requires authenticated user</p>
+                
+                <h4>Request Body:</h4>
+                <div class="code-block">{
+  "name": "Tech Startup Workspace",
+  "description": "Our main office workspace",
+  "address": "123 Business St, Tech City"
+}</div>
+                
+                <div class="test-section">
+                    <h4>🧪 Test Create Workspace</h4>
+                    <div class="form-group">
+                        <label for="ws-create-token">Access Token:</label>
+                        <input type="text" id="ws-create-token" placeholder="Paste access token here">
+                    </div>
+                    <div class="form-group">
+                        <label for="ws-create-name">Workspace Name:</label>
+                        <input type="text" id="ws-create-name" placeholder="Tech Startup Workspace">
+                    </div>
+                    <div class="form-group">
+                        <label for="ws-create-desc">Description:</label>
+                        <input type="text" id="ws-create-desc" placeholder="Our main office workspace">
+                    </div>
+                    <div class="form-group">
+                        <label for="ws-create-addr">Address:</label>
+                        <input type="text" id="ws-create-addr" placeholder="123 Business St, Tech City">
+                    </div>
+                    <button class="test-button" onclick="testCreateWorkspace()">Create Workspace</button>
+                    <button class="clear-button" onclick="clearCreateWorkspaceForm()">Clear Form</button>
+                    <div id="ws-create-response" class="response-container" style="display: none;"></div>
+                </div>
+                
+                <div class="response-example">
+                    <h4>Success Response (201):</h4>
+                    <div class="code-block">{
+  "success": true,
+  "message": "Workspace created successfully",
+  "data": {
+    "workspace_id": "123e4567-e89b-12d3-a456-426614174000",
+    "name": "Tech Startup Workspace",
+    "description": "Our main office workspace",
+    "address": "123 Business St, Tech City",
+    "admin_id": "user-id-here",
+    "created_at": "2025-01-15T10:30:00Z"
+  }
+}</div>
+                </div>
+            </div>
+
+            <!-- List Workspaces -->
+            <div class="endpoint">
+                <h3>List Workspaces</h3>
+                <div>
+                    <span class="method get">GET</span>
+                    <span class="url">/workspace/workspaces/</span>
+                </div>
+                
+                <p><strong>Description:</strong> List all workspaces where the user is an admin or member.</p>
+                <p><strong>Permissions:</strong> Requires authenticated user</p>
+                <h4>Headers:</h4>
+                <div class="code-block">Authorization: Bearer &lt;access_token&gt;</div>
+                
+                <div class="test-section">
+                    <h4>🧪 Test List Workspaces</h4>
+                    <div class="form-group">
+                        <label for="ws-list-token">Access Token:</label>
+                        <input type="text" id="ws-list-token" placeholder="Paste access token here">
+                    </div>
+                    <button class="test-button" onclick="testListWorkspaces()">List Workspaces</button>
+                    <div id="ws-list-response" class="response-container" style="display: none;"></div>
+                </div>
                 
                 <div class="response-example">
                     <h4>Success Response (200):</h4>
-                    <div class="code-block">
-{
+                    <div class="code-block">{
   "success": true,
-  "message": "Password reset successful. You can now login with your new password."
-}
-                    </div>
-                </div>
-                
-                <div class="response-example">
-                    <h4>Error Response (400):</h4>
-                    <div class="code-block">
-{
-  "success": false,
-  "message": "Password reset failed",
-  "errors": {
-    "verification_code": ["Invalid or expired verification code"],
-    "new_password": ["Password does not meet requirements"]
-  }
-}
-                    </div>
+  "message": "Workspaces retrieved successfully",
+  "data": [
+    {
+      "workspace_id": "123e4567-e89b-12d3-a456-426614174000",
+      "name": "Tech Startup Workspace",
+      "description": "Our main office workspace",
+      "admin_id": "user-id"
+    }
+  ]
+}</div>
                 </div>
             </div>
 
-            <!-- Authentication Info -->
+            <!-- Get Workspace Detail -->
+            <div class="endpoint">
+                <h3>Get Workspace Detail</h3>
+                <div>
+                    <span class="method get">GET</span>
+                    <span class="url">/workspace/workspaces/&lt;workspace_id&gt;/</span>
+                </div>
+                
+                <p><strong>Description:</strong> Retrieve detailed information about a specific workspace including branches and members.</p>
+                <p><strong>Permissions:</strong> Requires authenticated user who is workspace admin or member</p>
+                
+                <div class="test-section">
+                    <h4>🧪 Test Get Workspace Detail</h4>
+                    <div class="form-group">
+                        <label for="ws-detail-token">Access Token:</label>
+                        <input type="text" id="ws-detail-token" placeholder="Paste access token here">
+                    </div>
+                    <div class="form-group">
+                        <label for="ws-detail-id">Workspace ID:</label>
+                        <input type="text" id="ws-detail-id" placeholder="123e4567-e89b-12d3-a456-426614174000">
+                    </div>
+                    <button class="test-button" onclick="testGetWorkspaceDetail()">Get Detail</button>
+                    <div id="ws-detail-response" class="response-container" style="display: none;"></div>
+                </div>
+            </div>
+
+            <!-- Create Branch -->
+            <div class="endpoint">
+                <h3>Create Branch</h3>
+                <div>
+                    <span class="method post">POST</span>
+                    <span class="url">/workspace/branches/create/</span>
+                </div>
+                
+                <p><strong>Description:</strong> Create a new branch within a workspace. Only workspace admin can create branches.</p>
+                <p><strong>Permissions:</strong> Workspace admin only</p>
+                
+                <h4>Request Body:</h4>
+                <div class="code-block">{
+  "workspace_id": "123e4567-e89b-12d3-a456-426614174000",
+  "name": "Main Branch",
+  "address": "123 Business St",
+  "manager_id": "manager-user-id"
+}</div>
+                
+                <div class="test-section">
+                    <h4>🧪 Test Create Branch</h4>
+                    <div class="form-group">
+                        <label for="br-create-token">Access Token:</label>
+                        <input type="text" id="br-create-token" placeholder="Paste access token here">
+                    </div>
+                    <div class="form-group">
+                        <label for="br-create-ws-id">Workspace ID:</label>
+                        <input type="text" id="br-create-ws-id" placeholder="workspace-id">
+                    </div>
+                    <div class="form-group">
+                        <label for="br-create-name">Branch Name:</label>
+                        <input type="text" id="br-create-name" placeholder="Main Branch">
+                    </div>
+                    <div class="form-group">
+                        <label for="br-create-addr">Address:</label>
+                        <input type="text" id="br-create-addr" placeholder="123 Business St">
+                    </div>
+                    <button class="test-button" onclick="testCreateBranch()">Create Branch</button>
+                    <button class="clear-button" onclick="clearCreateBranchForm()">Clear Form</button>
+                    <div id="br-create-response" class="response-container" style="display: none;"></div>
+                </div>
+            </div>
+
+            <!-- List Branches -->
+            <div class="endpoint">
+                <h3>List Branches</h3>
+                <div>
+                    <span class="method get">GET</span>
+                    <span class="url">/workspace/branches/?workspace_id=&lt;workspace_id&gt;</span>
+                </div>
+                
+                <p><strong>Description:</strong> List all branches in a workspace. Optimized response with essential info only.</p>
+                <p><strong>Permissions:</strong> Requires authenticated user</p>
+                <p><strong>Query Parameters:</strong> workspace_id (required) - Filter branches by workspace</p>
+                
+                <div class="test-section">
+                    <h4>🧪 Test List Branches</h4>
+                    <div class="form-group">
+                        <label for="br-list-token">Access Token:</label>
+                        <input type="text" id="br-list-token" placeholder="Paste access token here">
+                    </div>
+                    <div class="form-group">
+                        <label for="br-list-ws-id">Workspace ID:</label>
+                        <input type="text" id="br-list-ws-id" placeholder="workspace-id">
+                    </div>
+                    <button class="test-button" onclick="testListBranches()">List Branches</button>
+                    <div id="br-list-response" class="response-container" style="display: none;"></div>
+                </div>
+            </div>
+
+            <!-- Create Space -->
+            <div class="endpoint">
+                <h3>Create Space</h3>
+                <div>
+                    <span class="method post">POST</span>
+                    <span class="url">/workspace/spaces/create/</span>
+                </div>
+                
+                <p><strong>Description:</strong> Create a new space within a branch. Space represents a bookable unit (desk, room, etc).</p>
+                <p><strong>Permissions:</strong> Workspace admin or branch manager</p>
+                
+                <h4>Request Body:</h4>
+                <div class="code-block">{
+  "branch_id": "branch-id-here",
+  "name": "Private Office",
+  "space_type": "private_office",
+  "capacity": 4,
+  "hourly_rate": 50.00,
+  "daily_rate": 350.00,
+  "monthly_rate": 5000.00,
+  "amenities": ["WiFi", "Parking", "Coffee"]
+}</div>
+                
+                <div class="test-section">
+                    <h4>🧪 Test Create Space</h4>
+                    <div class="form-group">
+                        <label for="sp-create-token">Access Token:</label>
+                        <input type="text" id="sp-create-token" placeholder="Paste access token here">
+                    </div>
+                    <div class="form-group">
+                        <label for="sp-create-br-id">Branch ID:</label>
+                        <input type="text" id="sp-create-br-id" placeholder="branch-id">
+                    </div>
+                    <div class="form-group">
+                        <label for="sp-create-name">Space Name:</label>
+                        <input type="text" id="sp-create-name" placeholder="Private Office">
+                    </div>
+                    <div class="form-group">
+                        <label for="sp-create-type">Space Type (private_office/open_desk/meeting_room):</label>
+                        <input type="text" id="sp-create-type" placeholder="private_office">
+                    </div>
+                    <div class="form-group">
+                        <label for="sp-create-capacity">Capacity:</label>
+                        <input type="number" id="sp-create-capacity" placeholder="4" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="sp-create-hourly">Hourly Rate ($):</label>
+                        <input type="number" id="sp-create-hourly" placeholder="50.00" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label for="sp-create-daily">Daily Rate ($):</label>
+                        <input type="number" id="sp-create-daily" placeholder="350.00" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label for="sp-create-monthly">Monthly Rate ($):</label>
+                        <input type="number" id="sp-create-monthly" placeholder="5000.00" step="0.01">
+                    </div>
+                    <button class="test-button" onclick="testCreateSpace()">Create Space</button>
+                    <button class="clear-button" onclick="clearCreateSpaceForm()">Clear Form</button>
+                    <div id="sp-create-response" class="response-container" style="display: none;"></div>
+                </div>
+            </div>
+
+            <!-- List Spaces -->
+            <div class="endpoint">
+                <h3>List Spaces</h3>
+                <div>
+                    <span class="method get">GET</span>
+                    <span class="url">/workspace/spaces/?branch_id=&lt;branch_id&gt;</span>
+                </div>
+                
+                <p><strong>Description:</strong> List all spaces in a branch. Lightweight response optimized for list views.</p>
+                <p><strong>Permissions:</strong> Requires authenticated user</p>
+                <p><strong>Query Parameters:</strong> branch_id (required) - Filter spaces by branch</p>
+                
+                <div class="test-section">
+                    <h4>🧪 Test List Spaces</h4>
+                    <div class="form-group">
+                        <label for="sp-list-token">Access Token:</label>
+                        <input type="text" id="sp-list-token" placeholder="Paste access token here">
+                    </div>
+                    <div class="form-group">
+                        <label for="sp-list-br-id">Branch ID:</label>
+                        <input type="text" id="sp-list-br-id" placeholder="branch-id">
+                    </div>
+                    <button class="test-button" onclick="testListSpaces()">List Spaces</button>
+                    <div id="sp-list-response" class="response-container" style="display: none;"></div>
+                </div>
+            </div>
+
+            <!-- Admin Registration -->
+            <div class="endpoint">
+                <h3>Admin Registration</h3>
+                <div>
+                    <span class="method post">POST</span>
+                    <span class="url">/workspace/admin/register/</span>
+                </div>
+                
+                <p><strong>Description:</strong> Register a new workspace admin with business email validation. Admin emails must be from a business domain (not Gmail, Yahoo, etc.).</p>
+                <p><strong>Permissions:</strong> Public - Anyone can register</p>
+                
+                <h4>Request Body:</h4>
+                <div class="code-block">{
+  "full_name": "John Admin",
+  "email": "john@company.com",
+  "password": "SecurePass123!",
+  "confirm_password": "SecurePass123!"
+}</div>
+                
+                <div class="test-section">
+                    <h4>🧪 Test Admin Registration</h4>
+                    <div class="form-group">
+                        <label for="admin-reg-name">Full Name:</label>
+                        <input type="text" id="admin-reg-name" placeholder="John Admin">
+                    </div>
+                    <div class="form-group">
+                        <label for="admin-reg-email">Business Email (not Gmail/Yahoo):</label>
+                        <input type="email" id="admin-reg-email" placeholder="john@company.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="admin-reg-password">Password:</label>
+                        <input type="password" id="admin-reg-password" placeholder="SecurePass123!">
+                    </div>
+                    <div class="form-group">
+                        <label for="admin-reg-confirm">Confirm Password:</label>
+                        <input type="password" id="admin-reg-confirm" placeholder="SecurePass123!">
+                    </div>
+                    <button class="test-button" onclick="testAdminRegister()">Register Admin</button>
+                    <button class="clear-button" onclick="clearAdminRegForm()">Clear Form</button>
+                    <div id="admin-reg-response" class="response-container" style="display: none;"></div>
+                </div>
+            </div>
+
+            <!-- Admin Login -->
+            <div class="endpoint">
+                <h3>Admin Login</h3>
+                <div>
+                    <span class="method post">POST</span>
+                    <span class="url">/workspace/admin/login/</span>
+                </div>
+                
+                <p><strong>Description:</strong> Login as admin user and receive JWT tokens for API access.</p>
+                <p><strong>Permissions:</strong> Public - Anyone can login</p>
+                
+                <h4>Request Body:</h4>
+                <div class="code-block">{
+  "email": "john@company.com",
+  "password": "SecurePass123!"
+}</div>
+                
+                <div class="test-section">
+                    <h4>🧪 Test Admin Login</h4>
+                    <div class="form-group">
+                        <label for="admin-login-email">Email:</label>
+                        <input type="email" id="admin-login-email" placeholder="john@company.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="admin-login-password">Password:</label>
+                        <input type="password" id="admin-login-password" placeholder="SecurePass123!">
+                    </div>
+                    <button class="test-button" onclick="testAdminLogin()">Login</button>
+                    <button class="clear-button" onclick="clearAdminLoginForm()">Clear Form</button>
+                    <div id="admin-login-response" class="response-container" style="display: none;"></div>
+                </div>
+            </div>
+
+            <!-- Admin Onboarding -->
+            <div class="endpoint">
+                <h3>Admin Onboarding</h3>
+                <div>
+                    <span class="method post">POST</span>
+                    <span class="url">/workspace/admin/onboarding/</span>
+                </div>
+                
+                <p><strong>Description:</strong> Complete admin onboarding by creating initial workspace. Can only be called once per admin during onboarding process.</p>
+                <p><strong>Permissions:</strong> Requires JWT authentication</p>
+                
+                <h4>Request Body:</h4>
+                <div class="code-block">{
+  "workspace_name": "My Company",
+  "workspace_description": "Main workspace for our company",
+  "company_email": "info@company.com",
+  "company_phone": "+1234567890",
+  "company_address": "123 Business St",
+  "company_city": "San Francisco",
+  "company_country": "USA"
+}</div>
+                
+                <div class="test-section">
+                    <h4>🧪 Test Admin Onboarding</h4>
+                    <div class="form-group">
+                        <label for="onboard-token">Access Token:</label>
+                        <input type="text" id="onboard-token" placeholder="Paste access token here">
+                    </div>
+                    <div class="form-group">
+                        <label for="onboard-ws-name">Workspace Name:</label>
+                        <input type="text" id="onboard-ws-name" placeholder="My Company">
+                    </div>
+                    <div class="form-group">
+                        <label for="onboard-ws-desc">Workspace Description:</label>
+                        <input type="text" id="onboard-ws-desc" placeholder="Main workspace for our company">
+                    </div>
+                    <div class="form-group">
+                        <label for="onboard-email">Company Email:</label>
+                        <input type="email" id="onboard-email" placeholder="info@company.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="onboard-phone">Company Phone:</label>
+                        <input type="tel" id="onboard-phone" placeholder="+1234567890">
+                    </div>
+                    <div class="form-group">
+                        <label for="onboard-address">Company Address:</label>
+                        <input type="text" id="onboard-address" placeholder="123 Business St">
+                    </div>
+                    <div class="form-group">
+                        <label for="onboard-city">City:</label>
+                        <input type="text" id="onboard-city" placeholder="San Francisco">
+                    </div>
+                    <div class="form-group">
+                        <label for="onboard-country">Country:</label>
+                        <input type="text" id="onboard-country" placeholder="USA">
+                    </div>
+                    <button class="test-button" onclick="testAdminOnboarding()">Start Onboarding</button>
+                    <button class="clear-button" onclick="clearOnboardingForm()">Clear Form</button>
+                    <div id="admin-onboarding-response" class="response-container" style="display: none;"></div>
+                </div>
+            </div>
+
+            <!-- Check Onboarding Status -->
+            <div class="endpoint">
+                <h3>Check Onboarding Status</h3>
+                <div>
+                    <span class="method get">GET</span>
+                    <span class="url">/workspace/admin/onboarding-status/</span>
+                </div>
+                
+                <p><strong>Description:</strong> Check the admin's onboarding progress and see completed steps.</p>
+                <p><strong>Permissions:</strong> Requires JWT authentication</p>
+                <h4>Headers:</h4>
+                <div class="code-block">Authorization: Bearer &lt;access_token&gt;</div>
+                
+                <div class="test-section">
+                    <h4>🧪 Test Check Onboarding Status</h4>
+                    <div class="form-group">
+                        <label for="onboard-status-token">Access Token:</label>
+                        <input type="text" id="onboard-status-token" placeholder="Paste access token here">
+                    </div>
+                    <button class="test-button" onclick="testOnboardingStatus()">Check Status</button>
+                    <div id="onboarding-status-response" class="response-container" style="display: none;"></div>
+                </div>
+            </div>
+
+            <!-- Admin Profile -->
+            <div class="endpoint">
+                <h3>Admin Profile</h3>
+                <div>
+                    <span class="method get">GET</span>
+                    <span class="url">/workspace/admin/profile/</span>
+                </div>
+                
+                <p><strong>Description:</strong> Get authenticated admin's profile including workspace and membership counts.</p>
+                <p><strong>Permissions:</strong> Requires JWT authentication</p>
+                <h4>Headers:</h4>
+                <div class="code-block">Authorization: Bearer &lt;access_token&gt;</div>
+                
+                <div class="test-section">
+                    <h4>🧪 Test Get Admin Profile</h4>
+                    <div class="form-group">
+                        <label for="admin-profile-token">Access Token:</label>
+                        <input type="text" id="admin-profile-token" placeholder="Paste access token here">
+                    </div>
+                    <button class="test-button" onclick="testGetAdminProfile()">Get Profile</button>
+                    <div id="admin-profile-response" class="response-container" style="display: none;"></div>
+                </div>
+            </div>
+
+            <!-- Invite Member to Workspace -->
+            <div class="endpoint">
+                <h3>Invite Member to Workspace</h3>
+                <div>
+                    <span class="method post">POST</span>
+                    <span class="url">/workspace/workspaces/&lt;workspace_id&gt;/members/invite/</span>
+                </div>
+                
+                <p><strong>Description:</strong> Invite an existing user to join workspace as manager or staff. User must already have an account.</p>
+                <p><strong>Permissions:</strong> Workspace admin only</p>
+                
+                <h4>Request Body:</h4>
+                <div class="code-block">{
+  "email": "staff@example.com",
+  "role": "manager"
+}</div>
+                
+                <p><strong>Valid Roles:</strong> manager, staff, user</p>
+                
+                <div class="test-section">
+                    <h4>🧪 Test Invite Member</h4>
+                    <div class="form-group">
+                        <label for="invite-token">Access Token:</label>
+                        <input type="text" id="invite-token" placeholder="Paste access token here">
+                    </div>
+                    <div class="form-group">
+                        <label for="invite-ws-id">Workspace ID:</label>
+                        <input type="text" id="invite-ws-id" placeholder="workspace-id">
+                    </div>
+                    <div class="form-group">
+                        <label for="invite-email">User Email:</label>
+                        <input type="email" id="invite-email" placeholder="staff@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="invite-role">Role (manager/staff/user):</label>
+                        <input type="text" id="invite-role" placeholder="manager">
+                    </div>
+                    <button class="test-button" onclick="testInviteMember()">Invite Member</button>
+                    <button class="clear-button" onclick="clearInviteForm()">Clear Form</button>
+                    <div id="invite-response" class="response-container" style="display: none;"></div>
+                </div>
+            </div>
+
+            <!-- List Workspace Members -->
+            <div class="endpoint">
+                <h3>List Workspace Members</h3>
+                <div>
+                    <span class="method get">GET</span>
+                    <span class="url">/workspace/workspaces/&lt;workspace_id&gt;/members/</span>
+                </div>
+                
+                <p><strong>Description:</strong> List all members of a workspace including the admin.</p>
+                <p><strong>Permissions:</strong> Workspace members only</p>
+                <h4>Headers:</h4>
+                <div class="code-block">Authorization: Bearer &lt;access_token&gt;</div>
+                
+                <div class="test-section">
+                    <h4>🧪 Test List Members</h4>
+                    <div class="form-group">
+                        <label for="list-members-token">Access Token:</label>
+                        <input type="text" id="list-members-token" placeholder="Paste access token here">
+                    </div>
+                    <div class="form-group">
+                        <label for="list-members-ws-id">Workspace ID:</label>
+                        <input type="text" id="list-members-ws-id" placeholder="workspace-id">
+                    </div>
+                    <button class="test-button" onclick="testListMembers()">List Members</button>
+                    <div id="list-members-response" class="response-container" style="display: none;"></div>
+                </div>
+            </div>
+
+            <!-- Update Member Role -->
+            <div class="endpoint">
+                <h3>Update Member Role</h3>
+                <div>
+                    <span class="method put">PUT</span>
+                    <span class="url">/workspace/workspaces/&lt;workspace_id&gt;/members/&lt;member_id&gt;/</span>
+                </div>
+                
+                <p><strong>Description:</strong> Update a member's role or status in the workspace.</p>
+                <p><strong>Permissions:</strong> Workspace admin only</p>
+                
+                <h4>Request Body:</h4>
+                <div class="code-block">{
+  "role": "staff",
+  "is_active": true
+}</div>
+                
+                <div class="test-section">
+                    <h4>🧪 Test Update Member Role</h4>
+                    <div class="form-group">
+                        <label for="update-member-token">Access Token:</label>
+                        <input type="text" id="update-member-token" placeholder="Paste access token here">
+                    </div>
+                    <div class="form-group">
+                        <label for="update-member-ws-id">Workspace ID:</label>
+                        <input type="text" id="update-member-ws-id" placeholder="workspace-id">
+                    </div>
+                    <div class="form-group">
+                        <label for="update-member-id">Member ID:</label>
+                        <input type="text" id="update-member-id" placeholder="member-id">
+                    </div>
+                    <div class="form-group">
+                        <label for="update-member-role">New Role (manager/staff/user):</label>
+                        <input type="text" id="update-member-role" placeholder="staff">
+                    </div>
+                    <button class="test-button" onclick="testUpdateMember()">Update Member</button>
+                    <button class="clear-button" onclick="clearUpdateMemberForm()">Clear Form</button>
+                    <div id="update-member-response" class="response-container" style="display: none;"></div>
+                </div>
+            </div>
+
+            <!-- Remove Member from Workspace -->
+            <div class="endpoint">
+                <h3>Remove Member from Workspace</h3>
+                <div>
+                    <span class="method delete">DELETE</span>
+                    <span class="url">/workspace/workspaces/&lt;workspace_id&gt;/members/&lt;member_id&gt;/</span>
+                </div>
+                
+                <p><strong>Description:</strong> Remove a member from the workspace.</p>
+                <p><strong>Permissions:</strong> Workspace admin only</p>
+                
+                <div class="test-section">
+                    <h4>🧪 Test Remove Member</h4>
+                    <div class="form-group">
+                        <label for="remove-member-token">Access Token:</label>
+                        <input type="text" id="remove-member-token" placeholder="Paste access token here">
+                    </div>
+                    <div class="form-group">
+                        <label for="remove-member-ws-id">Workspace ID:</label>
+                        <input type="text" id="remove-member-ws-id" placeholder="workspace-id">
+                    </div>
+                    <div class="form-group">
+                        <label for="remove-member-id">Member ID:</label>
+                        <input type="text" id="remove-member-id" placeholder="member-id">
+                    </div>
+                    <button class="test-button" onclick="testRemoveMember()">Remove Member</button>
+                    <button class="clear-button" onclick="clearRemoveMemberForm()">Clear Form</button>
+                    <div id="remove-member-response" class="response-container" style="display: none;"></div>
+                </div>
+            </div>
+
+            <!-- Complete Workflow Example -->
+            <div class="endpoint">
+                <h3>📚 Complete Workspace Setup Workflow</h3>
+                <p><strong>Step-by-step guide to set up a complete workspace structure:</strong></p>
+                <ol style="margin: 1rem 0; padding-left: 2rem;">
+                    <li><strong>Create Workspace:</strong> POST to /workspace/workspaces/create/ to create main workspace</li>
+                    <li><strong>Create Branches:</strong> POST to /workspace/branches/create/ to add office locations</li>
+                    <li><strong>Create Spaces:</strong> POST to /workspace/spaces/create/ to add bookable units (desks, rooms, etc.)</li>
+                    <li><strong>List Workspaces:</strong> GET /workspace/workspaces/ to view all your workspaces</li>
+                    <li><strong>Get Workspace Details:</strong> GET /workspace/workspaces/&lt;id&gt;/ to view full hierarchy</li>
+                    <li><strong>List Branches:</strong> GET /workspace/branches/ with workspace_id filter</li>
+                    <li><strong>List Spaces:</strong> GET /workspace/spaces/ with branch_id filter</li>
+                </ol>
+                
+                <h4>Example cURL Commands:</h4>
+                <div class="code-block">
+# Create a workspace
+curl -X POST http://127.0.0.1:8000/api/workspace/workspaces/create/ \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "My Company Workspace",
+    "description": "Main office",
+    "address": "123 Main St, City"
+  }'
+
+# Get workspace details (includes all branches and members)
+curl -X GET http://127.0.0.1:8000/api/workspace/workspaces/WORKSPACE_ID/ \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+
+# List branches in a workspace
+curl -X GET "http://127.0.0.1:8000/api/workspace/branches/?workspace_id=WORKSPACE_ID" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+
+# Create a space with pricing tiers
+curl -X POST http://127.0.0.1:8000/api/workspace/spaces/create/ \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "branch_id": "BRANCH_ID",
+    "name": "Meeting Room A",
+    "space_type": "meeting_room",
+    "capacity": 8,
+    "hourly_rate": 75.00,
+    "daily_rate": 500.00,
+    "monthly_rate": 8000.00,
+    "amenities": ["Projector", "Whiteboard", "Coffee"]
+  }'
+                </div>
+            </div>
+
             <div class="endpoint">
                 <h3>🔐 Authentication</h3>
                 <p>Most API endpoints require authentication. Include the access token in the Authorization header:</p>
-                <div class="code-block">
-Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
-                </div>
-                
+                <div class="code-block">Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...</div>
                 <p><strong>Token Expiry:</strong> Access tokens expire after 30 minutes. Use the refresh token to obtain new access tokens when needed.</p>
             </div>
 
-            <!-- Response Format Info -->
             <div class="endpoint">
                 <h3>📋 Response Format</h3>
                 <p>All API responses follow a consistent format:</p>
@@ -768,7 +1358,6 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
                 </ul>
             </div>
 
-            <!-- Status Codes -->
             <div class="endpoint">
                 <h3>📊 HTTP Status Codes</h3>
                 <ul style="margin: 1rem 0; padding-left: 2rem;">
@@ -783,7 +1372,6 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
             </div>
         </div>
 
-        <!-- Footer -->
         <div class="footer">
             <p>&copy; 2025 Xbooking. All rights reserved.</p>
             <p>Visit our main platform: <a href="https://xbooking.netlify.app/" target="_blank">xbooking.netlify.app</a></p>
@@ -792,28 +1380,40 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
     </div>
 
     <script>
-        // Get the base URL dynamically
         const baseUrl = `${window.location.protocol}//${window.location.host}/api`;
         document.getElementById('baseUrl').textContent = baseUrl;
 
-        // Test Registration Function
+        function showResponse(container, message, type) {
+            container.style.display = 'block';
+            container.textContent = message;
+            container.className = `response-container response-${type}`;
+        }
+
+        function getCsrfToken() {
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                const [name, value] = cookie.trim().split('=');
+                if (name === 'csrftoken') {
+                    return value;
+                }
+            }
+            return '';
+        }
+
         async function testRegistration() {
             const button = document.querySelector('button[onclick="testRegistration()"]');
             const responseDiv = document.getElementById('registration-response');
             
-            // Get form data
             const fullName = document.getElementById('reg-fullname').value;
             const email = document.getElementById('reg-email').value;
             const password = document.getElementById('reg-password').value;
             const confirmPassword = document.getElementById('reg-confirm-password').value;
             
-            // Validate inputs
             if (!fullName || !email || !password || !confirmPassword) {
                 showResponse(responseDiv, 'Please fill in all fields', 'error');
                 return;
             }
             
-            // Prepare request data
             const requestData = {
                 full_name: fullName,
                 email: email,
@@ -821,7 +1421,6 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
                 confirm_password: confirmPassword
             };
             
-            // Show loading state
             button.disabled = true;
             button.textContent = 'Testing...';
             showResponse(responseDiv, 'Sending request...', 'loading');
@@ -837,8 +1436,6 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
                 });
                 
                 const data = await response.json();
-                
-                // Format response for display
                 const formattedResponse = `Status: ${response.status} ${response.statusText}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
                 
                 if (response.ok) {
@@ -855,28 +1452,23 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
             }
         }
 
-        // Test Login Function
         async function testLogin() {
             const button = document.querySelector('button[onclick="testLogin()"]');
             const responseDiv = document.getElementById('login-response');
             
-            // Get form data
             const email = document.getElementById('login-email').value;
             const password = document.getElementById('login-password').value;
             
-            // Validate inputs
             if (!email || !password) {
                 showResponse(responseDiv, 'Please fill in all fields', 'error');
                 return;
             }
             
-            // Prepare request data
             const requestData = {
                 email: email,
                 password: password
             };
             
-            // Show loading state
             button.disabled = true;
             button.textContent = 'Testing...';
             showResponse(responseDiv, 'Sending request...', 'loading');
@@ -892,8 +1484,6 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
                 });
                 
                 const data = await response.json();
-                
-                // Format response for display
                 const formattedResponse = `Status: ${response.status} ${response.statusText}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
                 
                 if (response.ok) {
@@ -910,26 +1500,145 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
             }
         }
 
-        // Test Forget Password Function
+        async function testGoogleAuth() {
+            const button = document.querySelector('button[onclick="testGoogleAuth()"]');
+            const responseDiv = document.getElementById('google-auth-response');
+            const code = document.getElementById('google-code').value;
+            
+            if (!code) {
+                showResponse(responseDiv, 'Please enter the Google OAuth code', 'error');
+                return;
+            }
+            
+            const requestData = { code };
+            
+            button.disabled = true;
+            button.textContent = 'Testing...';
+            showResponse(responseDiv, 'Sending request...', 'loading');
+            
+            try {
+                const response = await fetch(`${baseUrl}/user/auth/google/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                const data = await response.json();
+                const formattedResponse = `Status: ${response.status} ${response.statusText}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
+                
+                if (response.ok) {
+                    showResponse(responseDiv, formattedResponse, 'success');
+                } else {
+                    showResponse(responseDiv, formattedResponse, 'error');
+                }
+            } catch (error) {
+                showResponse(responseDiv, `Error: ${error.message}`, 'error');
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Test Google Auth';
+            }
+        }
+
+        async function testGitHubAuth() {
+            const button = document.querySelector('button[onclick="testGitHubAuth()"]');
+            const responseDiv = document.getElementById('github-auth-response');
+            const code = document.getElementById('github-code').value;
+            
+            if (!code) {
+                showResponse(responseDiv, 'Please enter the GitHub OAuth code', 'error');
+                return;
+            }
+            
+            const requestData = { code };
+            
+            button.disabled = true;
+            button.textContent = 'Testing...';
+            showResponse(responseDiv, 'Sending request...', 'loading');
+            
+            try {
+                const response = await fetch(`${baseUrl}/user/auth/github/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                const data = await response.json();
+                const formattedResponse = `Status: ${response.status} ${response.statusText}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
+                
+                if (response.ok) {
+                    showResponse(responseDiv, formattedResponse, 'success');
+                } else {
+                    showResponse(responseDiv, formattedResponse, 'error');
+                }
+            } catch (error) {
+                showResponse(responseDiv, `Error: ${error.message}`, 'error');
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Test GitHub Auth';
+            }
+        }
+
+        async function testProfile() {
+            const button = document.querySelector('button[onclick="testProfile()"]');
+            const responseDiv = document.getElementById('profile-response');
+            const token = document.getElementById('profile-token').value;
+            
+            if (!token) {
+                showResponse(responseDiv, 'Please enter the access token', 'error');
+                return;
+            }
+            
+            button.disabled = true;
+            button.textContent = 'Testing...';
+            showResponse(responseDiv, 'Sending request...', 'loading');
+            
+            try {
+                const response = await fetch(`${baseUrl}/user/profile/`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfToken()
+                    }
+                });
+                
+                const data = await response.json();
+                const formattedResponse = `Status: ${response.status} ${response.statusText}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
+                
+                if (response.ok) {
+                    showResponse(responseDiv, formattedResponse, 'success');
+                } else {
+                    showResponse(responseDiv, formattedResponse, 'error');
+                }
+            } catch (error) {
+                showResponse(responseDiv, `Error: ${error.message}`, 'error');
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Test Profile';
+            }
+        }
+
         async function testForgetPassword() {
             const button = document.querySelector('button[onclick="testForgetPassword()"]');
             const responseDiv = document.getElementById('forget-password-response');
             
-            // Get form data
             const email = document.getElementById('forget-email').value;
             
-            // Validate inputs
             if (!email) {
                 showResponse(responseDiv, 'Please enter an email address', 'error');
                 return;
             }
             
-            // Prepare request data
             const requestData = {
                 email: email
             };
             
-            // Show loading state
             button.disabled = true;
             button.textContent = 'Sending...';
             showResponse(responseDiv, 'Sending request...', 'loading');
@@ -945,8 +1654,6 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
                 });
                 
                 const data = await response.json();
-                
-                // Format response for display
                 const formattedResponse = `Status: ${response.status} ${response.statusText}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
                 
                 if (response.ok) {
@@ -963,26 +1670,21 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
             }
         }
 
-        // Test Resend Password Reset Function
         async function testResendPasswordReset() {
             const button = document.querySelector('button[onclick="testResendPasswordReset()"]');
             const responseDiv = document.getElementById('resend-password-reset-response');
             
-            // Get form data
             const email = document.getElementById('resend-email').value;
             
-            // Validate inputs
             if (!email) {
                 showResponse(responseDiv, 'Please enter an email address', 'error');
                 return;
             }
             
-            // Prepare request data
             const requestData = {
                 email: email
             };
             
-            // Show loading state
             button.disabled = true;
             button.textContent = 'Resending...';
             showResponse(responseDiv, 'Sending request...', 'loading');
@@ -998,8 +1700,6 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
                 });
                 
                 const data = await response.json();
-                
-                // Format response for display
                 const formattedResponse = `Status: ${response.status} ${response.statusText}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
                 
                 if (response.ok) {
@@ -1016,24 +1716,20 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
             }
         }
 
-        // Test Password Reset Confirm Function
         async function testPasswordResetConfirm() {
             const button = document.querySelector('button[onclick="testPasswordResetConfirm()"]');
             const responseDiv = document.getElementById('password-reset-confirm-response');
             
-            // Get form data
             const email = document.getElementById('reset-email').value;
             const verificationCode = document.getElementById('reset-code').value;
             const newPassword = document.getElementById('reset-new-password').value;
             const confirmNewPassword = document.getElementById('reset-confirm-password').value;
             
-            // Validate inputs
             if (!email || !verificationCode || !newPassword || !confirmNewPassword) {
                 showResponse(responseDiv, 'Please fill in all fields', 'error');
                 return;
             }
             
-            // Prepare request data
             const requestData = {
                 email: email,
                 verification_code: verificationCode,
@@ -1041,7 +1737,6 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
                 confirm_new_password: confirmNewPassword
             };
             
-            // Show loading state
             button.disabled = true;
             button.textContent = 'Resetting...';
             showResponse(responseDiv, 'Sending request...', 'loading');
@@ -1057,8 +1752,6 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
                 });
                 
                 const data = await response.json();
-                
-                // Format response for display
                 const formattedResponse = `Status: ${response.status} ${response.statusText}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
                 
                 if (response.ok) {
@@ -1075,14 +1768,6 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
             }
         }
 
-        // Helper function to show responses
-        function showResponse(container, message, type) {
-            container.style.display = 'block';
-            container.textContent = message;
-            container.className = `response-container response-${type}`;
-        }
-
-        // Clear form functions
         function clearRegistrationForm() {
             document.getElementById('reg-fullname').value = '';
             document.getElementById('reg-email').value = '';
@@ -1095,6 +1780,21 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
             document.getElementById('login-email').value = '';
             document.getElementById('login-password').value = '';
             document.getElementById('login-response').style.display = 'none';
+        }
+
+        function clearGoogleAuthForm() {
+            document.getElementById('google-code').value = '';
+            document.getElementById('google-auth-response').style.display = 'none';
+        }
+
+        function clearGitHubAuthForm() {
+            document.getElementById('github-code').value = '';
+            document.getElementById('github-auth-response').style.display = 'none';
+        }
+
+        function clearProfileForm() {
+            document.getElementById('profile-token').value = '';
+            document.getElementById('profile-response').style.display = 'none';
         }
 
         function clearForgetPasswordForm() {
@@ -1115,27 +1815,824 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
             document.getElementById('password-reset-confirm-response').style.display = 'none';
         }
 
-        // Get CSRF token function
-        function getCsrfToken() {
-            const cookies = document.cookie.split(';');
-            for (let cookie of cookies) {
-                const [name, value] = cookie.trim().split('=');
-                if (name === 'csrftoken') {
-                    return value;
-                }
+        // ===== Workspace API Test Functions =====
+        
+        async function testCreateWorkspace() {
+            const button = document.querySelector('button[onclick="testCreateWorkspace()"]');
+            const responseDiv = document.getElementById('ws-create-response');
+            
+            const token = document.getElementById('ws-create-token').value;
+            const name = document.getElementById('ws-create-name').value;
+            const description = document.getElementById('ws-create-desc').value;
+            const address = document.getElementById('ws-create-addr').value;
+            
+            if (!token || !name || !description || !address) {
+                showResponse(responseDiv, 'Please fill in all fields', 'error');
+                return;
             }
-            return '';
+            
+            const requestData = { name, description, address };
+            
+            button.disabled = true;
+            button.textContent = 'Creating...';
+            showResponse(responseDiv, 'Creating workspace...', 'loading');
+            
+            try {
+                const response = await fetch(`${baseUrl}/workspace/workspaces/create/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                const data = await response.json();
+                const formattedResponse = `Status: ${response.status} ${response.statusText}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
+                
+                if (response.ok) {
+                    showResponse(responseDiv, formattedResponse, 'success');
+                } else {
+                    showResponse(responseDiv, formattedResponse, 'error');
+                }
+                
+            } catch (error) {
+                showResponse(responseDiv, `Error: ${error.message}`, 'error');
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Create Workspace';
+            }
         }
 
-        // Generate random test data
-        function generateTestEmail() {
-            const timestamp = Date.now();
-            return `testuser${timestamp}@example.com`;
+        async function testListWorkspaces() {
+            const button = document.querySelector('button[onclick="testListWorkspaces()"]');
+            const responseDiv = document.getElementById('ws-list-response');
+            
+            const token = document.getElementById('ws-list-token').value;
+            
+            if (!token) {
+                showResponse(responseDiv, 'Please enter access token', 'error');
+                return;
+            }
+            
+            button.disabled = true;
+            button.textContent = 'Loading...';
+            showResponse(responseDiv, 'Fetching workspaces...', 'loading');
+            
+            try {
+                const response = await fetch(`${baseUrl}/workspace/workspaces/`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'X-CSRFToken': getCsrfToken()
+                    }
+                });
+                
+                const data = await response.json();
+                const formattedResponse = `Status: ${response.status} ${response.statusText}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
+                
+                if (response.ok) {
+                    showResponse(responseDiv, formattedResponse, 'success');
+                } else {
+                    showResponse(responseDiv, formattedResponse, 'error');
+                }
+                
+            } catch (error) {
+                showResponse(responseDiv, `Error: ${error.message}`, 'error');
+            } finally {
+                button.disabled = false;
+                button.textContent = 'List Workspaces';
+            }
         }
 
-        // Add a button to generate test data
+        async function testGetWorkspaceDetail() {
+            const button = document.querySelector('button[onclick="testGetWorkspaceDetail()"]');
+            const responseDiv = document.getElementById('ws-detail-response');
+            
+            const token = document.getElementById('ws-detail-token').value;
+            const wsId = document.getElementById('ws-detail-id').value;
+            
+            if (!token || !wsId) {
+                showResponse(responseDiv, 'Please fill in all fields', 'error');
+                return;
+            }
+            
+            button.disabled = true;
+            button.textContent = 'Loading...';
+            showResponse(responseDiv, 'Fetching workspace...', 'loading');
+            
+            try {
+                const response = await fetch(`${baseUrl}/workspace/workspaces/${wsId}/`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'X-CSRFToken': getCsrfToken()
+                    }
+                });
+                
+                const data = await response.json();
+                const formattedResponse = `Status: ${response.status} ${response.statusText}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
+                
+                if (response.ok) {
+                    showResponse(responseDiv, formattedResponse, 'success');
+                } else {
+                    showResponse(responseDiv, formattedResponse, 'error');
+                }
+                
+            } catch (error) {
+                showResponse(responseDiv, `Error: ${error.message}`, 'error');
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Get Detail';
+            }
+        }
+
+        async function testCreateBranch() {
+            const button = document.querySelector('button[onclick="testCreateBranch()"]');
+            const responseDiv = document.getElementById('br-create-response');
+            
+            const token = document.getElementById('br-create-token').value;
+            const wsId = document.getElementById('br-create-ws-id').value;
+            const name = document.getElementById('br-create-name').value;
+            const address = document.getElementById('br-create-addr').value;
+            
+            if (!token || !wsId || !name || !address) {
+                showResponse(responseDiv, 'Please fill in all fields', 'error');
+                return;
+            }
+            
+            const requestData = { workspace_id: wsId, name, address };
+            
+            button.disabled = true;
+            button.textContent = 'Creating...';
+            showResponse(responseDiv, 'Creating branch...', 'loading');
+            
+            try {
+                const response = await fetch(`${baseUrl}/workspace/branches/create/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                const data = await response.json();
+                const formattedResponse = `Status: ${response.status} ${response.statusText}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
+                
+                if (response.ok) {
+                    showResponse(responseDiv, formattedResponse, 'success');
+                } else {
+                    showResponse(responseDiv, formattedResponse, 'error');
+                }
+                
+            } catch (error) {
+                showResponse(responseDiv, `Error: ${error.message}`, 'error');
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Create Branch';
+            }
+        }
+
+        async function testListBranches() {
+            const button = document.querySelector('button[onclick="testListBranches()"]');
+            const responseDiv = document.getElementById('br-list-response');
+            
+            const token = document.getElementById('br-list-token').value;
+            const wsId = document.getElementById('br-list-ws-id').value;
+            
+            if (!token || !wsId) {
+                showResponse(responseDiv, 'Please fill in all fields', 'error');
+                return;
+            }
+            
+            button.disabled = true;
+            button.textContent = 'Loading...';
+            showResponse(responseDiv, 'Fetching branches...', 'loading');
+            
+            try {
+                const response = await fetch(`${baseUrl}/workspace/branches/?workspace_id=${wsId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'X-CSRFToken': getCsrfToken()
+                    }
+                });
+                
+                const data = await response.json();
+                const formattedResponse = `Status: ${response.status} ${response.statusText}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
+                
+                if (response.ok) {
+                    showResponse(responseDiv, formattedResponse, 'success');
+                } else {
+                    showResponse(responseDiv, formattedResponse, 'error');
+                }
+                
+            } catch (error) {
+                showResponse(responseDiv, `Error: ${error.message}`, 'error');
+            } finally {
+                button.disabled = false;
+                button.textContent = 'List Branches';
+            }
+        }
+
+        async function testCreateSpace() {
+            const button = document.querySelector('button[onclick="testCreateSpace()"]');
+            const responseDiv = document.getElementById('sp-create-response');
+            
+            const token = document.getElementById('sp-create-token').value;
+            const brId = document.getElementById('sp-create-br-id').value;
+            const name = document.getElementById('sp-create-name').value;
+            const spaceType = document.getElementById('sp-create-type').value;
+            const capacity = document.getElementById('sp-create-capacity').value;
+            const hourlyRate = document.getElementById('sp-create-hourly').value;
+            const dailyRate = document.getElementById('sp-create-daily').value;
+            const monthlyRate = document.getElementById('sp-create-monthly').value;
+            
+            if (!token || !brId || !name || !spaceType || !capacity || !hourlyRate || !dailyRate || !monthlyRate) {
+                showResponse(responseDiv, 'Please fill in all fields', 'error');
+                return;
+            }
+            
+            const requestData = {
+                branch_id: brId,
+                name,
+                space_type: spaceType,
+                capacity: parseInt(capacity),
+                hourly_rate: parseFloat(hourlyRate),
+                daily_rate: parseFloat(dailyRate),
+                monthly_rate: parseFloat(monthlyRate)
+            };
+            
+            button.disabled = true;
+            button.textContent = 'Creating...';
+            showResponse(responseDiv, 'Creating space...', 'loading');
+            
+            try {
+                const response = await fetch(`${baseUrl}/workspace/spaces/create/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                const data = await response.json();
+                const formattedResponse = `Status: ${response.status} ${response.statusText}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
+                
+                if (response.ok) {
+                    showResponse(responseDiv, formattedResponse, 'success');
+                } else {
+                    showResponse(responseDiv, formattedResponse, 'error');
+                }
+                
+            } catch (error) {
+                showResponse(responseDiv, `Error: ${error.message}`, 'error');
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Create Space';
+            }
+        }
+
+        async function testListSpaces() {
+            const button = document.querySelector('button[onclick="testListSpaces()"]');
+            const responseDiv = document.getElementById('sp-list-response');
+            
+            const token = document.getElementById('sp-list-token').value;
+            const brId = document.getElementById('sp-list-br-id').value;
+            
+            if (!token || !brId) {
+                showResponse(responseDiv, 'Please fill in all fields', 'error');
+                return;
+            }
+            
+            button.disabled = true;
+            button.textContent = 'Loading...';
+            showResponse(responseDiv, 'Fetching spaces...', 'loading');
+            
+            try {
+                const response = await fetch(`${baseUrl}/workspace/spaces/?branch_id=${brId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'X-CSRFToken': getCsrfToken()
+                    }
+                });
+                
+                const data = await response.json();
+                const formattedResponse = `Status: ${response.status} ${response.statusText}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
+                
+                if (response.ok) {
+                    showResponse(responseDiv, formattedResponse, 'success');
+                } else {
+                    showResponse(responseDiv, formattedResponse, 'error');
+                }
+                
+            } catch (error) {
+                showResponse(responseDiv, `Error: ${error.message}`, 'error');
+            } finally {
+                button.disabled = false;
+                button.textContent = 'List Spaces';
+            }
+        }
+
+        // ===== Admin & Member Management Test Functions =====
+        
+        async function testAdminRegister() {
+            const button = document.querySelector('button[onclick="testAdminRegister()"]');
+            const responseDiv = document.getElementById('admin-reg-response');
+            
+            const fullName = document.getElementById('admin-reg-name').value;
+            const email = document.getElementById('admin-reg-email').value;
+            const password = document.getElementById('admin-reg-password').value;
+            const confirmPassword = document.getElementById('admin-reg-confirm').value;
+            
+            if (!fullName || !email || !password || !confirmPassword) {
+                showResponse(responseDiv, 'Please fill in all fields', 'error');
+                return;
+            }
+            
+            const requestData = {
+                full_name: fullName,
+                email: email,
+                password: password,
+                confirm_password: confirmPassword
+            };
+            
+            button.disabled = true;
+            button.textContent = 'Registering...';
+            showResponse(responseDiv, 'Registering admin...', 'loading');
+            
+            try {
+                const response = await fetch(`${baseUrl}/workspace/admin/register/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                const data = await response.json();
+                const formattedResponse = `Status: ${response.status} ${response.statusText}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
+                
+                if (response.ok) {
+                    showResponse(responseDiv, formattedResponse, 'success');
+                } else {
+                    showResponse(responseDiv, formattedResponse, 'error');
+                }
+                
+            } catch (error) {
+                showResponse(responseDiv, `Error: ${error.message}`, 'error');
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Register Admin';
+            }
+        }
+
+        async function testAdminLogin() {
+            const button = document.querySelector('button[onclick="testAdminLogin()"]');
+            const responseDiv = document.getElementById('admin-login-response');
+            
+            const email = document.getElementById('admin-login-email').value;
+            const password = document.getElementById('admin-login-password').value;
+            
+            if (!email || !password) {
+                showResponse(responseDiv, 'Please fill in all fields', 'error');
+                return;
+            }
+            
+            const requestData = { email, password };
+            
+            button.disabled = true;
+            button.textContent = 'Logging in...';
+            showResponse(responseDiv, 'Logging in...', 'loading');
+            
+            try {
+                const response = await fetch(`${baseUrl}/workspace/admin/login/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                const data = await response.json();
+                const formattedResponse = `Status: ${response.status} ${response.statusText}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
+                
+                if (response.ok) {
+                    showResponse(responseDiv, formattedResponse, 'success');
+                } else {
+                    showResponse(responseDiv, formattedResponse, 'error');
+                }
+                
+            } catch (error) {
+                showResponse(responseDiv, `Error: ${error.message}`, 'error');
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Login';
+            }
+        }
+
+        async function testAdminOnboarding() {
+            const button = document.querySelector('button[onclick="testAdminOnboarding()"]');
+            const responseDiv = document.getElementById('admin-onboarding-response');
+            
+            const token = document.getElementById('onboard-token').value;
+            const wsName = document.getElementById('onboard-ws-name').value;
+            const email = document.getElementById('onboard-email').value;
+            
+            if (!token || !wsName || !email) {
+                showResponse(responseDiv, 'Please fill in required fields (token, workspace name, email)', 'error');
+                return;
+            }
+            
+            const requestData = {
+                workspace_name: wsName,
+                workspace_description: document.getElementById('onboard-ws-desc').value || '',
+                company_email: email,
+                company_phone: document.getElementById('onboard-phone').value || '',
+                company_address: document.getElementById('onboard-address').value || '',
+                company_city: document.getElementById('onboard-city').value || '',
+                company_country: document.getElementById('onboard-country').value || ''
+            };
+            
+            button.disabled = true;
+            button.textContent = 'Starting Onboarding...';
+            showResponse(responseDiv, 'Initializing onboarding...', 'loading');
+            
+            try {
+                const response = await fetch(`${baseUrl}/workspace/admin/onboarding/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                const data = await response.json();
+                const formattedResponse = `Status: ${response.status} ${response.statusText}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
+                
+                if (response.ok) {
+                    showResponse(responseDiv, formattedResponse, 'success');
+                } else {
+                    showResponse(responseDiv, formattedResponse, 'error');
+                }
+                
+            } catch (error) {
+                showResponse(responseDiv, `Error: ${error.message}`, 'error');
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Start Onboarding';
+            }
+        }
+
+        async function testOnboardingStatus() {
+            const button = document.querySelector('button[onclick="testOnboardingStatus()"]');
+            const responseDiv = document.getElementById('onboarding-status-response');
+            
+            const token = document.getElementById('onboard-status-token').value;
+            
+            if (!token) {
+                showResponse(responseDiv, 'Please enter access token', 'error');
+                return;
+            }
+            
+            button.disabled = true;
+            button.textContent = 'Loading...';
+            showResponse(responseDiv, 'Checking status...', 'loading');
+            
+            try {
+                const response = await fetch(`${baseUrl}/workspace/admin/onboarding-status/`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'X-CSRFToken': getCsrfToken()
+                    }
+                });
+                
+                const data = await response.json();
+                const formattedResponse = `Status: ${response.status} ${response.statusText}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
+                
+                if (response.ok) {
+                    showResponse(responseDiv, formattedResponse, 'success');
+                } else {
+                    showResponse(responseDiv, formattedResponse, 'error');
+                }
+                
+            } catch (error) {
+                showResponse(responseDiv, `Error: ${error.message}`, 'error');
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Check Status';
+            }
+        }
+            const button = document.querySelector('button[onclick="testGetAdminProfile()"]');
+            const responseDiv = document.getElementById('admin-profile-response');
+            
+            const token = document.getElementById('admin-profile-token').value;
+            
+            if (!token) {
+                showResponse(responseDiv, 'Please enter access token', 'error');
+                return;
+            }
+            
+            button.disabled = true;
+            button.textContent = 'Loading...';
+            showResponse(responseDiv, 'Fetching profile...', 'loading');
+            
+            try {
+                const response = await fetch(`${baseUrl}/workspace/admin/profile/`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'X-CSRFToken': getCsrfToken()
+                    }
+                });
+                
+                const data = await response.json();
+                const formattedResponse = `Status: ${response.status} ${response.statusText}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
+                
+                if (response.ok) {
+                    showResponse(responseDiv, formattedResponse, 'success');
+                } else {
+                    showResponse(responseDiv, formattedResponse, 'error');
+                }
+                
+            } catch (error) {
+                showResponse(responseDiv, `Error: ${error.message}`, 'error');
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Get Profile';
+            }
+        }
+
+        async function testInviteMember() {
+            const button = document.querySelector('button[onclick="testInviteMember()"]');
+            const responseDiv = document.getElementById('invite-response');
+            
+            const token = document.getElementById('invite-token').value;
+            const wsId = document.getElementById('invite-ws-id').value;
+            const email = document.getElementById('invite-email').value;
+            const role = document.getElementById('invite-role').value;
+            
+            if (!token || !wsId || !email || !role) {
+                showResponse(responseDiv, 'Please fill in all fields', 'error');
+                return;
+            }
+            
+            const requestData = { email, role };
+            
+            button.disabled = true;
+            button.textContent = 'Inviting...';
+            showResponse(responseDiv, 'Sending invitation...', 'loading');
+            
+            try {
+                const response = await fetch(`${baseUrl}/workspace/workspaces/${wsId}/members/invite/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                const data = await response.json();
+                const formattedResponse = `Status: ${response.status} ${response.statusText}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
+                
+                if (response.ok) {
+                    showResponse(responseDiv, formattedResponse, 'success');
+                } else {
+                    showResponse(responseDiv, formattedResponse, 'error');
+                }
+                
+            } catch (error) {
+                showResponse(responseDiv, `Error: ${error.message}`, 'error');
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Invite Member';
+            }
+        }
+
+        async function testListMembers() {
+            const button = document.querySelector('button[onclick="testListMembers()"]');
+            const responseDiv = document.getElementById('list-members-response');
+            
+            const token = document.getElementById('list-members-token').value;
+            const wsId = document.getElementById('list-members-ws-id').value;
+            
+            if (!token || !wsId) {
+                showResponse(responseDiv, 'Please fill in all fields', 'error');
+                return;
+            }
+            
+            button.disabled = true;
+            button.textContent = 'Loading...';
+            showResponse(responseDiv, 'Fetching members...', 'loading');
+            
+            try {
+                const response = await fetch(`${baseUrl}/workspace/workspaces/${wsId}/members/`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'X-CSRFToken': getCsrfToken()
+                    }
+                });
+                
+                const data = await response.json();
+                const formattedResponse = `Status: ${response.status} ${response.statusText}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
+                
+                if (response.ok) {
+                    showResponse(responseDiv, formattedResponse, 'success');
+                } else {
+                    showResponse(responseDiv, formattedResponse, 'error');
+                }
+                
+            } catch (error) {
+                showResponse(responseDiv, `Error: ${error.message}`, 'error');
+            } finally {
+                button.disabled = false;
+                button.textContent = 'List Members';
+            }
+        }
+
+        async function testUpdateMember() {
+            const button = document.querySelector('button[onclick="testUpdateMember()"]');
+            const responseDiv = document.getElementById('update-member-response');
+            
+            const token = document.getElementById('update-member-token').value;
+            const wsId = document.getElementById('update-member-ws-id').value;
+            const memberId = document.getElementById('update-member-id').value;
+            const role = document.getElementById('update-member-role').value;
+            
+            if (!token || !wsId || !memberId || !role) {
+                showResponse(responseDiv, 'Please fill in all fields', 'error');
+                return;
+            }
+            
+            const requestData = { role };
+            
+            button.disabled = true;
+            button.textContent = 'Updating...';
+            showResponse(responseDiv, 'Updating member...', 'loading');
+            
+            try {
+                const response = await fetch(`${baseUrl}/workspace/workspaces/${wsId}/members/${memberId}/`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                const data = await response.json();
+                const formattedResponse = `Status: ${response.status} ${response.statusText}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
+                
+                if (response.ok) {
+                    showResponse(responseDiv, formattedResponse, 'success');
+                } else {
+                    showResponse(responseDiv, formattedResponse, 'error');
+                }
+                
+            } catch (error) {
+                showResponse(responseDiv, `Error: ${error.message}`, 'error');
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Update Member';
+            }
+        }
+
+        async function testRemoveMember() {
+            const button = document.querySelector('button[onclick="testRemoveMember()"]');
+            const responseDiv = document.getElementById('remove-member-response');
+            
+            const token = document.getElementById('remove-member-token').value;
+            const wsId = document.getElementById('remove-member-ws-id').value;
+            const memberId = document.getElementById('remove-member-id').value;
+            
+            if (!token || !wsId || !memberId) {
+                showResponse(responseDiv, 'Please fill in all fields', 'error');
+                return;
+            }
+            
+            button.disabled = true;
+            button.textContent = 'Removing...';
+            showResponse(responseDiv, 'Removing member...', 'loading');
+            
+            try {
+                const response = await fetch(`${baseUrl}/workspace/workspaces/${wsId}/members/${memberId}/`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'X-CSRFToken': getCsrfToken()
+                    }
+                });
+                
+                const data = await response.json();
+                const formattedResponse = `Status: ${response.status} ${response.statusText}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
+                
+                if (response.ok) {
+                    showResponse(responseDiv, formattedResponse, 'success');
+                } else {
+                    showResponse(responseDiv, formattedResponse, 'error');
+                }
+                
+            } catch (error) {
+                showResponse(responseDiv, `Error: ${error.message}`, 'error');
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Remove Member';
+            }
+        }
+        function clearCreateWorkspaceForm() {
+            document.getElementById('ws-create-token').value = '';
+            document.getElementById('ws-create-name').value = '';
+            document.getElementById('ws-create-desc').value = '';
+            document.getElementById('ws-create-addr').value = '';
+            document.getElementById('ws-create-response').style.display = 'none';
+        }
+
+        function clearCreateBranchForm() {
+            document.getElementById('br-create-token').value = '';
+            document.getElementById('br-create-ws-id').value = '';
+            document.getElementById('br-create-name').value = '';
+            document.getElementById('br-create-addr').value = '';
+            document.getElementById('br-create-response').style.display = 'none';
+        }
+
+        function clearCreateSpaceForm() {
+            document.getElementById('sp-create-token').value = '';
+            document.getElementById('sp-create-br-id').value = '';
+            document.getElementById('sp-create-name').value = '';
+            document.getElementById('sp-create-type').value = '';
+            document.getElementById('sp-create-capacity').value = '';
+            document.getElementById('sp-create-hourly').value = '';
+            document.getElementById('sp-create-daily').value = '';
+            document.getElementById('sp-create-monthly').value = '';
+            document.getElementById('sp-create-response').style.display = 'none';
+        }
+
+        // Admin & Member Management Clear Form Functions
+        function clearAdminRegForm() {
+            document.getElementById('admin-reg-name').value = '';
+            document.getElementById('admin-reg-email').value = '';
+            document.getElementById('admin-reg-password').value = '';
+            document.getElementById('admin-reg-confirm').value = '';
+            document.getElementById('admin-reg-response').style.display = 'none';
+        }
+
+        function clearAdminLoginForm() {
+            document.getElementById('admin-login-email').value = '';
+            document.getElementById('admin-login-password').value = '';
+            document.getElementById('admin-login-response').style.display = 'none';
+        }
+
+        function clearOnboardingForm() {
+            document.getElementById('onboard-token').value = '';
+            document.getElementById('onboard-ws-name').value = '';
+            document.getElementById('onboard-ws-desc').value = '';
+            document.getElementById('onboard-email').value = '';
+            document.getElementById('onboard-phone').value = '';
+            document.getElementById('onboard-address').value = '';
+            document.getElementById('onboard-city').value = '';
+            document.getElementById('onboard-country').value = '';
+            document.getElementById('admin-onboarding-response').style.display = 'none';
+        }
+
+        function clearInviteForm() {
+            document.getElementById('invite-token').value = '';
+            document.getElementById('invite-ws-id').value = '';
+            document.getElementById('invite-email').value = '';
+            document.getElementById('invite-role').value = '';
+            document.getElementById('invite-response').style.display = 'none';
+        }
+
+        function clearUpdateMemberForm() {
+            document.getElementById('update-member-token').value = '';
+            document.getElementById('update-member-ws-id').value = '';
+            document.getElementById('update-member-id').value = '';
+            document.getElementById('update-member-role').value = '';
+            document.getElementById('update-member-response').style.display = 'none';
+        }
+
+        function clearRemoveMemberForm() {
+            document.getElementById('remove-member-token').value = '';
+            document.getElementById('remove-member-ws-id').value = '';
+            document.getElementById('remove-member-id').value = '';
+            document.getElementById('remove-member-response').style.display = 'none';
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
-            // You can add more interactive features here
             console.log('Xbooking API Documentation loaded successfully!');
         });
     </script>

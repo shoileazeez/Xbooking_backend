@@ -2,6 +2,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from user.serializers import PasswordResetConfirmSerializer
+from rest_framework.permissions import AllowAny
+from drf_spectacular.utils import extend_schema
 
 
 class PasswordResetConfirmView(APIView):
@@ -16,7 +18,13 @@ class PasswordResetConfirmView(APIView):
         "confirm_password": "NewSecurePass123!"
     }
     """
+    permission_classes = [AllowAny]
+    serializer_class = PasswordResetConfirmSerializer
     
+    @extend_schema(
+        request=PasswordResetConfirmSerializer,
+        description="Confirm password reset with verification code"
+    )
     def post(self, request):
         """
         Handle password reset confirmation

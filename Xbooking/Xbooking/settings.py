@@ -39,16 +39,16 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles',
     "user",
+    "workspace",
     "rest_framework",
     "corsheaders",
-    "rest_framework_simplejwt"
+    "rest_framework_simplejwt",
+    "drf_spectacular",
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
     "corsheaders.middleware.CorsMiddleware",
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -120,30 +120,6 @@ USE_I18N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.2/howto/static-files/
-
-STATIC_URL = config('STATIC_URL', default='/static/')
-STATIC_ROOT = BASE_DIR / config('STATIC_ROOT', default='staticfiles')
-
-# Additional locations of static files
-STATICFILES_DIRS = [
-    BASE_DIR / 'static',
-]
-
-# Static files finders
-STATICFILES_FINDERS = [
-    'django.contrib.staticfiles.finders.FileSystemFinder',
-    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-]
-
-# WhiteNoise configuration for serving static files in production
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
-# Media files (User uploaded content)
-MEDIA_URL = config('MEDIA_URL', default='/media/')
-MEDIA_ROOT = BASE_DIR / config('MEDIA_ROOT', default='media')
-
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
@@ -192,4 +168,33 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
     "USER_ID_FIELD": "id",
     "USER_ID_CLAIM": "user_id",
+}
+
+# REST Framework Configuration
+REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
+}
+
+# drf-spectacular Configuration
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Xbooking API',
+    'DESCRIPTION': 'Workspace and space booking management API',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'SERVERS': [
+        {'url': 'http://localhost:8000', 'description': 'Development Server'},
+        {'url': 'https://api.xbooking.com', 'description': 'Production Server'},
+    ],
+    'CONTACT': {
+        'name': 'Xbooking Support',
+        'email': 'support@xbooking.com',
+    },
 }

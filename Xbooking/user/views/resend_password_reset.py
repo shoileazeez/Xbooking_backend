@@ -2,6 +2,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from user.serializers import ResendPasswordResetSerializer
+from rest_framework.permissions import AllowAny
+from drf_spectacular.utils import extend_schema
 
 
 class ResendPasswordResetView(APIView):
@@ -13,7 +15,13 @@ class ResendPasswordResetView(APIView):
         "email": "user@example.com"
     }
     """
+    permission_classes = [AllowAny]
+    serializer_class = ResendPasswordResetSerializer
     
+    @extend_schema(
+        request=ResendPasswordResetSerializer,
+        description="Resend password reset verification code to email"
+    )
     def post(self, request):
         """
         Handle resend password reset request
