@@ -2,7 +2,7 @@
 QR Code Admin Configuration
 """
 from django.contrib import admin
-from qr_code.models import OrderQRCode, QRCodeScanLog, NotificationPreference, Notification
+from qr_code.models import OrderQRCode, QRCodeScanLog
 
 
 @admin.register(OrderQRCode)
@@ -45,35 +45,3 @@ class QRCodeScanLogAdmin(admin.ModelAdmin):
     def verification_code(self, obj):
         return obj.qr_code.verification_code
     verification_code.short_description = 'QR Code'
-
-
-@admin.register(NotificationPreference)
-class NotificationPreferenceAdmin(admin.ModelAdmin):
-    """Admin for NotificationPreference model"""
-    list_display = ['user', 'email_order_confirmation', 'email_payment_confirmation', 'email_qr_code']
-    list_filter = ['email_order_confirmation', 'email_payment_confirmation', 'email_qr_code']
-    search_fields = ['user__email']
-    readonly_fields = ['id']
-
-
-@admin.register(Notification)
-class NotificationAdmin(admin.ModelAdmin):
-    """Admin for Notification model"""
-    list_display = ['title', 'user', 'notification_type', 'channel', 'is_sent', 'is_read', 'created_at']
-    list_filter = ['notification_type', 'channel', 'is_sent', 'is_read', 'created_at']
-    search_fields = ['user__email', 'title', 'message']
-    readonly_fields = ['id', 'created_at']
-    fieldsets = (
-        ('Notification Info', {
-            'fields': ('id', 'user', 'notification_type', 'channel')
-        }),
-        ('Content', {
-            'fields': ('title', 'message', 'data')
-        }),
-        ('Status', {
-            'fields': ('is_sent', 'is_read', 'send_error')
-        }),
-        ('Timestamps', {
-            'fields': ('created_at', 'sent_at', 'read_at')
-        })
-    )

@@ -19,13 +19,15 @@ from django.core.exceptions import ValidationError
 from decimal import Decimal
 import uuid
 import requests
+import logging
 
+logger = logging.getLogger(__name__)
 
-# Import Celery tasks
 from qr_code.tasks import (
     generate_qr_code_for_order, send_qr_code_email,
     send_order_confirmation_email, send_payment_confirmation_email
 )
+from payment.gateways import PaystackGateway, FlutterwaveGateway
 
 
 class CreateOrderView(APIView):
@@ -290,63 +292,52 @@ class InitiatePaymentView(APIView):
     def _initialize_paystack_payment(self, payment, email, order_number):
         """Initialize Paystack payment"""
         try:
-            paystack_key = "YOUR_PAYSTACK_SECRET_KEY"  # Use settings
-            headers = {
-                "Authorization": f"Bearer {paystack_key}",
-                "Content-Type": "application/json"
+            gateway = PaystackGateway()
+            
+            metadata = {
+                "order_number": order_number,
+                "workspace_id": str(payment.workspace_id),
+                "payment_id": str(payment.id)
             }
             
-            data = {
-                "email": email,
-                "amount": int(payment.amount * 100),  # Paystack uses kobo
-                "reference": str(payment.id),
-                "metadata": {
-                    "order_number": order_number,
-                    "workspace_id": str(payment.workspace_id)
-                }
-            }
+            result = gateway.initialize_transaction(
+                email=email,
+                amount=payment.amount,
+                reference=str(payment.id),
+                metadata=metadata
+            )
             
-            # This is a placeholder - implement actual Paystack integration
-            # response = requests.post(
-            #     "https://api.paystack.co/transaction/initialize",
-            #     json=data,
-            #     headers=headers
-            # )
-            # if response.status_code == 200:
-            #     return response.json()['data']['authorization_url']
-            
-            return f"https://checkout.paystack.com/test_reference_{payment.id}"
+            if result['success']:
+                return result['authorization_url']
+            else:
+                raise Exception(result.get('error', 'Paystack initialization failed'))
         except Exception as e:
+            logger.error(f"Paystack initialization failed: {str(e)}")
             raise Exception(f"Paystack initialization failed: {str(e)}")
     
     def _initialize_flutterwave_payment(self, payment, email, order_number):
         """Initialize Flutterwave payment"""
         try:
-            flutterwave_key = "YOUR_FLUTTERWAVE_SECRET_KEY"  # Use settings
+            gateway = FlutterwaveGateway()
             
-            data = {
-                "tx_ref": str(payment.id),
-                "amount": str(payment.amount),
-                "currency": "NGN",
-                "customer": {
-                    "email": email
-                },
-                "customizations": {
-                    "title": f"Order {order_number}",
-                    "description": f"Payment for booking order"
-                }
+            metadata = {
+                "order_number": order_number,
+                "description": f"Payment for booking order {order_number}"
             }
             
-            # This is a placeholder - implement actual Flutterwave integration
-            # headers = {"Authorization": f"Bearer {flutterwave_key}"}
-            # response = requests.post(
-            #     "https://api.flutterwave.com/v3/payments",
-            #     json=data,
-            #     headers=headers
-            # )
+            result = gateway.initialize_transaction(
+                email=email,
+                amount=payment.amount,
+                tx_ref=str(payment.id),
+                metadata=metadata
+            )
             
-            return f"https://checkout.flutterwave.com/test_reference_{payment.id}"
+            if result['success']:
+                return result['payment_link']
+            else:
+                raise Exception(result.get('error', 'Flutterwave initialization failed'))
         except Exception as e:
+            logger.error(f"Flutterwave initialization failed: {str(e)}")
             raise Exception(f"Flutterwave initialization failed: {str(e)}")
 
 
@@ -365,68 +356,47 @@ class PaymentCallbackView(APIView):
         }
     )
     def post(self, request):
-        """Handle payment callback"""
+        """Handle payment callback from Paystack or Flutterwave"""
         try:
-            reference = request.data.get('reference')
+            from payment.webhooks import handle_webhook
             
-            if not reference:
-                return Response(
-                    {"detail": "Reference is required"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+            # Determine payment method from request
+            payment_method = request.query_params.get('method', 'paystack')  # Default to paystack
             
-            # Get payment
-            payment = Payment.objects.get(gateway_transaction_id=str(reference))
+            # Get signature header for verification
+            signature_header = None
+            if payment_method == 'paystack':
+                signature_header = request.META.get('HTTP_X_PAYSTACK_SIGNATURE')
+            elif payment_method == 'flutterwave':
+                signature_header = request.META.get('HTTP_VERIFI_HASH')
             
-            # Verify payment status from gateway
-            payment_status = request.data.get('status', 'failed')
+            # Process webhook
+            result = handle_webhook(
+                request.data,
+                payment_method=payment_method,
+                signature_header=signature_header
+            )
             
-            if payment_status == 'success':
-                # Update payment
-                payment.status = 'success'
-                payment.completed_at = timezone.now()
-                payment.save()
-                
-                # Update order
-                order = payment.order
-                order.status = 'paid'
-                order.payment_method = payment.payment_method
-                order.payment_reference = str(reference)
-                order.paid_at = timezone.now()
-                order.save()
-                
-                # Update bookings to confirmed
-                for booking in order.bookings.all():
-                    booking.status = 'confirmed'
-                    booking.confirmed_at = timezone.now()
-                    booking.save()
-                
-                # Trigger background tasks
-                send_payment_confirmation_email.delay(str(order.id))
-                generate_qr_code_for_order.delay(str(order.id))
-                
+            if result['success']:
                 return Response(
                     {
                         "status": "success",
-                        "message": "Payment processed successfully",
-                        "detail": "QR code will be sent to user email shortly"
+                        "message": result.get('message', 'Webhook processed successfully')
                     },
                     status=status.HTTP_200_OK
                 )
             else:
-                payment.status = 'failed'
-                payment.save()
-                
+                logger.warning(f"Webhook processing failed: {result.get('error')}")
                 return Response(
-                    {"status": "failed", "message": "Payment failed"},
-                    status=status.HTTP_200_OK
+                    {
+                        "status": "error",
+                        "message": result.get('error', 'Webhook processing failed')
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
                 )
-        except Payment.DoesNotExist:
-            return Response(
-                {"detail": "Payment not found"},
-                status=status.HTTP_404_NOT_FOUND
-            )
+        
         except Exception as e:
+            logger.error(f"Webhook error: {str(e)}")
             return Response(
                 {"detail": str(e)},
                 status=status.HTTP_400_BAD_REQUEST
