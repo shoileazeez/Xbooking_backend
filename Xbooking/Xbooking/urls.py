@@ -26,6 +26,9 @@ urlpatterns = [
     path("api/user/", include("user.urls")),
     path("api/workspace/", include("workspace.urls")),
     path("api/booking/", include("booking.urls")),
+    path("api/payment/", include("payment.urls")),
+    path("api/qr/", include("qr_code.urls")),
+    path("api/notifications/", include("notifications.urls")),
     path("api/user/profile/", ProfileView.as_view(), name="profile"),
     
     # API Documentation

@@ -42,6 +42,9 @@ INSTALLED_APPS = [
     "user",
     "workspace",
     "booking",
+    "payment",
+    "qr_code",
+    "notifications",
     "rest_framework",
     "corsheaders",
     "rest_framework_simplejwt",
@@ -198,4 +201,25 @@ SPECTACULAR_SETTINGS = {
         'name': 'Xbooking Support',
         'email': 'support@xbooking.com',
     },
+}
+
+# Celery Configuration
+CELERY_BROKER_URL = config('CELERY_BROKER_URL', default='redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = config('CELERY_RESULT_BACKEND', default='redis://localhost:6379/0')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'UTC'
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 minutes
+
+# Redis Cache Configuration (optional, for caching)
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': config('REDIS_URL', default='redis://localhost:6379/1'),
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
+    }
 }
