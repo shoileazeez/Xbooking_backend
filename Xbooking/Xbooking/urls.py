@@ -25,6 +25,7 @@ urlpatterns = [
     path('', LandingPageView.as_view(), name='landing_page'),
     path("api/user/", include("user.urls")),
     path("api/workspace/", include("workspace.urls")),
+    path("api/booking/", include("booking.urls")),
     path("api/user/profile/", ProfileView.as_view(), name="profile"),
     
     # API Documentation

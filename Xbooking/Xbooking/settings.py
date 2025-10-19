@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     "user",
     "workspace",
+    "booking",
     "rest_framework",
     "corsheaders",
     "rest_framework_simplejwt",
