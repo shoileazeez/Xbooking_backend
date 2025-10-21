@@ -24,6 +24,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', LandingPageView.as_view(), name='landing_page'),
     path("api/user/", include("user.urls")),
+    path("api/users/", include("user.views.password_change_urls")),
     path("api/workspace/", include("workspace.urls")),
     path("api/booking/", include("booking.urls")),
     path("api/payment/", include("payment.urls")),

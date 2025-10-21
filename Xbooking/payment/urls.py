@@ -1,7 +1,7 @@
 """
 Payment and Order URLs
 """
-from django.urls import path
+from django.urls import path, include
 from payment.views import (
     CreateOrderView, ListOrdersView, OrderDetailView,
     InitiatePaymentView, PaymentCallbackView, ListPaymentsView,
@@ -26,4 +26,7 @@ urlpatterns = [
     
     # Refund URLs
     path('workspaces/<uuid:workspace_id>/refunds/request/', RequestRefundView.as_view(), name='request_refund'),
+    
+    # Withdrawal URLs
+    path('workspaces/<uuid:workspace_id>/', include('payment.withdrawal_urls')),
 ]

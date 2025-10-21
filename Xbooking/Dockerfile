@@ -31,9 +31,6 @@ RUN pip install --upgrade pip \
 # Copy project files
 COPY . /app/
 
-# Create necessary directories with proper permissions
-RUN mkdir -p /app/staticfiles /app/media /app/static \
-    && chown -R django:django /app
 
 # Switch to non-root user
 USER django

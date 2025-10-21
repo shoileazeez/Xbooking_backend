@@ -55,12 +55,13 @@ class GetUserNotificationsView(APIView):
 class MarkNotificationAsReadView(APIView):
     """Mark a single notification as read"""
     permission_classes = [IsAuthenticated]
+    serializer_class = NotificationSerializer
     
     @extend_schema(
         summary="Mark notification as read",
         description="Mark a single notification as read",
         tags=["Notifications"],
-        responses={200: NotificationSerializer()}
+        responses={200: NotificationSerializer}
     )
     def post(self, request, notification_id):
         """Mark notification as read"""
@@ -80,6 +81,7 @@ class MarkNotificationAsReadView(APIView):
 class MarkAllNotificationsAsReadView(APIView):
     """Mark all user notifications as read"""
     permission_classes = [IsAuthenticated]
+    serializer_class = NotificationSerializer
     
     @extend_schema(
         summary="Mark all notifications as read",
@@ -107,12 +109,13 @@ class MarkAllNotificationsAsReadView(APIView):
 class GetNotificationPreferencesView(APIView):
     """Get user notification preferences"""
     permission_classes = [IsAuthenticated]
+    serializer_class = NotificationPreferenceSerializer
     
     @extend_schema(
         summary="Get notification preferences",
         description="Get current user notification preferences",
         tags=["Notification Preferences"],
-        responses={200: NotificationPreferenceSerializer()}
+        responses={200: NotificationPreferenceSerializer}
     )
     def get(self, request):
         """Get preferences"""
@@ -129,13 +132,14 @@ class GetNotificationPreferencesView(APIView):
 class UpdateNotificationPreferencesView(APIView):
     """Update user notification preferences"""
     permission_classes = [IsAuthenticated]
+    serializer_class = NotificationPreferenceSerializer
     
     @extend_schema(
         summary="Update notification preferences",
         description="Update current user notification preferences",
         tags=["Notification Preferences"],
-        request=NotificationPreferenceSerializer(),
-        responses={200: NotificationPreferenceSerializer()}
+        request=NotificationPreferenceSerializer,
+        responses={200: NotificationPreferenceSerializer}
     )
     def patch(self, request):
         """Update preferences"""
@@ -155,14 +159,15 @@ class UpdateNotificationPreferencesView(APIView):
 class AdminSendBroadcastNotificationView(APIView):
     """Send broadcast notification to workspace users"""
     permission_classes = [IsAuthenticated]
+    serializer_class = CreateBroadcastNotificationSerializer
     
     @extend_schema(
         summary="Send broadcast notification",
         description="Admin/Manager sends broadcast notification to workspace users",
         tags=["Admin Notifications"],
-        request=CreateBroadcastNotificationSerializer(),
+        request=CreateBroadcastNotificationSerializer,
         responses={
-            201: BroadcastNotificationSerializer(),
+            201: BroadcastNotificationSerializer,
             403: {"type": "object", "properties": {"detail": {"type": "string"}}},
             400: {"type": "object", "properties": {"detail": {"type": "string"}}}
         }

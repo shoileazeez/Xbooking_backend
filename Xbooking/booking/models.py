@@ -171,3 +171,66 @@ class BookingAvailability(models.Model):
     
     def __str__(self):
         return f"Availability - {self.space.name}"
+
+
+class Guest(models.Model):
+    """Model for booking guests with QR code verification"""
+    
+    GUEST_STATUS_CHOICES = [
+        ('pending', 'Pending - Awaiting Verification'),
+        ('verified', 'Verified - QR code sent'),
+        ('checked_in', 'Checked In'),
+        ('checked_out', 'Checked Out'),
+        ('rejected', 'Rejected by Admin'),
+    ]
+    
+    VERIFICATION_STATUS_CHOICES = [
+        ('pending', 'Pending Admin Verification'),
+        ('verified', 'Verified by Admin'),
+        ('rejected', 'Rejected by Admin'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    booking = models.ForeignKey(Booking, on_delete=models.CASCADE, related_name='guests')
+    
+    # Guest information
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100)
+    email = models.EmailField()
+    phone = models.CharField(max_length=20, blank=True, null=True)
+    
+    # Status tracking
+    status = models.CharField(max_length=20, choices=GUEST_STATUS_CHOICES, default='pending')
+    
+    # Admin verification
+    verification_status = models.CharField(max_length=20, choices=VERIFICATION_STATUS_CHOICES, default='pending')
+    verified_by = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True, related_name='verified_guests')
+    verified_at = models.DateTimeField(blank=True, null=True)
+    rejection_reason = models.TextField(blank=True, null=True, help_text='Reason for rejecting guest')
+    
+    # QR Code tracking
+    qr_code_sent = models.BooleanField(default=False)
+    qr_code_sent_at = models.DateTimeField(blank=True, null=True)
+    qr_code_verification_code = models.CharField(max_length=50, unique=True, help_text='Unique verification code for guest QR')
+    
+    # Check-in/out tracking
+    checked_in_at = models.DateTimeField(blank=True, null=True)
+    checked_out_at = models.DateTimeField(blank=True, null=True)
+    checked_in_by = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True, related_name='checked_in_guests')
+    
+    # Tracking
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'booking_guest'
+        ordering = ['created_at']
+        indexes = [
+            models.Index(fields=['booking', 'status']),
+            models.Index(fields=['email']),
+            models.Index(fields=['qr_code_verification_code']),
+        ]
+    
+    def __str__(self):
+        return f"Guest {self.first_name} {self.last_name} - {self.booking.id}"
+

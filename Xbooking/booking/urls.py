@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 from booking.views import (
     CartView, AddToCartView, RemoveFromCartView, ClearCartView,
     CheckoutView, CreateBookingView, ListBookingsView, BookingDetailView,
@@ -9,6 +9,8 @@ from booking.admin_views import (
     AdminBookingsByStatusView, AdminBookingsBySpaceView, AdminBookingReviewsView,
     AdminBookingStatisticsView
 )
+from booking import guest_urls
+from booking import admin_guest_urls
 
 app_name = 'booking'
 
@@ -35,4 +37,8 @@ urlpatterns = [
     path('workspaces/<uuid:workspace_id>/admin/spaces/<uuid:space_id>/bookings/', AdminBookingsBySpaceView.as_view(), name='admin_space_bookings'),
     path('workspaces/<uuid:workspace_id>/admin/bookings/<uuid:booking_id>/reviews/', AdminBookingReviewsView.as_view(), name='admin_booking_reviews'),
     path('workspaces/<uuid:workspace_id>/admin/bookings/statistics/', AdminBookingStatisticsView.as_view(), name='admin_booking_stats'),
+    
+    # Guest Management URLs
+    path('', include(guest_urls)),
+    path('', include(admin_guest_urls)),
 ]

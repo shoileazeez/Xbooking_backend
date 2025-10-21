@@ -38,9 +38,9 @@ class CreateOrderView(APIView):
         summary="Create order from bookings",
         description="Create an order from one or more bookings",
         tags=["Orders"],
-        request=CreateOrderSerializer(),
+        request=CreateOrderSerializer,
         responses={
-            201: OrderSerializer(),
+            201: OrderSerializer,
             400: {"type": "object", "properties": {"detail": {"type": "string"}}},
             403: {"type": "object", "properties": {"detail": {"type": "string"}}}
         }
@@ -155,7 +155,7 @@ class OrderDetailView(APIView):
         description="Get detailed information about an order",
         tags=["Orders"],
         responses={
-            200: OrderSerializer(),
+            200: OrderSerializer,
             403: {"type": "object", "properties": {"detail": {"type": "string"}}},
             404: {"type": "object", "properties": {"detail": {"type": "string"}}}
         }
@@ -203,7 +203,7 @@ class InitiatePaymentView(APIView):
         summary="Initiate payment",
         description="Start payment process for an order",
         tags=["Payments"],
-        request=InitiatePaymentSerializer(),
+        request=InitiatePaymentSerializer,
         responses={
             200: {"type": "object", "properties": {
                 "payment_url": {"type": "string"},
@@ -347,9 +347,9 @@ class PaymentCallbackView(APIView):
     
     @extend_schema(
         summary="Payment callback",
-        description="Handle payment gateway callback (webhook)",
+        description="Handle payment gateway webhook callback",
         tags=["Payments"],
-        request=PaymentCallbackSerializer(),
+        request=PaymentCallbackSerializer,
         responses={
             200: {"type": "object", "properties": {"status": {"type": "string"}}},
             400: {"type": "object", "properties": {"detail": {"type": "string"}}}
@@ -447,9 +447,9 @@ class RequestRefundView(APIView):
         summary="Request refund",
         description="Request refund for a completed order",
         tags=["Refunds"],
-        request=CreateRefundSerializer(),
+        request=CreateRefundSerializer,
         responses={
-            201: RefundSerializer(),
+            201: RefundSerializer,
             400: {"type": "object", "properties": {"detail": {"type": "string"}}},
             403: {"type": "object", "properties": {"detail": {"type": "string"}}},
             404: {"type": "object", "properties": {"detail": {"type": "string"}}}
@@ -529,7 +529,7 @@ class PaymentStatusView(APIView):
         description="Get detailed payment status",
         tags=["Payments"],
         responses={
-            200: PaymentSerializer(),
+            200: PaymentSerializer,
             403: {"type": "object", "properties": {"detail": {"type": "string"}}},
             404: {"type": "object", "properties": {"detail": {"type": "string"}}}
         }

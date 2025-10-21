@@ -385,8 +385,8 @@ class BookingReviewAdmin(admin.ModelAdmin):
 
 @admin.register(BookingAvailability)
 class BookingAvailabilityAdmin(admin.ModelAdmin):
-    list_display = ['availability_id_display', 'space_display', 'availability_status', 'availability_period', 'updated_at']
-    list_filter = ['is_available', 'updated_at', 'space__workspace']
+    list_display = ['availability_id_display', 'space', 'availability_status', 'availability_period', 'updated_at']
+    list_filter = ['is_available', 'updated_at', 'space']
     search_fields = ['space__name', 'space__workspace__name']
     readonly_fields = ['id', 'updated_at', 'availability_info']
     

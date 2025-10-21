@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 from workspace.views.workspace import (
     CreateWorkspaceView, ListWorkspacesView, WorkspaceDetailView
 )
@@ -46,4 +46,7 @@ urlpatterns = [
     
     # Self Sign Up with Invite URL (allows any email for members joining)
     path('invite/<uuid:invite_token>/signup/', SelfSignUpInviteView.as_view(), name='self_signup_invite'),
+    
+    # Admin User Management URLs
+    path('workspaces/<uuid:workspace_id>/admin/', include('workspace.views.admin_user_management_urls')),
 ]

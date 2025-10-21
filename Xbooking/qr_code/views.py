@@ -19,13 +19,14 @@ from django.db.models import Q
 class GenerateOrderQRCodeView(APIView):
     """Generate QR code for order"""
     permission_classes = [IsAuthenticated]
+    serializer_class = OrderQRCodeSerializer
     
     @extend_schema(
         summary="Generate QR code for order",
         description="Generate and send QR code to user",
         tags=["QR Codes"],
         responses={
-            200: OrderQRCodeSerializer(),
+            200: {"type": "object", "properties": {"detail": {"type": "string"}}},
             403: {"type": "object", "properties": {"detail": {"type": "string"}}},
             404: {"type": "object", "properties": {"detail": {"type": "string"}}}
         }
@@ -70,13 +71,14 @@ class GenerateOrderQRCodeView(APIView):
 class GetOrderQRCodeView(APIView):
     """Get QR code for an order"""
     permission_classes = [IsAuthenticated]
+    serializer_class = OrderQRCodeSerializer
     
     @extend_schema(
         summary="Get order QR code",
         description="Get QR code details for an order",
         tags=["QR Codes"],
         responses={
-            200: OrderQRCodeSerializer(),
+            200: OrderQRCodeSerializer,
             403: {"type": "object", "properties": {"detail": {"type": "string"}}},
             404: {"type": "object", "properties": {"detail": {"type": "string"}}}
         }

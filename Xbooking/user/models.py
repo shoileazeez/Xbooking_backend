@@ -15,6 +15,11 @@ class User(models.Model):
     date_joined = models.DateTimeField(_("date joined"), default=timezone.now)
     last_login = models.DateTimeField(_("last_login"), default=timezone.now)
     is_active = models.BooleanField(default = True)
+    force_password_change = models.BooleanField(default=False, help_text="Force user to change password on next login")
+    
+    # Required fields for custom user model
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['full_name']
     
     def __str__(self):
         return self.full_name or self.email
@@ -25,6 +30,26 @@ class User(models.Model):
  
     def check_password(self, raw_password):
         return check_password(raw_password, self.password)
+    
+    @property
+    def is_anonymous(self):
+        """Always return False for logged-in users"""
+        return False
+    
+    @property
+    def is_authenticated(self):
+        """Return True if user is active"""
+        return self.is_active
+    
+    @property
+    def is_staff(self):
+        """Return False - we use is_active for admin detection"""
+        return False
+    
+    @property
+    def is_superuser(self):
+        """Return False - we use is_active for admin detection"""
+        return False
 
 
 class VerificationCode(models.Model):

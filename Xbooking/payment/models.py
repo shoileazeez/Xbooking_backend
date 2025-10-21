@@ -9,6 +9,9 @@ from workspace.models import Workspace
 from booking.models import Booking
 import uuid
 
+# Import withdrawal models
+from .withdrawal_models import BankAccount, Withdrawal, WithdrawalLog
+
 
 class Order(models.Model):
     """Model for orders created from bookings"""

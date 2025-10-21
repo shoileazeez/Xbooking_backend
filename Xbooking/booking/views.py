@@ -135,8 +135,9 @@ class AddToCartView(APIView):
 
 
 class RemoveFromCartView(APIView):
-    """Remove item from cart"""
+    """Remove an item from cart"""
     permission_classes = [IsAuthenticated]
+    serializer_class = None
 
     @extend_schema(
         description="Remove item from cart"
@@ -166,6 +167,7 @@ class RemoveFromCartView(APIView):
 class ClearCartView(APIView):
     """Clear all items from cart"""
     permission_classes = [IsAuthenticated]
+    serializer_class = None
 
     @extend_schema(
         description="Clear all items from shopping cart"

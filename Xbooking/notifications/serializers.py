@@ -34,7 +34,7 @@ class NotificationLogSerializer(serializers.ModelSerializer):
 class NotificationSerializer(serializers.ModelSerializer):
     """Serializer for notifications"""
     
-    delivery_logs = NotificationLogSerializer(source='delivery_logs', many=True, read_only=True)
+    delivery_logs = NotificationLogSerializer(many=True, read_only=True)
     
     class Meta:
         model = Notification
@@ -49,7 +49,7 @@ class NotificationSerializer(serializers.ModelSerializer):
 class NotificationDetailSerializer(serializers.ModelSerializer):
     """Detailed serializer for notifications with full information"""
     
-    delivery_logs = NotificationLogSerializer(source='delivery_logs', many=True, read_only=True)
+    delivery_logs = NotificationLogSerializer(many=True, read_only=True)
     
     class Meta:
         model = Notification

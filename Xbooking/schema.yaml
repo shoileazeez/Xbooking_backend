@@ -1,0 +1,6537 @@
+openapi: 3.0.3
+info:
+  title: Xbooking API
+  version: 1.0.0
+  description: Workspace and space booking management API
+  contact:
+    name: Xbooking Support
+    email: support@xbooking.com
+paths:
+  /api/booking/workspaces/{workspace_id}/admin/bookings/:
+    get:
+      operationId: api_booking_workspaces_admin_bookings_list
+      description: Get all bookings in a workspace (Admin/Manager only)
+      summary: List all workspace bookings
+      parameters:
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Admin Bookings
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BookingList'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/booking/workspaces/{workspace_id}/admin/bookings/{booking_id}/:
+    get:
+      operationId: api_booking_workspaces_admin_bookings_retrieve
+      description: Get detailed information about a specific booking
+      summary: Get booking details
+      parameters:
+      - in: path
+        name: booking_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Admin Bookings
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingDetail'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/booking/workspaces/{workspace_id}/admin/bookings/{booking_id}/reviews/:
+    get:
+      operationId: api_booking_workspaces_admin_bookings_reviews_list
+      description: Get all reviews for a completed booking
+      summary: Get booking reviews
+      parameters:
+      - in: path
+        name: booking_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Admin Bookings
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BookingReview'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/booking/workspaces/{workspace_id}/admin/bookings/{booking_id}/status/:
+    patch:
+      operationId: api_booking_workspaces_admin_bookings_status_partial_update
+      description: Update booking status (confirm, complete, cancel)
+      summary: Update booking status
+      parameters:
+      - in: path
+        name: booking_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Admin Bookings
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminUpdateBookingStatus'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminUpdateBookingStatus'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminUpdateBookingStatus'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingDetail'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/booking/workspaces/{workspace_id}/admin/bookings/filter/status/:
+    get:
+      operationId: api_booking_workspaces_admin_bookings_filter_status_list
+      description: Get all bookings filtered by status
+      summary: List bookings by status
+      parameters:
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Admin Bookings
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BookingList'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/booking/workspaces/{workspace_id}/admin/bookings/statistics/:
+    get:
+      operationId: api_booking_workspaces_admin_bookings_statistics_retrieve
+      description: Get booking statistics (total, by status, revenue, etc.)
+      summary: Get booking statistics
+      parameters:
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Admin Bookings
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_bookings:
+                    type: integer
+                  pending:
+                    type: integer
+                  confirmed:
+                    type: integer
+                  in_progress:
+                    type: integer
+                  completed:
+                    type: integer
+                  cancelled:
+                    type: integer
+                  total_revenue:
+                    type: string
+                  average_booking_value:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/booking/workspaces/{workspace_id}/admin/spaces/{space_id}/bookings/:
+    get:
+      operationId: api_booking_workspaces_admin_spaces_bookings_list
+      description: Get all bookings for a specific space in workspace
+      summary: List bookings for a space
+      parameters:
+      - in: path
+        name: space_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Admin Bookings
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BookingList'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/booking/workspaces/{workspace_id}/bookings/:
+    get:
+      operationId: api_booking_workspaces_bookings_list
+      description: Get all user bookings for a workspace
+      parameters:
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BookingList'
+          description: ''
+  /api/booking/workspaces/{workspace_id}/bookings/{booking_id}/:
+    get:
+      operationId: api_booking_workspaces_bookings_retrieve
+      description: Get detailed booking information
+      parameters:
+      - in: path
+        name: booking_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingDetail'
+          description: ''
+  /api/booking/workspaces/{workspace_id}/bookings/{booking_id}/cancel/:
+    post:
+      operationId: api_booking_workspaces_bookings_cancel_create
+      description: Cancel a booking
+      parameters:
+      - in: path
+        name: booking_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelBooking'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CancelBooking'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CancelBooking'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CancelBooking'
+          description: ''
+  /api/booking/workspaces/{workspace_id}/bookings/{booking_id}/review/:
+    post:
+      operationId: api_booking_workspaces_bookings_review_create
+      description: Add review for completed booking
+      parameters:
+      - in: path
+        name: booking_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateReview'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CreateReview'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreateReview'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingReview'
+          description: ''
+  /api/booking/workspaces/{workspace_id}/bookings/create/:
+    post:
+      operationId: api_booking_workspaces_bookings_create_create
+      description: Create booking directly for a space
+      parameters:
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBooking'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CreateBooking'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreateBooking'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+          description: ''
+  /api/booking/workspaces/{workspace_id}/cart/:
+    get:
+      operationId: api_booking_workspaces_cart_retrieve
+      description: Get current user's shopping cart
+      parameters:
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+          description: ''
+  /api/booking/workspaces/{workspace_id}/cart/add/:
+    post:
+      operationId: api_booking_workspaces_cart_add_create
+      description: Add space booking to cart
+      parameters:
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddToCart'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AddToCart'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AddToCart'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartItem'
+          description: ''
+  /api/booking/workspaces/{workspace_id}/cart/checkout/:
+    post:
+      operationId: api_booking_workspaces_cart_checkout_create
+      description: Checkout cart items and create bookings
+      parameters:
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Checkout'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Checkout'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Checkout'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Checkout'
+          description: ''
+  /api/booking/workspaces/{workspace_id}/cart/clear/:
+    post:
+      operationId: api_booking_workspaces_cart_clear_create
+      description: Clear all items from shopping cart
+      parameters:
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/booking/workspaces/{workspace_id}/cart/items/{item_id}/:
+    delete:
+      operationId: api_booking_workspaces_cart_items_destroy
+      description: Remove item from cart
+      parameters:
+      - in: path
+        name: item_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/notifications/:
+    get:
+      operationId: api_notifications_list
+      description: Get all notifications for the current user with optional filtering
+      summary: Get user notifications
+      tags:
+      - Notifications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Notification'
+          description: ''
+  /api/notifications/{notification_id}/read/:
+    post:
+      operationId: api_notifications_read_create
+      description: Mark a single notification as read
+      summary: Mark notification as read
+      parameters:
+      - in: path
+        name: notification_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Notifications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Notification'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Notification'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Notification'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+          description: ''
+  /api/notifications/preferences/:
+    get:
+      operationId: api_notifications_preferences_retrieve
+      description: Get current user notification preferences
+      summary: Get notification preferences
+      tags:
+      - Notification Preferences
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationPreference'
+          description: ''
+  /api/notifications/preferences/update/:
+    patch:
+      operationId: api_notifications_preferences_update_partial_update
+      description: Update current user notification preferences
+      summary: Update notification preferences
+      tags:
+      - Notification Preferences
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedNotificationPreference'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedNotificationPreference'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedNotificationPreference'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationPreference'
+          description: ''
+  /api/notifications/read-all/:
+    post:
+      operationId: api_notifications_read_all_create
+      description: Mark all unread notifications as read
+      summary: Mark all notifications as read
+      tags:
+      - Notifications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Notification'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Notification'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Notification'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  updated_count:
+                    type: integer
+          description: ''
+  /api/notifications/workspaces/{workspace_id}/broadcast/:
+    post:
+      operationId: api_notifications_workspaces_broadcast_create
+      description: Admin/Manager sends broadcast notification to workspace users
+      summary: Send broadcast notification
+      parameters:
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Admin Notifications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBroadcastNotification'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CreateBroadcastNotification'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreateBroadcastNotification'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BroadcastNotification'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/notifications/workspaces/{workspace_id}/broadcast-list/:
+    get:
+      operationId: api_notifications_workspaces_broadcast_list_list
+      description: Get all broadcast notifications for a workspace
+      summary: List broadcast notifications
+      parameters:
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Admin Notifications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BroadcastNotification'
+          description: ''
+  /api/payment/payments/callback/:
+    post:
+      operationId: api_payment_payments_callback_create
+      description: Handle payment gateway webhook callback
+      summary: Payment callback
+      tags:
+      - Payments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentCallback'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PaymentCallback'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PaymentCallback'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/payment/workspaces/{workspace_id}/admin/withdrawals/pending/:
+    get:
+      operationId: api_payment_workspaces_admin_withdrawals_pending_retrieve
+      description: List all pending withdrawals for admin
+      parameters:
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithdrawalList'
+          description: ''
+  /api/payment/workspaces/{workspace_id}/bank-accounts/:
+    get:
+      operationId: api_payment_workspaces_bank_accounts_list
+      description: ViewSet for Bank Account Management
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedBankAccountList'
+          description: ''
+    post:
+      operationId: api_payment_workspaces_bank_accounts_create
+      description: Create a new bank account
+      parameters:
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBankAccount'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CreateBankAccount'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreateBankAccount'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateBankAccount'
+          description: ''
+  /api/payment/workspaces/{workspace_id}/bank-accounts/{id}/:
+    get:
+      operationId: api_payment_workspaces_bank_accounts_retrieve
+      description: ViewSet for Bank Account Management
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BankAccount'
+          description: ''
+    put:
+      operationId: api_payment_workspaces_bank_accounts_update
+      description: ViewSet for Bank Account Management
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BankAccount'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BankAccount'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BankAccount'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BankAccount'
+          description: ''
+    patch:
+      operationId: api_payment_workspaces_bank_accounts_partial_update
+      description: ViewSet for Bank Account Management
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedBankAccount'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedBankAccount'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedBankAccount'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BankAccount'
+          description: ''
+    delete:
+      operationId: api_payment_workspaces_bank_accounts_destroy
+      description: ViewSet for Bank Account Management
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/payment/workspaces/{workspace_id}/bank-accounts/{id}/deactivate/:
+    post:
+      operationId: api_payment_workspaces_bank_accounts_deactivate_create
+      description: Deactivate a bank account
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BankAccount'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BankAccount'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BankAccount'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BankAccount'
+          description: ''
+  /api/payment/workspaces/{workspace_id}/bank-accounts/{id}/set_default/:
+    post:
+      operationId: api_payment_workspaces_bank_accounts_set_default_create
+      description: Set a bank account as default
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BankAccount'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BankAccount'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BankAccount'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BankAccount'
+          description: ''
+  /api/payment/workspaces/{workspace_id}/orders/:
+    get:
+      operationId: api_payment_workspaces_orders_list
+      description: Get all orders for the authenticated user
+      summary: List user orders
+      parameters:
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Orders
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OrderList'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/payment/workspaces/{workspace_id}/orders/{order_id}/:
+    get:
+      operationId: api_payment_workspaces_orders_retrieve
+      description: Get detailed information about an order
+      summary: Get order details
+      parameters:
+      - in: path
+        name: order_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Orders
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/payment/workspaces/{workspace_id}/orders/create/:
+    post:
+      operationId: api_payment_workspaces_orders_create_create
+      description: Create an order from one or more bookings
+      summary: Create order from bookings
+      parameters:
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Orders
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrder'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CreateOrder'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreateOrder'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/payment/workspaces/{workspace_id}/payments/:
+    get:
+      operationId: api_payment_workspaces_payments_list
+      description: Get all payments for the authenticated user
+      summary: List payments
+      parameters:
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Payments
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PaymentList'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/payment/workspaces/{workspace_id}/payments/{payment_id}/:
+    get:
+      operationId: api_payment_workspaces_payments_retrieve
+      description: Get detailed payment status
+      summary: Get payment status
+      parameters:
+      - in: path
+        name: payment_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Payments
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/payment/workspaces/{workspace_id}/payments/initiate/:
+    post:
+      operationId: api_payment_workspaces_payments_initiate_create
+      description: Start payment process for an order
+      summary: Initiate payment
+      parameters:
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Payments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InitiatePayment'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/InitiatePayment'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InitiatePayment'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  payment_url:
+                    type: string
+                  payment_id:
+                    type: string
+                  reference:
+                    type: string
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/payment/workspaces/{workspace_id}/refunds/request/:
+    post:
+      operationId: api_payment_workspaces_refunds_request_create
+      description: Request refund for a completed order
+      summary: Request refund
+      parameters:
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Refunds
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRefund'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CreateRefund'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreateRefund'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Refund'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/payment/workspaces/{workspace_id}/withdrawals/{withdrawal_id}/:
+    get:
+      operationId: api_payment_workspaces_withdrawals_retrieve
+      description: Get withdrawal details
+      parameters:
+      - in: path
+        name: withdrawal_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Withdrawal'
+          description: ''
+  /api/payment/workspaces/{workspace_id}/withdrawals/{withdrawal_id}/approve/:
+    post:
+      operationId: api_payment_workspaces_withdrawals_approve_create
+      description: Admin approve a withdrawal request
+      parameters:
+      - in: path
+        name: withdrawal_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApproveWithdrawal'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ApproveWithdrawal'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ApproveWithdrawal'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApproveWithdrawal'
+          description: ''
+  /api/payment/workspaces/{workspace_id}/withdrawals/{withdrawal_id}/process/:
+    post:
+      operationId: api_payment_workspaces_withdrawals_process_create
+      description: Admin process a withdrawal (send payout)
+      parameters:
+      - in: path
+        name: withdrawal_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProcessWithdrawal'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProcessWithdrawal'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProcessWithdrawal'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessWithdrawal'
+          description: ''
+  /api/payment/workspaces/{workspace_id}/withdrawals/{withdrawal_id}/reject/:
+    post:
+      operationId: api_payment_workspaces_withdrawals_reject_create
+      description: Admin reject a withdrawal request
+      parameters:
+      - in: path
+        name: withdrawal_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RejectWithdrawal'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RejectWithdrawal'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RejectWithdrawal'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RejectWithdrawal'
+          description: ''
+  /api/payment/workspaces/{workspace_id}/withdrawals/create/:
+    post:
+      operationId: api_payment_workspaces_withdrawals_create_create
+      description: Create a withdrawal request
+      parameters:
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWithdrawal'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CreateWithdrawal'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreateWithdrawal'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateWithdrawal'
+          description: ''
+  /api/payment/workspaces/{workspace_id}/withdrawals/list/:
+    get:
+      operationId: api_payment_workspaces_withdrawals_list_retrieve
+      description: List withdrawals for a workspace
+      parameters:
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithdrawalList'
+          description: ''
+  /api/qr/workspaces/{workspace_id}/admin/qr-code/{qr_code_id}/details/:
+    get:
+      operationId: api_qr_workspaces_admin_qr_code_details_retrieve
+      description: Get detailed information about a QR code including scan history
+      summary: Get QR code details
+      parameters:
+      - in: path
+        name: qr_code_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Admin QR Verification
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  qr_code:
+                    type: object
+                  scan_history:
+                    type: array
+                  order_details:
+                    type: object
+                  bookings:
+                    type: array
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/qr/workspaces/{workspace_id}/admin/qr-code/{qr_code_id}/resend/:
+    post:
+      operationId: api_qr_workspaces_admin_qr_code_resend_create
+      description: Resend QR code email to user
+      summary: Resend QR code
+      parameters:
+      - in: path
+        name: qr_code_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Admin QR Verification
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderQRCode'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OrderQRCode'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OrderQRCode'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/qr/workspaces/{workspace_id}/admin/qr-code/dashboard/:
+    get:
+      operationId: api_qr_workspaces_admin_qr_code_dashboard_retrieve
+      description: Get QR code statistics and pending verifications
+      summary: QR code verification dashboard
+      parameters:
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Admin QR Verification
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pending_verifications:
+                    type: integer
+                  verified_today:
+                    type: integer
+                  total_scanned:
+                    type: integer
+                  expired_codes:
+                    type: integer
+                  recent_scans:
+                    type: array
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/qr/workspaces/{workspace_id}/admin/qr-code/pending/:
+    get:
+      operationId: api_qr_workspaces_admin_qr_code_pending_retrieve
+      description: Get all pending QR codes waiting for verification
+      summary: List pending verifications
+      parameters:
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Admin QR Verification
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/qr/workspaces/{workspace_id}/admin/qr-code/reject/:
+    post:
+      operationId: api_qr_workspaces_admin_qr_code_reject_create
+      description: Admin rejects QR code and marks as invalid
+      summary: Reject QR code
+      parameters:
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Admin QR Verification
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminRejectQRCode'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminRejectQRCode'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminRejectQRCode'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  qr_code:
+                    type: object
+                  message:
+                    type: string
+                  reason:
+                    type: string
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/qr/workspaces/{workspace_id}/admin/qr-code/stats/:
+    get:
+      operationId: api_qr_workspaces_admin_qr_code_stats_retrieve
+      description: Get QR code verification statistics
+      summary: Get verification statistics
+      parameters:
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Admin QR Verification
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_qr_codes:
+                    type: integer
+                  verified:
+                    type: integer
+                  pending:
+                    type: integer
+                  expired:
+                    type: integer
+                  by_status:
+                    type: object
+                  today_stats:
+                    type: object
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/qr/workspaces/{workspace_id}/admin/qr-code/verify/:
+    post:
+      operationId: api_qr_workspaces_admin_qr_code_verify_create
+      description: Admin verifies QR code and completes check-in
+      summary: Verify QR code (Admin)
+      parameters:
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Admin QR Verification
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminVerifyQRCode'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminVerifyQRCode'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminVerifyQRCode'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  qr_code:
+                    type: object
+                  bookings_updated:
+                    type: integer
+                  message:
+                    type: string
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/qr/workspaces/{workspace_id}/orders/{order_id}/qr-code/:
+    get:
+      operationId: api_qr_workspaces_orders_qr_code_retrieve
+      description: Get QR code details for an order
+      summary: Get order QR code
+      parameters:
+      - in: path
+        name: order_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - QR Codes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderQRCode'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/qr/workspaces/{workspace_id}/orders/{order_id}/qr-code/generate/:
+    post:
+      operationId: api_qr_workspaces_orders_qr_code_generate_create
+      description: Generate and send QR code to user
+      summary: Generate QR code for order
+      parameters:
+      - in: path
+        name: order_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - QR Codes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderQRCode'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OrderQRCode'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OrderQRCode'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
+  /api/user/auth/google/:
+    post:
+      operationId: api_user_auth_google_create
+      description: Google OAuth authentication - returns JWT tokens
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GoogleAuth'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/GoogleAuth'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/GoogleAuth'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoogleAuth'
+          description: ''
+  /api/user/forget-password/:
+    post:
+      operationId: api_user_forget_password_create
+      description: Request password reset - sends reset link to email
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForgetPassword'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ForgetPassword'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ForgetPassword'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForgetPassword'
+          description: ''
+  /api/user/login/:
+    post:
+      operationId: api_user_login_create
+      description: User login - returns JWT access and refresh tokens
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginSerializers'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LoginSerializers'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LoginSerializers'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginSerializers'
+          description: ''
+  /api/user/password-reset-confirm/:
+    post:
+      operationId: api_user_password_reset_confirm_create
+      description: Confirm password reset with verification code
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetConfirm'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PasswordResetConfirm'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PasswordResetConfirm'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PasswordResetConfirm'
+          description: ''
+  /api/user/profile/:
+    get:
+      operationId: api_user_profile_retrieve
+      description: Get authenticated user profile
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+          description: ''
+  /api/user/register/:
+    post:
+      operationId: api_user_register_create
+      description: Register a new user account
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserSerializers'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserSerializers'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserSerializers'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSerializers'
+          description: ''
+  /api/user/resend-password-reset/:
+    post:
+      operationId: api_user_resend_password_reset_create
+      description: Resend password reset verification code to email
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResendPasswordReset'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ResendPasswordReset'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ResendPasswordReset'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResendPasswordReset'
+          description: ''
+  /api/users/change-password/:
+    post:
+      operationId: api_users_change_password_create
+      description: |-
+        POST /api/users/change-password/
+
+        Request body:
+        {
+            "current_password": "old_password_here",
+            "new_password": "new_password_here"
+        }
+
+        Response:
+        {
+            "success": true,
+            "message": "Password changed successfully",
+            "force_password_change": false
+        }
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePassword'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ChangePassword'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ChangePassword'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChangePassword'
+          description: ''
+  /api/users/forced-password-change/:
+    post:
+      operationId: api_users_forced_password_change_create
+      description: |-
+        POST /api/users/forced-password-change/
+
+        Used when admin resets password and user logs in with temporary password
+        Only requires new password
+
+        Request body:
+        {
+            "new_password": "new_strong_password"
+        }
+
+        Response:
+        {
+            "success": true,
+            "message": "Password changed successfully",
+            "force_password_change": false
+        }
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForcedPasswordChange'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ForcedPasswordChange'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ForcedPasswordChange'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForcedPasswordChange'
+          description: ''
+  /api/users/password-change-required/:
+    get:
+      operationId: api_users_password_change_required_retrieve
+      description: |-
+        GET /api/users/password-change-required/
+
+        Response:
+        {
+            "force_password_change": true,
+            "message": "You must change your password before continuing",
+            "reason": "Password was reset by administrator"
+        }
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckPasswordChangeRequired'
+          description: ''
+  /api/workspace/admin/login/:
+    post:
+      operationId: api_workspace_admin_login_create
+      description: Admin login - returns JWT access and refresh tokens
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminLogin'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminLogin'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminLogin'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminProfile'
+          description: ''
+  /api/workspace/admin/onboarding/:
+    post:
+      operationId: api_workspace_admin_onboarding_create
+      description: Create workspace during admin onboarding
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminOnboarding'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminOnboarding'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminOnboarding'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminOnboarding'
+          description: ''
+  /api/workspace/admin/onboarding-status/:
+    get:
+      operationId: api_workspace_admin_onboarding_status_retrieve
+      description: Get admin onboarding progress and completion status
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnboardingStatus'
+          description: ''
+  /api/workspace/admin/profile/:
+    get:
+      operationId: api_workspace_admin_profile_retrieve
+      description: Get authenticated user profile
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminProfile'
+          description: ''
+    put:
+      operationId: api_workspace_admin_profile_update
+      description: Update authenticated user profile
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminProfile'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminProfile'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminProfile'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminProfile'
+          description: ''
+  /api/workspace/admin/register/:
+    post:
+      operationId: api_workspace_admin_register_create
+      description: Register a new admin with business email validation
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminRegister'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminRegister'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminRegister'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminProfile'
+          description: ''
+  /api/workspace/branches/{branch_id}/:
+    get:
+      operationId: api_workspace_branches_retrieve
+      description: Get branch details
+      parameters:
+      - in: path
+        name: branch_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BranchDetail'
+          description: ''
+    put:
+      operationId: api_workspace_branches_update
+      description: Update branch
+      parameters:
+      - in: path
+        name: branch_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Branch'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Branch'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Branch'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Branch'
+          description: ''
+    delete:
+      operationId: api_workspace_branches_destroy
+      description: Delete branch
+      parameters:
+      - in: path
+        name: branch_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/workspace/branches/{branch_id}/spaces/:
+    get:
+      operationId: api_workspace_branches_spaces_list
+      description: Get all spaces in a branch
+      parameters:
+      - in: path
+        name: branch_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SpaceSimple'
+          description: ''
+  /api/workspace/branches/{branch_id}/spaces/create/:
+    post:
+      operationId: api_workspace_branches_spaces_create_create
+      description: Create a new space in branch
+      parameters:
+      - in: path
+        name: branch_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Space'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Space'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Space'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Space'
+          description: ''
+  /api/workspace/invite/{invite_token}/signup/:
+    post:
+      operationId: api_workspace_invite_signup_create
+      description: Register as a new user and join workspace via invite link
+      parameters:
+      - in: path
+        name: invite_token
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemberSignUp'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MemberSignUp'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MemberSignUp'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemberSignUp'
+          description: ''
+  /api/workspace/spaces/{space_id}/:
+    get:
+      operationId: api_workspace_spaces_retrieve
+      description: Get space details
+      parameters:
+      - in: path
+        name: space_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpaceDetail'
+          description: ''
+    put:
+      operationId: api_workspace_spaces_update
+      description: Update space
+      parameters:
+      - in: path
+        name: space_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Space'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Space'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Space'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Space'
+          description: ''
+    delete:
+      operationId: api_workspace_spaces_destroy
+      description: Delete space
+      parameters:
+      - in: path
+        name: space_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/workspace/workspaces/:
+    get:
+      operationId: api_workspace_workspaces_list
+      description: Get all workspaces owned by or user is member of
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Workspace'
+          description: ''
+  /api/workspace/workspaces/{workspace_id}/:
+    get:
+      operationId: api_workspace_workspaces_retrieve
+      description: Get workspace details
+      parameters:
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceDetail'
+          description: ''
+    put:
+      operationId: api_workspace_workspaces_update
+      description: Update workspace
+      parameters:
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Workspace'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Workspace'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Workspace'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+          description: ''
+    delete:
+      operationId: api_workspace_workspaces_destroy
+      description: Delete workspace
+      parameters:
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/workspace/workspaces/{workspace_id}/admin/users/{user_id}/delete-account/:
+    post:
+      operationId: api_workspace_workspaces_admin_users_delete_account_create
+      description: |-
+        POST /api/workspaces/{workspace_id}/admin/users/{user_id}/delete-account/
+
+        Request body (required):
+        {
+            "confirm": true,
+            "reason": "Account no longer needed"
+        }
+
+        CAUTION: This permanently deletes the user account and cannot be undone
+      parameters:
+      - in: path
+        name: user_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminDeleteAccount'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminDeleteAccount'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminDeleteAccount'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminDeleteAccount'
+          description: ''
+  /api/workspace/workspaces/{workspace_id}/admin/users/{user_id}/force-password-change/:
+    post:
+      operationId: api_workspace_workspaces_admin_users_force_password_change_create
+      description: |-
+        POST /api/workspaces/{workspace_id}/admin/users/{user_id}/force-password-change/
+
+        Forces user to change password on next login attempt
+      parameters:
+      - in: path
+        name: user_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminForcePasswordChange'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminForcePasswordChange'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminForcePasswordChange'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminForcePasswordChange'
+          description: ''
+  /api/workspace/workspaces/{workspace_id}/admin/users/{user_id}/reset-password/:
+    post:
+      operationId: api_workspace_workspaces_admin_users_reset_password_create
+      description: |-
+        POST /api/workspaces/{workspace_id}/admin/users/{user_id}/reset-password/
+
+        Request body (optional):
+        {
+            "send_email": true  // whether to send email with temporary password
+        }
+
+        Response:
+        {
+            "success": true,
+            "message": "Password reset successfully",
+            "temporary_password": "aBc123XyZ!@#",  // only shown if send_email=false
+            "email_sent": true
+        }
+      parameters:
+      - in: path
+        name: user_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminResetPassword'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminResetPassword'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminResetPassword'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminResetPassword'
+          description: ''
+  /api/workspace/workspaces/{workspace_id}/admin/users/{user_id}/restore-access/:
+    post:
+      operationId: api_workspace_workspaces_admin_users_restore_access_create
+      description: |-
+        POST /api/workspaces/{workspace_id}/admin/users/{user_id}/restore-access/
+
+        Restores user access that was previously revoked
+      parameters:
+      - in: path
+        name: user_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminRestoreAccess'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminRestoreAccess'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminRestoreAccess'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminRestoreAccess'
+          description: ''
+  /api/workspace/workspaces/{workspace_id}/admin/users/{user_id}/revoke-access/:
+    post:
+      operationId: api_workspace_workspaces_admin_users_revoke_access_create
+      description: |-
+        POST /api/workspaces/{workspace_id}/admin/users/{user_id}/revoke-access/
+
+        Request body (optional):
+        {
+            "reason": "Employee left company"  // optional reason for audit trail
+        }
+
+        Response:
+        {
+            "success": true,
+            "message": "User access revoked",
+            "user_email": "user@example.com",
+            "workspace_name": "My Workspace"
+        }
+      parameters:
+      - in: path
+        name: user_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminRevokeAccess'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminRevokeAccess'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminRevokeAccess'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminRevokeAccess'
+          description: ''
+  /api/workspace/workspaces/{workspace_id}/branches/:
+    get:
+      operationId: api_workspace_workspaces_branches_list
+      description: Get all branches in a workspace
+      parameters:
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BranchSimple'
+          description: ''
+  /api/workspace/workspaces/{workspace_id}/branches/create/:
+    post:
+      operationId: api_workspace_workspaces_branches_create_create
+      description: Create a new branch in workspace
+      parameters:
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Branch'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Branch'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Branch'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Branch'
+          description: ''
+  /api/workspace/workspaces/{workspace_id}/members/:
+    get:
+      operationId: api_workspace_workspaces_members_list
+      description: Get all active members of a workspace
+      parameters:
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WorkspaceMember'
+          description: ''
+  /api/workspace/workspaces/{workspace_id}/members/{member_id}/:
+    get:
+      operationId: api_workspace_workspaces_members_retrieve
+      description: Get details of a specific workspace member
+      parameters:
+      - in: path
+        name: member_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceMemberDetail'
+          description: ''
+    put:
+      operationId: api_workspace_workspaces_members_update
+      description: Update member role or status
+      parameters:
+      - in: path
+        name: member_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkspaceMemberDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/WorkspaceMemberDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/WorkspaceMemberDetail'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceMemberDetail'
+          description: ''
+    delete:
+      operationId: api_workspace_workspaces_members_destroy
+      description: Remove member from workspace
+      parameters:
+      - in: path
+        name: member_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/workspace/workspaces/{workspace_id}/members/invite/:
+    post:
+      operationId: api_workspace_workspaces_members_invite_create
+      description: Invite an existing user to join workspace
+      parameters:
+      - in: path
+        name: workspace_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InviteToken'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/InviteToken'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InviteToken'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InviteToken'
+          description: ''
+  /api/workspace/workspaces/create/:
+    post:
+      operationId: api_workspace_workspaces_create_create
+      description: Create a new workspace
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Workspace'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Workspace'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Workspace'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+          description: ''
+components:
+  schemas:
+    AccountTypeEnum:
+      enum:
+      - personal
+      - business
+      type: string
+      description: |-
+        * `personal` - Personal Account
+        * `business` - Business Account
+    AddToCart:
+      type: object
+      description: Serializer for adding items to cart
+      properties:
+        space_id:
+          type: string
+        check_in:
+          type: string
+          format: date-time
+        check_out:
+          type: string
+          format: date-time
+        number_of_guests:
+          type: integer
+          minimum: 1
+          default: 1
+        special_requests:
+          type: string
+      required:
+      - check_in
+      - check_out
+      - space_id
+    AdminDeleteAccount:
+      type: object
+      description: Serializer for deleting user account
+      properties:
+        confirm:
+          type: boolean
+        reason:
+          type: string
+          maxLength: 500
+      required:
+      - confirm
+    AdminForcePasswordChange:
+      type: object
+      description: Serializer for forcing password change
+      properties:
+        reason:
+          type: string
+          maxLength: 255
+    AdminLogin:
+      type: object
+      description: Serializer for admin login
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          writeOnly: true
+      required:
+      - email
+      - password
+    AdminOnboarding:
+      type: object
+      description: Serializer for admin onboarding - creates workspace with initial
+        setup
+      properties:
+        workspace_name:
+          type: string
+          maxLength: 255
+        workspace_description:
+          type: string
+          maxLength: 1000
+        company_email:
+          type: string
+          format: email
+        company_phone:
+          type: string
+          maxLength: 20
+        company_address:
+          type: string
+          maxLength: 255
+        company_city:
+          type: string
+          maxLength: 100
+        company_country:
+          type: string
+          maxLength: 100
+      required:
+      - company_email
+      - workspace_name
+    AdminProfile:
+      type: object
+      description: Serializer for user profile
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        full_name:
+          type: string
+          maxLength: 200
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        avatar_url:
+          type: string
+          format: uri
+          nullable: true
+          maxLength: 200
+        date_joined:
+          type: string
+          format: date-time
+          readOnly: true
+        last_login:
+          type: string
+          format: date-time
+          readOnly: true
+        workspace_count:
+          type: integer
+          readOnly: true
+        membership_count:
+          type: integer
+          readOnly: true
+      required:
+      - date_joined
+      - email
+      - full_name
+      - id
+      - last_login
+      - membership_count
+      - workspace_count
+    AdminRegister:
+      type: object
+      description: Serializer for admin registration - requires business email
+      properties:
+        full_name:
+          type: string
+          maxLength: 200
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          writeOnly: true
+          minLength: 8
+        confirm_password:
+          type: string
+          writeOnly: true
+      required:
+      - confirm_password
+      - email
+      - full_name
+      - password
+    AdminRejectQRCode:
+      type: object
+      description: Serializer for rejecting QR code
+      properties:
+        qr_code_id:
+          type: string
+        reason:
+          type: string
+          maxLength: 500
+      required:
+      - qr_code_id
+    AdminResetPassword:
+      type: object
+      description: Serializer for admin password reset
+      properties:
+        send_email:
+          type: boolean
+          default: true
+    AdminRestoreAccess:
+      type: object
+      description: Serializer for restoring user access
+      properties:
+        reason:
+          type: string
+          maxLength: 500
+    AdminRevokeAccess:
+      type: object
+      description: Serializer for revoking user access
+      properties:
+        reason:
+          type: string
+          maxLength: 500
+    AdminUpdateBookingStatusStatusEnum:
+      enum:
+      - pending
+      - confirmed
+      - in_progress
+      - completed
+      - cancelled
+      type: string
+      description: |-
+        * `pending` - pending
+        * `confirmed` - confirmed
+        * `in_progress` - in_progress
+        * `completed` - completed
+        * `cancelled` - cancelled
+    AdminVerifyQRCode:
+      type: object
+      description: Serializer for verifying QR code
+      properties:
+        qr_code_id:
+          type: string
+        notes:
+          type: string
+          maxLength: 500
+      required:
+      - qr_code_id
+    ApproveWithdrawal:
+      type: object
+      description: Serializer for approving withdrawal
+      properties:
+        approval_notes:
+          type: string
+    BankAccount:
+      type: object
+      description: Serializer for bank account
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        user:
+          type: string
+          format: uuid
+          readOnly: true
+        workspace:
+          type: string
+          format: uuid
+          readOnly: true
+        account_number:
+          type: string
+          maxLength: 20
+        account_name:
+          type: string
+          maxLength: 100
+        bank_name:
+          type: string
+          maxLength: 100
+        bank_code:
+          type: string
+          description: Bank code for the bank (e.g., 058 for GTBank)
+          maxLength: 10
+        account_type:
+          $ref: '#/components/schemas/AccountTypeEnum'
+        is_default:
+          type: boolean
+          description: Use this account by default for withdrawals
+        is_verified:
+          type: boolean
+          readOnly: true
+          description: Account verified with payment gateway
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - account_name
+      - account_number
+      - bank_code
+      - bank_name
+      - created_at
+      - id
+      - is_verified
+      - updated_at
+      - user
+      - workspace
+    Booking:
+      type: object
+      description: Serializer for bookings
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        workspace:
+          type: string
+          format: uuid
+          readOnly: true
+        space:
+          type: string
+          format: uuid
+        space_name:
+          type: string
+          readOnly: true
+        user:
+          type: string
+          format: uuid
+          readOnly: true
+        user_email:
+          type: string
+          readOnly: true
+        booking_type:
+          $ref: '#/components/schemas/BookingType69dEnum'
+        check_in:
+          type: string
+          format: date-time
+        check_out:
+          type: string
+          format: date-time
+        number_of_guests:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 1
+          format: int64
+        base_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        discount_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        tax_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        total_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        status:
+          $ref: '#/components/schemas/Status528Enum'
+        special_requests:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        confirmed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        cancelled_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+      required:
+      - base_price
+      - cancelled_at
+      - check_in
+      - check_out
+      - confirmed_at
+      - created_at
+      - discount_amount
+      - id
+      - space
+      - space_name
+      - tax_amount
+      - total_price
+      - user
+      - user_email
+      - workspace
+    BookingDetail:
+      type: object
+      description: Detailed serializer for booking
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        workspace:
+          type: string
+          format: uuid
+          readOnly: true
+        space_details:
+          allOf:
+          - $ref: '#/components/schemas/SpaceSimple'
+          readOnly: true
+        user_details:
+          type: object
+          additionalProperties: {}
+          readOnly: true
+        booking_type:
+          allOf:
+          - $ref: '#/components/schemas/BookingType69dEnum'
+          readOnly: true
+        check_in:
+          type: string
+          format: date-time
+          readOnly: true
+        check_out:
+          type: string
+          format: date-time
+          readOnly: true
+        number_of_guests:
+          type: integer
+          readOnly: true
+        base_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        discount_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        tax_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        total_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/Status528Enum'
+          readOnly: true
+        special_requests:
+          type: string
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        confirmed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        cancelled_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+      required:
+      - base_price
+      - booking_type
+      - cancelled_at
+      - check_in
+      - check_out
+      - confirmed_at
+      - created_at
+      - discount_amount
+      - id
+      - number_of_guests
+      - space_details
+      - special_requests
+      - status
+      - tax_amount
+      - total_price
+      - user_details
+      - workspace
+    BookingList:
+      type: object
+      description: Serializer for listing bookings
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        space:
+          type: string
+          format: uuid
+          readOnly: true
+        space_name:
+          type: string
+          readOnly: true
+        branch_name:
+          type: string
+          readOnly: true
+        booking_type:
+          allOf:
+          - $ref: '#/components/schemas/BookingType69dEnum'
+          readOnly: true
+        check_in:
+          type: string
+          format: date-time
+          readOnly: true
+        check_out:
+          type: string
+          format: date-time
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/Status528Enum'
+          readOnly: true
+        total_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - booking_type
+      - branch_name
+      - check_in
+      - check_out
+      - created_at
+      - id
+      - space
+      - space_name
+      - status
+      - total_price
+    BookingReview:
+      type: object
+      description: Serializer for booking reviews
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        booking:
+          type: string
+          format: uuid
+          readOnly: true
+        user_name:
+          type: string
+          readOnly: true
+        space_name:
+          type: string
+          readOnly: true
+        rating:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 1
+          format: int64
+          description: Rating from 1-5
+        comment:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - booking
+      - created_at
+      - id
+      - rating
+      - space_name
+      - user_name
+    BookingType69dEnum:
+      enum:
+      - hourly
+      - daily
+      - monthly
+      type: string
+      description: |-
+        * `hourly` - Hourly
+        * `daily` - Daily
+        * `monthly` - Monthly
+    Branch:
+      type: object
+      description: Serializer for Branch model - List/Create view
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        workspace:
+          type: string
+          format: uuid
+        workspace_name:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          nullable: true
+        manager:
+          type: string
+          format: uuid
+          nullable: true
+        manager_name:
+          type: string
+          readOnly: true
+          nullable: true
+        manager_email:
+          type: string
+          readOnly: true
+          nullable: true
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        phone:
+          type: string
+          nullable: true
+          maxLength: 20
+        address:
+          type: string
+          maxLength: 255
+        city:
+          type: string
+          maxLength: 100
+        state:
+          type: string
+          nullable: true
+          maxLength: 100
+        country:
+          type: string
+          maxLength: 100
+        postal_code:
+          type: string
+          nullable: true
+          maxLength: 20
+        latitude:
+          type: number
+          format: double
+          nullable: true
+        longitude:
+          type: number
+          format: double
+          nullable: true
+        is_active:
+          type: boolean
+        spaces_count:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - address
+      - city
+      - country
+      - created_at
+      - email
+      - id
+      - manager_email
+      - manager_name
+      - name
+      - spaces_count
+      - updated_at
+      - workspace
+      - workspace_name
+    BranchDetail:
+      type: object
+      description: Detailed branch serializer with nested spaces
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        workspace:
+          allOf:
+          - $ref: '#/components/schemas/Workspace'
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          nullable: true
+        manager:
+          allOf:
+          - $ref: '#/components/schemas/UserSimple'
+          readOnly: true
+          nullable: true
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        phone:
+          type: string
+          nullable: true
+          maxLength: 20
+        address:
+          type: string
+          maxLength: 255
+        city:
+          type: string
+          maxLength: 100
+        state:
+          type: string
+          nullable: true
+          maxLength: 100
+        country:
+          type: string
+          maxLength: 100
+        postal_code:
+          type: string
+          nullable: true
+          maxLength: 20
+        latitude:
+          type: number
+          format: double
+          nullable: true
+        longitude:
+          type: number
+          format: double
+          nullable: true
+        is_active:
+          type: boolean
+        spaces:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - address
+      - city
+      - country
+      - created_at
+      - email
+      - id
+      - manager
+      - name
+      - spaces
+      - updated_at
+      - workspace
+    BranchSimple:
+      type: object
+      description: Simple branch serializer for nested data
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        workspace_name:
+          type: string
+          readOnly: true
+        manager_name:
+          type: string
+          readOnly: true
+          nullable: true
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        city:
+          type: string
+          maxLength: 100
+        country:
+          type: string
+          maxLength: 100
+        is_active:
+          type: boolean
+        spaces_count:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - city
+      - country
+      - created_at
+      - email
+      - id
+      - manager_name
+      - name
+      - spaces_count
+      - workspace_name
+    BroadcastNotification:
+      type: object
+      description: Serializer for broadcast notifications
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        workspace:
+          type: string
+          format: uuid
+        workspace_name:
+          type: string
+          readOnly: true
+        created_by:
+          type: integer
+          readOnly: true
+          nullable: true
+        created_by_email:
+          type: string
+          readOnly: true
+        title:
+          type: string
+          maxLength: 255
+        message:
+          type: string
+        channels:
+          description: 'List of channels to send to: ["email", "push", "in_app"]'
+        target_roles:
+          description: 'Target specific roles: ["admin", "manager", "staff", "user"]'
+        status:
+          $ref: '#/components/schemas/BroadcastNotificationStatusEnum'
+        scheduled_at:
+          type: string
+          format: date-time
+          nullable: true
+        sent_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        total_recipients:
+          type: integer
+          readOnly: true
+        sent_count:
+          type: integer
+          readOnly: true
+        failed_count:
+          type: integer
+          readOnly: true
+        read_count:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - created_by
+      - created_by_email
+      - failed_count
+      - id
+      - message
+      - read_count
+      - sent_at
+      - sent_count
+      - title
+      - total_recipients
+      - updated_at
+      - workspace
+      - workspace_name
+    BroadcastNotificationStatusEnum:
+      enum:
+      - draft
+      - scheduled
+      - sent
+      - cancelled
+      type: string
+      description: |-
+        * `draft` - Draft
+        * `scheduled` - Scheduled
+        * `sent` - Sent
+        * `cancelled` - Cancelled
+    CancelBooking:
+      type: object
+      description: Serializer for cancelling bookings
+      properties:
+        cancellation_reason:
+          type: string
+    Cart:
+      type: object
+      description: Serializer for shopping cart
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        user:
+          type: string
+          format: uuid
+          readOnly: true
+        workspace:
+          type: string
+          format: uuid
+          readOnly: true
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CartItem'
+          readOnly: true
+        subtotal:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        discount_total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        tax_total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        item_count:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - discount_total
+      - id
+      - item_count
+      - items
+      - subtotal
+      - tax_total
+      - total
+      - updated_at
+      - user
+      - workspace
+    CartItem:
+      type: object
+      description: Serializer for cart items
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        space:
+          type: string
+          format: uuid
+        space_details:
+          allOf:
+          - $ref: '#/components/schemas/SpaceSimple'
+          readOnly: true
+        check_in:
+          type: string
+          format: date-time
+        check_out:
+          type: string
+          format: date-time
+        number_of_guests:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 1
+          format: int64
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        discount_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        tax_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        special_requests:
+          type: string
+          nullable: true
+        added_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - added_at
+      - check_in
+      - check_out
+      - id
+      - price
+      - space
+      - space_details
+      - updated_at
+    ChangePassword:
+      type: object
+      description: Serializer for changing password
+      properties:
+        current_password:
+          type: string
+          writeOnly: true
+        new_password:
+          type: string
+          writeOnly: true
+      required:
+      - current_password
+      - new_password
+    ChannelEnum:
+      enum:
+      - email
+      - sms
+      - push
+      - in_app
+      type: string
+      description: |-
+        * `email` - Email
+        * `sms` - SMS
+        * `push` - Push Notification
+        * `in_app` - In-App Notification
+    CheckPasswordChangeRequired:
+      type: object
+      description: Response serializer for checking if password change is required
+      properties:
+        force_password_change:
+          type: boolean
+        message:
+          type: string
+        reason:
+          type: string
+      required:
+      - force_password_change
+    Checkout:
+      type: object
+      description: Serializer for cart checkout
+      properties:
+        coupon_code:
+          type: string
+        notes:
+          type: string
+    CreateBankAccount:
+      type: object
+      description: Serializer for creating bank account
+      properties:
+        account_number:
+          type: string
+          maxLength: 20
+        account_name:
+          type: string
+          maxLength: 100
+        bank_name:
+          type: string
+          maxLength: 100
+        bank_code:
+          type: string
+          description: Bank code for the bank (e.g., 058 for GTBank)
+          maxLength: 10
+        account_type:
+          $ref: '#/components/schemas/AccountTypeEnum'
+      required:
+      - account_name
+      - account_number
+      - bank_code
+      - bank_name
+    CreateBooking:
+      type: object
+      description: Serializer for creating bookings from cart or direct
+      properties:
+        space_id:
+          type: string
+        check_in:
+          type: string
+          format: date-time
+        check_out:
+          type: string
+          format: date-time
+        booking_type:
+          allOf:
+          - $ref: '#/components/schemas/CreateBookingBookingTypeEnum'
+          default: daily
+        number_of_guests:
+          type: integer
+          minimum: 1
+          default: 1
+        special_requests:
+          type: string
+      required:
+      - check_in
+      - check_out
+      - space_id
+    CreateBookingBookingTypeEnum:
+      enum:
+      - hourly
+      - daily
+      - monthly
+      type: string
+      description: |-
+        * `hourly` - hourly
+        * `daily` - daily
+        * `monthly` - monthly
+    CreateBroadcastNotification:
+      type: object
+      description: Serializer for creating broadcast notifications
+      properties:
+        workspace:
+          type: string
+          format: uuid
+        title:
+          type: string
+          maxLength: 255
+        message:
+          type: string
+        channels:
+          description: 'List of channels to send to: ["email", "push", "in_app"]'
+        target_users:
+          type: array
+          items:
+            type: integer
+          description: Leave empty to send to all workspace users
+        target_roles:
+          description: 'Target specific roles: ["admin", "manager", "staff", "user"]'
+        scheduled_at:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - message
+      - title
+      - workspace
+    CreateOrder:
+      type: object
+      description: Serializer for creating orders from bookings
+      properties:
+        booking_ids:
+          type: array
+          items:
+            type: string
+          description: List of booking IDs to include in this order
+        discount_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          default: '0.00'
+        notes:
+          type: string
+      required:
+      - booking_ids
+    CreateRefund:
+      type: object
+      description: Serializer for requesting refunds
+      properties:
+        order_id:
+          type: string
+        reason:
+          $ref: '#/components/schemas/CreateRefundReasonEnum'
+        reason_description:
+          type: string
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+      required:
+      - order_id
+      - reason
+      - reason_description
+    CreateRefundReasonEnum:
+      enum:
+      - user_request
+      - booking_cancelled
+      - system_error
+      - duplicate_charge
+      - other
+      type: string
+      description: |-
+        * `user_request` - user_request
+        * `booking_cancelled` - booking_cancelled
+        * `system_error` - system_error
+        * `duplicate_charge` - duplicate_charge
+        * `other` - other
+    CreateReview:
+      type: object
+      description: Serializer for creating reviews
+      properties:
+        rating:
+          type: integer
+          maximum: 5
+          minimum: 1
+        comment:
+          type: string
+      required:
+      - rating
+    CreateWithdrawal:
+      type: object
+      description: Serializer for creating withdrawal request
+      properties:
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        withdrawal_type:
+          $ref: '#/components/schemas/CreateWithdrawalWithdrawalTypeEnum'
+        description:
+          type: string
+        bank_account_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: If not provided, default account will be used
+      required:
+      - amount
+      - withdrawal_type
+    CreateWithdrawalWithdrawalTypeEnum:
+      enum:
+      - revenue
+      - commission
+      - refund
+      - manual
+      type: string
+      description: |-
+        * `revenue` - revenue
+        * `commission` - commission
+        * `refund` - refund
+        * `manual` - manual
+    DigestFrequencyEnum:
+      enum:
+      - immediate
+      - daily_digest
+      - weekly_digest
+      type: string
+      description: |-
+        * `immediate` - Immediate
+        * `daily_digest` - Daily Digest
+        * `weekly_digest` - Weekly Digest
+    ForcedPasswordChange:
+      type: object
+      description: Serializer for forced password change after admin reset
+      properties:
+        new_password:
+          type: string
+          writeOnly: true
+      required:
+      - new_password
+    ForgetPassword:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+      required:
+      - email
+    GoogleAuth:
+      type: object
+      properties:
+        code:
+          type: string
+      required:
+      - code
+    InitiatePayment:
+      type: object
+      description: Serializer for initiating payment
+      properties:
+        order_id:
+          type: string
+        payment_method:
+          $ref: '#/components/schemas/InitiatePaymentPaymentMethodEnum'
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+      required:
+      - order_id
+      - payment_method
+    InitiatePaymentPaymentMethodEnum:
+      enum:
+      - paystack
+      - flutterwave
+      - stripe
+      - paypal
+      - bank_transfer
+      type: string
+      description: |-
+        * `paystack` - paystack
+        * `flutterwave` - flutterwave
+        * `stripe` - stripe
+        * `paypal` - paypal
+        * `bank_transfer` - bank_transfer
+    InviteToken:
+      type: object
+      description: Serializer for generating invite tokens
+      properties:
+        email:
+          type: string
+          format: email
+        role:
+          $ref: '#/components/schemas/InviteTokenRoleEnum'
+      required:
+      - email
+      - role
+    InviteTokenRoleEnum:
+      enum:
+      - manager
+      - staff
+      - user
+      type: string
+      description: |-
+        * `manager` - manager
+        * `staff` - staff
+        * `user` - user
+    LoginSerializers:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          maxLength: 255
+      required:
+      - email
+      - password
+    MemberSignUp:
+      type: object
+      description: Serializer for member/staff/manager signup - allows any email
+      properties:
+        full_name:
+          type: string
+          maxLength: 200
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          writeOnly: true
+          minLength: 8
+        confirm_password:
+          type: string
+          writeOnly: true
+      required:
+      - confirm_password
+      - email
+      - full_name
+      - password
+    Notification:
+      type: object
+      description: Serializer for notifications
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        user:
+          type: integer
+          readOnly: true
+        notification_type:
+          $ref: '#/components/schemas/NotificationTypeEnum'
+        channel:
+          $ref: '#/components/schemas/ChannelEnum'
+        title:
+          type: string
+          maxLength: 255
+        message:
+          type: string
+        data:
+          description: Additional data (e.g., order_id, qr_code_id)
+        is_read:
+          type: boolean
+        is_sent:
+          type: boolean
+          readOnly: true
+        is_clicked:
+          type: boolean
+          description: For push notifications
+        sent_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        read_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        clicked_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        delivery_logs:
+          type: array
+          items:
+            $ref: '#/components/schemas/NotificationLog'
+          readOnly: true
+      required:
+      - channel
+      - clicked_at
+      - created_at
+      - delivery_logs
+      - id
+      - is_sent
+      - message
+      - notification_type
+      - read_at
+      - sent_at
+      - title
+      - updated_at
+      - user
+    NotificationLog:
+      type: object
+      description: Serializer for notification delivery logs
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        notification:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/NotificationLogStatusEnum'
+        attempt_number:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        error_message:
+          type: string
+          description: Error message if delivery failed
+        response_code:
+          type: string
+          description: HTTP or gateway response code
+          maxLength: 50
+        attempted_at:
+          type: string
+          format: date-time
+          readOnly: true
+        delivered_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+      required:
+      - attempted_at
+      - delivered_at
+      - id
+      - notification
+    NotificationLogStatusEnum:
+      enum:
+      - pending
+      - sent
+      - failed
+      - bounced
+      - complained
+      type: string
+      description: |-
+        * `pending` - Pending
+        * `sent` - Sent
+        * `failed` - Failed
+        * `bounced` - Bounced
+        * `complained` - Complained
+    NotificationPreference:
+      type: object
+      description: Serializer for notification preferences
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        user:
+          type: integer
+          readOnly: true
+        email_enabled:
+          type: boolean
+        email_qr_code:
+          type: boolean
+          description: Send QR codes via email
+        email_order_confirmation:
+          type: boolean
+        email_payment_confirmation:
+          type: boolean
+        email_booking_reminder:
+          type: boolean
+        email_booking_update:
+          type: boolean
+        sms_enabled:
+          type: boolean
+        sms_qr_code:
+          type: boolean
+        sms_booking_reminder:
+          type: boolean
+        push_enabled:
+          type: boolean
+        push_qr_code:
+          type: boolean
+        push_booking_reminder:
+          type: boolean
+        push_booking_update:
+          type: boolean
+        in_app_enabled:
+          type: boolean
+        in_app_qr_code:
+          type: boolean
+        in_app_booking_reminder:
+          type: boolean
+        in_app_booking_update:
+          type: boolean
+        digest_frequency:
+          $ref: '#/components/schemas/DigestFrequencyEnum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - updated_at
+      - user
+    NotificationTypeEnum:
+      enum:
+      - qr_code_generated
+      - qr_code_expired
+      - order_created
+      - payment_successful
+      - payment_failed
+      - booking_confirmed
+      - booking_cancelled
+      - booking_reminder
+      - booking_check_in
+      - booking_completed
+      - refund_initiated
+      - refund_completed
+      - system_alert
+      type: string
+      description: |-
+        * `qr_code_generated` - QR Code Generated
+        * `qr_code_expired` - QR Code Expired
+        * `order_created` - Order Created
+        * `payment_successful` - Payment Successful
+        * `payment_failed` - Payment Failed
+        * `booking_confirmed` - Booking Confirmed
+        * `booking_cancelled` - Booking Cancelled
+        * `booking_reminder` - Booking Reminder
+        * `booking_check_in` - Check-in Reminder
+        * `booking_completed` - Booking Completed
+        * `refund_initiated` - Refund Initiated
+        * `refund_completed` - Refund Completed
+        * `system_alert` - System Alert
+    OnboardingStatus:
+      type: object
+      description: Serializer for onboarding status
+      properties:
+        is_registered:
+          type: boolean
+        has_workspace:
+          type: boolean
+        completed_steps:
+          type: array
+          items:
+            type: string
+        progress_percentage:
+          type: integer
+          maximum: 100
+          minimum: 0
+      required:
+      - completed_steps
+      - has_workspace
+      - is_registered
+      - progress_percentage
+    Order:
+      type: object
+      description: Serializer for orders
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        order_number:
+          type: string
+          readOnly: true
+        workspace:
+          type: string
+          format: uuid
+          readOnly: true
+        user:
+          type: string
+          format: uuid
+          readOnly: true
+        bookings:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookingList'
+          readOnly: true
+        booking_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+            writeOnly: true
+          writeOnly: true
+        subtotal:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        discount_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        tax_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        total_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        status:
+          $ref: '#/components/schemas/StatusB97Enum'
+        payment_method:
+          type: string
+          nullable: true
+          maxLength: 50
+        payment_reference:
+          type: string
+          nullable: true
+          maxLength: 255
+        notes:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        paid_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+      required:
+      - booking_ids
+      - bookings
+      - completed_at
+      - created_at
+      - discount_amount
+      - id
+      - order_number
+      - paid_at
+      - subtotal
+      - tax_amount
+      - total_amount
+      - updated_at
+      - user
+      - workspace
+    OrderList:
+      type: object
+      description: Serializer for listing orders
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        order_number:
+          type: string
+          readOnly: true
+        user_email:
+          type: string
+          readOnly: true
+        booking_count:
+          type: integer
+          readOnly: true
+        total_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusB97Enum'
+          readOnly: true
+        payment_method:
+          type: string
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        paid_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+      required:
+      - booking_count
+      - created_at
+      - id
+      - order_number
+      - paid_at
+      - payment_method
+      - status
+      - total_amount
+      - user_email
+    OrderQRCode:
+      type: object
+      description: Serializer for QR code
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        order:
+          type: string
+          format: uuid
+          readOnly: true
+        verification_code:
+          type: string
+          readOnly: true
+          description: Unique code for QR verification
+        qr_code_url:
+          type: string
+          readOnly: true
+        qr_code_image:
+          type: string
+          format: uri
+          readOnly: true
+          nullable: true
+          description: Generated QR code image
+        status:
+          allOf:
+          - $ref: '#/components/schemas/OrderQRCodeStatusEnum'
+          readOnly: true
+        scan_count:
+          type: integer
+          readOnly: true
+        verified:
+          type: boolean
+          readOnly: true
+        verified_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: QR code expiry time for check-in
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        sent_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+      required:
+      - created_at
+      - id
+      - order
+      - qr_code_image
+      - qr_code_url
+      - scan_count
+      - sent_at
+      - status
+      - verification_code
+      - verified
+      - verified_at
+    OrderQRCodeStatusEnum:
+      enum:
+      - pending
+      - generated
+      - sent
+      - scanned
+      - verified
+      - expired
+      type: string
+      description: |-
+        * `pending` - Pending
+        * `generated` - Generated
+        * `sent` - Sent to User
+        * `scanned` - Scanned
+        * `verified` - Verified
+        * `expired` - Expired
+    PaginatedBankAccountList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/BankAccount'
+    PasswordResetConfirm:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        verification_code:
+          type: string
+          maxLength: 6
+          minLength: 6
+        new_password:
+          type: string
+          minLength: 8
+        confirm_password:
+          type: string
+          minLength: 8
+      required:
+      - confirm_password
+      - email
+      - new_password
+      - verification_code
+    PatchedAdminUpdateBookingStatus:
+      type: object
+      description: Serializer for updating booking status
+      properties:
+        status:
+          $ref: '#/components/schemas/AdminUpdateBookingStatusStatusEnum'
+        notes:
+          type: string
+          maxLength: 500
+    PatchedBankAccount:
+      type: object
+      description: Serializer for bank account
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        user:
+          type: string
+          format: uuid
+          readOnly: true
+        workspace:
+          type: string
+          format: uuid
+          readOnly: true
+        account_number:
+          type: string
+          maxLength: 20
+        account_name:
+          type: string
+          maxLength: 100
+        bank_name:
+          type: string
+          maxLength: 100
+        bank_code:
+          type: string
+          description: Bank code for the bank (e.g., 058 for GTBank)
+          maxLength: 10
+        account_type:
+          $ref: '#/components/schemas/AccountTypeEnum'
+        is_default:
+          type: boolean
+          description: Use this account by default for withdrawals
+        is_verified:
+          type: boolean
+          readOnly: true
+          description: Account verified with payment gateway
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedNotificationPreference:
+      type: object
+      description: Serializer for notification preferences
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        user:
+          type: integer
+          readOnly: true
+        email_enabled:
+          type: boolean
+        email_qr_code:
+          type: boolean
+          description: Send QR codes via email
+        email_order_confirmation:
+          type: boolean
+        email_payment_confirmation:
+          type: boolean
+        email_booking_reminder:
+          type: boolean
+        email_booking_update:
+          type: boolean
+        sms_enabled:
+          type: boolean
+        sms_qr_code:
+          type: boolean
+        sms_booking_reminder:
+          type: boolean
+        push_enabled:
+          type: boolean
+        push_qr_code:
+          type: boolean
+        push_booking_reminder:
+          type: boolean
+        push_booking_update:
+          type: boolean
+        in_app_enabled:
+          type: boolean
+        in_app_qr_code:
+          type: boolean
+        in_app_booking_reminder:
+          type: boolean
+        in_app_booking_update:
+          type: boolean
+        digest_frequency:
+          $ref: '#/components/schemas/DigestFrequencyEnum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+    Payment:
+      type: object
+      description: Serializer for payments
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        order:
+          type: string
+          format: uuid
+          readOnly: true
+        order_details:
+          allOf:
+          - $ref: '#/components/schemas/Order'
+          readOnly: true
+        workspace:
+          type: string
+          format: uuid
+          readOnly: true
+        user:
+          type: string
+          format: uuid
+          readOnly: true
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        currency:
+          type: string
+          maxLength: 3
+        payment_method:
+          $ref: '#/components/schemas/PaymentMethod18eEnum'
+        gateway_transaction_id:
+          type: string
+          nullable: true
+          maxLength: 255
+        status:
+          $ref: '#/components/schemas/Status7a2Enum'
+        gateway_response:
+          readOnly: true
+        retry_count:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        completed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+      required:
+      - amount
+      - completed_at
+      - created_at
+      - gateway_response
+      - id
+      - order
+      - order_details
+      - payment_method
+      - retry_count
+      - updated_at
+      - user
+      - workspace
+    PaymentCallback:
+      type: object
+      description: Serializer for payment gateway callbacks
+      properties:
+        reference:
+          type: string
+        status:
+          type: string
+        message:
+          type: string
+      required:
+      - reference
+      - status
+    PaymentList:
+      type: object
+      description: Serializer for listing payments
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        order_number:
+          type: string
+          readOnly: true
+        user_email:
+          type: string
+          readOnly: true
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        currency:
+          type: string
+          readOnly: true
+        payment_method:
+          allOf:
+          - $ref: '#/components/schemas/PaymentMethod18eEnum'
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/Status7a2Enum'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        completed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+      required:
+      - amount
+      - completed_at
+      - created_at
+      - currency
+      - id
+      - order_number
+      - payment_method
+      - status
+      - user_email
+    PaymentMethod18eEnum:
+      enum:
+      - paystack
+      - flutterwave
+      - stripe
+      - paypal
+      - bank_transfer
+      type: string
+      description: |-
+        * `paystack` - Paystack
+        * `flutterwave` - Flutterwave
+        * `stripe` - Stripe
+        * `paypal` - PayPal
+        * `bank_transfer` - Bank Transfer
+    ProcessWithdrawal:
+      type: object
+      description: Serializer for processing withdrawal
+      properties:
+        gateway_transaction_id:
+          type: string
+          maxLength: 255
+        notes:
+          type: string
+    Profile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        full_name:
+          type: string
+          maxLength: 200
+        email:
+          type: string
+          format: email
+          readOnly: true
+        avatar_url:
+          type: string
+          format: uri
+          nullable: true
+          maxLength: 200
+        date_joined:
+          type: string
+          format: date-time
+          readOnly: true
+        last_login:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - date_joined
+      - email
+      - full_name
+      - id
+      - last_login
+    Refund:
+      type: object
+      description: Serializer for refunds
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        payment:
+          type: string
+          format: uuid
+          readOnly: true
+        order:
+          type: string
+          format: uuid
+          readOnly: true
+        workspace:
+          type: string
+          format: uuid
+          readOnly: true
+        user:
+          type: string
+          format: uuid
+          readOnly: true
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        reason:
+          $ref: '#/components/schemas/RefundReasonEnum'
+        reason_description:
+          type: string
+        gateway_refund_id:
+          type: string
+          readOnly: true
+          nullable: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/RefundStatusEnum'
+          readOnly: true
+        requested_at:
+          type: string
+          format: date-time
+          readOnly: true
+        completed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+      required:
+      - amount
+      - completed_at
+      - gateway_refund_id
+      - id
+      - order
+      - payment
+      - reason
+      - reason_description
+      - requested_at
+      - status
+      - user
+      - workspace
+    RefundReasonEnum:
+      enum:
+      - user_request
+      - booking_cancelled
+      - system_error
+      - duplicate_charge
+      - other
+      type: string
+      description: |-
+        * `user_request` - User Request
+        * `booking_cancelled` - Booking Cancelled
+        * `system_error` - System Error
+        * `duplicate_charge` - Duplicate Charge
+        * `other` - Other
+    RefundStatusEnum:
+      enum:
+      - pending
+      - processing
+      - completed
+      - failed
+      type: string
+      description: |-
+        * `pending` - Pending
+        * `processing` - Processing
+        * `completed` - Completed
+        * `failed` - Failed
+    RejectWithdrawal:
+      type: object
+      description: Serializer for rejecting withdrawal
+      properties:
+        reason:
+          type: string
+          maxLength: 500
+      required:
+      - reason
+    ResendPasswordReset:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+      required:
+      - email
+    Role986Enum:
+      enum:
+      - admin
+      - manager
+      - staff
+      - user
+      type: string
+      description: |-
+        * `admin` - Admin
+        * `manager` - Manager
+        * `staff` - Staff
+        * `user` - User
+    Space:
+      type: object
+      description: Serializer for Space model - List/Create view
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        branch:
+          type: string
+          format: uuid
+        branch_name:
+          type: string
+          readOnly: true
+        workspace_name:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          nullable: true
+        space_type:
+          $ref: '#/components/schemas/SpaceTypeEnum'
+        capacity:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 1
+          format: int64
+        hourly_rate:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        daily_rate:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+        monthly_rate:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+        image_url:
+          type: string
+          format: uri
+          nullable: true
+          maxLength: 200
+        amenities: {}
+        is_available:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - branch
+      - branch_name
+      - capacity
+      - created_at
+      - hourly_rate
+      - id
+      - name
+      - space_type
+      - updated_at
+      - workspace_name
+    SpaceDetail:
+      type: object
+      description: Detailed space serializer
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        branch:
+          allOf:
+          - $ref: '#/components/schemas/BranchSimple'
+          readOnly: true
+        workspace_name:
+          type: string
+          readOnly: true
+        workspace_id:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          nullable: true
+        space_type:
+          $ref: '#/components/schemas/SpaceTypeEnum'
+        capacity:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 1
+          format: int64
+        hourly_rate:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        daily_rate:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+        monthly_rate:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+        image_url:
+          type: string
+          format: uri
+          nullable: true
+          maxLength: 200
+        amenities: {}
+        is_available:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - branch
+      - capacity
+      - created_at
+      - hourly_rate
+      - id
+      - name
+      - space_type
+      - updated_at
+      - workspace_id
+      - workspace_name
+    SpaceSimple:
+      type: object
+      description: Simple space serializer for nested data
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        branch_name:
+          type: string
+          readOnly: true
+        space_type:
+          $ref: '#/components/schemas/SpaceTypeEnum'
+        capacity:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 1
+          format: int64
+        hourly_rate:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        daily_rate:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+        monthly_rate:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+        is_available:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - branch_name
+      - capacity
+      - created_at
+      - hourly_rate
+      - id
+      - name
+      - space_type
+    SpaceTypeEnum:
+      enum:
+      - meeting_room
+      - office
+      - coworking
+      - event_space
+      - desk
+      - lounge
+      type: string
+      description: |-
+        * `meeting_room` - Meeting Room
+        * `office` - Office
+        * `coworking` - Coworking Space
+        * `event_space` - Event Space
+        * `desk` - Dedicated Desk
+        * `lounge` - Lounge
+    Status0a9Enum:
+      enum:
+      - pending
+      - approved
+      - processing
+      - completed
+      - failed
+      - cancelled
+      type: string
+      description: |-
+        * `pending` - Pending
+        * `approved` - Approved
+        * `processing` - Processing
+        * `completed` - Completed
+        * `failed` - Failed
+        * `cancelled` - Cancelled
+    Status528Enum:
+      enum:
+      - pending
+      - confirmed
+      - in_progress
+      - completed
+      - cancelled
+      type: string
+      description: |-
+        * `pending` - Pending
+        * `confirmed` - Confirmed
+        * `in_progress` - In Progress
+        * `completed` - Completed
+        * `cancelled` - Cancelled
+    Status7a2Enum:
+      enum:
+      - pending
+      - processing
+      - success
+      - failed
+      - cancelled
+      - refunded
+      type: string
+      description: |-
+        * `pending` - Pending
+        * `processing` - Processing
+        * `success` - Success
+        * `failed` - Failed
+        * `cancelled` - Cancelled
+        * `refunded` - Refunded
+    StatusB97Enum:
+      enum:
+      - pending
+      - paid
+      - processing
+      - completed
+      - failed
+      - refunded
+      type: string
+      description: |-
+        * `pending` - Pending
+        * `paid` - Paid
+        * `processing` - Processing
+        * `completed` - Completed
+        * `failed` - Failed
+        * `refunded` - Refunded
+    UserSerializers:
+      type: object
+      description: User serializer with validation logic for registration
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        full_name:
+          type: string
+          maxLength: 200
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        password:
+          type: string
+          writeOnly: true
+          maxLength: 255
+        confirm_password:
+          type: string
+          writeOnly: true
+        is_active:
+          type: boolean
+          readOnly: true
+        avatar_url:
+          type: string
+          format: uri
+          readOnly: true
+          nullable: true
+      required:
+      - avatar_url
+      - confirm_password
+      - email
+      - full_name
+      - id
+      - is_active
+    UserSimple:
+      type: object
+      description: Simple user serializer for nested data
+      properties:
+        id:
+          type: string
+        full_name:
+          type: string
+        email:
+          type: string
+          format: email
+      required:
+      - email
+      - full_name
+      - id
+    Withdrawal:
+      type: object
+      description: Serializer for withdrawal details
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        workspace:
+          type: string
+          format: uuid
+          readOnly: true
+        requested_by:
+          type: string
+          format: uuid
+          readOnly: true
+        requested_by_email:
+          type: string
+          readOnly: true
+        withdrawal_number:
+          type: string
+          readOnly: true
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        currency:
+          type: string
+          maxLength: 3
+        withdrawal_type:
+          $ref: '#/components/schemas/WithdrawalType556Enum'
+        description:
+          type: string
+          nullable: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/Status0a9Enum'
+          readOnly: true
+        bank_account:
+          type: string
+          format: uuid
+          nullable: true
+        bank_account_details:
+          allOf:
+          - $ref: '#/components/schemas/BankAccount'
+          readOnly: true
+        gateway_transaction_id:
+          type: string
+          readOnly: true
+          nullable: true
+        approved_by:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+        approved_by_email:
+          type: string
+          readOnly: true
+          nullable: true
+        approved_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        approval_notes:
+          type: string
+          nullable: true
+        processed_by:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+        processed_by_email:
+          type: string
+          readOnly: true
+          nullable: true
+        processed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        error_message:
+          type: string
+          readOnly: true
+          nullable: true
+        retry_count:
+          type: integer
+          readOnly: true
+        requested_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        completed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        logs:
+          type: array
+          items:
+            $ref: '#/components/schemas/WithdrawalLog'
+          readOnly: true
+      required:
+      - amount
+      - approved_at
+      - approved_by
+      - approved_by_email
+      - bank_account_details
+      - completed_at
+      - error_message
+      - gateway_transaction_id
+      - id
+      - logs
+      - processed_at
+      - processed_by
+      - processed_by_email
+      - requested_at
+      - requested_by
+      - requested_by_email
+      - retry_count
+      - status
+      - updated_at
+      - withdrawal_number
+      - workspace
+    WithdrawalList:
+      type: object
+      description: Lightweight serializer for listing withdrawals
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        withdrawal_number:
+          type: string
+          readOnly: true
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        currency:
+          type: string
+          readOnly: true
+        withdrawal_type:
+          allOf:
+          - $ref: '#/components/schemas/WithdrawalType556Enum'
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/Status0a9Enum'
+          readOnly: true
+        requested_by_email:
+          type: string
+          readOnly: true
+        bank_account_number:
+          type: string
+          readOnly: true
+        requested_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - amount
+      - bank_account_number
+      - currency
+      - id
+      - requested_at
+      - requested_by_email
+      - status
+      - updated_at
+      - withdrawal_number
+      - withdrawal_type
+    WithdrawalLog:
+      type: object
+      description: Serializer for withdrawal log entries
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        status:
+          $ref: '#/components/schemas/WithdrawalLogStatusEnum'
+        message:
+          type: string
+        metadata:
+          description: Additional details about this status change
+        created_by:
+          type: string
+          format: uuid
+          nullable: true
+        created_by_email:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - created_by_email
+      - id
+      - message
+      - status
+    WithdrawalLogStatusEnum:
+      enum:
+      - requested
+      - pending_approval
+      - approved
+      - processing
+      - completed
+      - failed
+      - cancelled
+      type: string
+      description: |-
+        * `requested` - Withdrawal Requested
+        * `pending_approval` - Pending Approval
+        * `approved` - Approved
+        * `processing` - Processing
+        * `completed` - Completed
+        * `failed` - Failed
+        * `cancelled` - Cancelled
+    WithdrawalType556Enum:
+      enum:
+      - revenue
+      - commission
+      - refund
+      - manual
+      type: string
+      description: |-
+        * `revenue` - Revenue Share
+        * `commission` - Commission
+        * `refund` - Refund
+        * `manual` - Manual Transfer
+    Workspace:
+      type: object
+      description: Serializer for Workspace model - List/Create view
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          nullable: true
+        admin:
+          type: string
+          format: uuid
+        admin_name:
+          type: string
+          readOnly: true
+        admin_email:
+          type: string
+          readOnly: true
+        logo_url:
+          type: string
+          format: uri
+          nullable: true
+          maxLength: 200
+        website:
+          type: string
+          format: uri
+          nullable: true
+          maxLength: 200
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        phone:
+          type: string
+          nullable: true
+          maxLength: 20
+        address:
+          type: string
+          nullable: true
+          maxLength: 255
+        city:
+          type: string
+          nullable: true
+          maxLength: 100
+        state:
+          type: string
+          nullable: true
+          maxLength: 100
+        country:
+          type: string
+          nullable: true
+          maxLength: 100
+        postal_code:
+          type: string
+          nullable: true
+          maxLength: 20
+        is_active:
+          type: boolean
+        members_count:
+          type: integer
+          readOnly: true
+        branches_count:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - admin
+      - admin_email
+      - admin_name
+      - branches_count
+      - created_at
+      - email
+      - id
+      - members_count
+      - name
+      - updated_at
+    WorkspaceDetail:
+      type: object
+      description: Detailed workspace serializer with nested data
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          nullable: true
+        admin:
+          allOf:
+          - $ref: '#/components/schemas/UserSimple'
+          readOnly: true
+        logo_url:
+          type: string
+          format: uri
+          nullable: true
+          maxLength: 200
+        website:
+          type: string
+          format: uri
+          nullable: true
+          maxLength: 200
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        phone:
+          type: string
+          nullable: true
+          maxLength: 20
+        address:
+          type: string
+          nullable: true
+          maxLength: 255
+        city:
+          type: string
+          nullable: true
+          maxLength: 100
+        state:
+          type: string
+          nullable: true
+          maxLength: 100
+        country:
+          type: string
+          nullable: true
+          maxLength: 100
+        postal_code:
+          type: string
+          nullable: true
+          maxLength: 20
+        is_active:
+          type: boolean
+        branches:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+          readOnly: true
+        members:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+          readOnly: true
+        total_spaces:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - admin
+      - branches
+      - created_at
+      - email
+      - id
+      - members
+      - name
+      - total_spaces
+      - updated_at
+    WorkspaceMember:
+      type: object
+      description: Serializer for workspace members
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        user_id:
+          type: string
+          readOnly: true
+        user_email:
+          type: string
+          readOnly: true
+        user_name:
+          type: string
+          readOnly: true
+        role:
+          $ref: '#/components/schemas/Role986Enum'
+        is_active:
+          type: boolean
+        joined_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - id
+      - joined_at
+      - user_email
+      - user_id
+      - user_name
+    WorkspaceMemberDetail:
+      type: object
+      description: Detailed serializer for workspace members
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        user:
+          type: object
+          additionalProperties: {}
+          readOnly: true
+        role:
+          $ref: '#/components/schemas/Role986Enum'
+        is_active:
+          type: boolean
+        joined_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - id
+      - joined_at
+      - updated_at
+      - user
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+servers:
+- url: http://localhost:8000
+  description: Development Server
+- url: https://api.xbooking.com
+  description: Production Server

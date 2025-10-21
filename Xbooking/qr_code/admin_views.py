@@ -7,6 +7,7 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from qr_code.models import OrderQRCode, QRCodeScanLog
 from qr_code.serializers import OrderQRCodeSerializer, QRCodeScanLogSerializer, VerifyQRCodeSerializer
+from qr_code.admin_serializers import AdminVerifyQRCodeSerializer, AdminRejectQRCodeSerializer, AdminResendQRCodeSerializer
 from payment.models import Order
 from booking.models import Booking
 from workspace.permissions import check_workspace_member
@@ -18,6 +19,7 @@ from django.db.models import Count
 class AdminQRCodeDashboardView(APIView):
     """Admin dashboard for QR code verification"""
     permission_classes = [IsAuthenticated]
+    serializer_class = OrderQRCodeSerializer
     
     @extend_schema(
         summary="QR code verification dashboard",
@@ -98,6 +100,7 @@ class AdminQRCodeDashboardView(APIView):
 class AdminListPendingVerificationsView(APIView):
     """List pending QR code verifications"""
     permission_classes = [IsAuthenticated]
+    serializer_class = OrderQRCodeSerializer
     
     @extend_schema(
         summary="List pending verifications",
@@ -169,17 +172,15 @@ class AdminListPendingVerificationsView(APIView):
 class AdminVerifyQRCodeView(APIView):
     """Admin verify QR code and complete check-in"""
     permission_classes = [IsAuthenticated]
+    serializer_class = OrderQRCodeSerializer
     
     @extend_schema(
         summary="Verify QR code (Admin)",
         description="Admin verifies QR code and completes check-in",
         tags=["Admin QR Verification"],
-        request={"type": "object", "properties": {
-            "qr_code_id": {"type": "string"},
-            "notes": {"type": "string"}
-        }},
+        request=AdminVerifyQRCodeSerializer,
         responses={
-            200: OrderQRCodeSerializer(),
+            200: {"type": "object", "properties": {"qr_code": {"type": "object"}, "bookings_updated": {"type": "integer"}, "message": {"type": "string"}}},
             400: {"type": "object", "properties": {"detail": {"type": "string"}}},
             403: {"type": "object", "properties": {"detail": {"type": "string"}}},
             404: {"type": "object", "properties": {"detail": {"type": "string"}}}
@@ -263,17 +264,15 @@ class AdminVerifyQRCodeView(APIView):
 class AdminRejectQRCodeView(APIView):
     """Admin reject QR code verification"""
     permission_classes = [IsAuthenticated]
+    serializer_class = OrderQRCodeSerializer
     
     @extend_schema(
         summary="Reject QR code",
         description="Admin rejects QR code and marks as invalid",
         tags=["Admin QR Verification"],
-        request={"type": "object", "properties": {
-            "qr_code_id": {"type": "string"},
-            "reason": {"type": "string"}
-        }},
+        request=AdminRejectQRCodeSerializer,
         responses={
-            200: OrderQRCodeSerializer(),
+            200: {"type": "object", "properties": {"qr_code": {"type": "object"}, "message": {"type": "string"}, "reason": {"type": "string"}}},
             400: {"type": "object", "properties": {"detail": {"type": "string"}}},
             403: {"type": "object", "properties": {"detail": {"type": "string"}}},
             404: {"type": "object", "properties": {"detail": {"type": "string"}}}
@@ -344,6 +343,7 @@ class AdminRejectQRCodeView(APIView):
 class AdminQRCodeDetailsView(APIView):
     """Get detailed QR code information"""
     permission_classes = [IsAuthenticated]
+    serializer_class = OrderQRCodeSerializer
     
     @extend_schema(
         summary="Get QR code details",
@@ -351,7 +351,7 @@ class AdminQRCodeDetailsView(APIView):
         tags=["Admin QR Verification"],
         responses={
             200: {"type": "object", "properties": {
-                "qr_code": OrderQRCodeSerializer(),
+                "qr_code": {"type": "object"},
                 "scan_history": {"type": "array"},
                 "order_details": {"type": "object"},
                 "bookings": {"type": "array"}
@@ -431,6 +431,7 @@ class AdminQRCodeDetailsView(APIView):
 class AdminVerificationStatsView(APIView):
     """Get verification statistics"""
     permission_classes = [IsAuthenticated]
+    serializer_class = OrderQRCodeSerializer
     
     @extend_schema(
         summary="Get verification statistics",
@@ -502,6 +503,7 @@ class AdminVerificationStatsView(APIView):
 class AdminResendQRCodeView(APIView):
     """Resend QR code to user"""
     permission_classes = [IsAuthenticated]
+    serializer_class = OrderQRCodeSerializer
     
     @extend_schema(
         summary="Resend QR code",

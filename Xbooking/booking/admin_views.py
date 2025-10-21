@@ -7,6 +7,7 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from booking.models import Booking, BookingReview
 from booking.serializers import BookingListSerializer, BookingDetailSerializer, BookingReviewSerializer
+from booking.admin_serializers import AdminUpdateBookingStatusSerializer, AdminBookingFilterSerializer
 from workspace.permissions import check_workspace_member
 from drf_spectacular.utils import extend_schema
 from django.utils.decorators import method_decorator
@@ -17,6 +18,7 @@ import uuid
 class AdminListBookingsView(APIView):
     """List all bookings for a workspace - Admin/Manager only"""
     permission_classes = [IsAuthenticated]
+    serializer_class = BookingListSerializer
     
     @extend_schema(
         summary="List all workspace bookings",
@@ -53,13 +55,14 @@ class AdminListBookingsView(APIView):
 class AdminBookingDetailView(APIView):
     """Get detailed booking information - Admin/Manager only"""
     permission_classes = [IsAuthenticated]
+    serializer_class = BookingDetailSerializer
     
     @extend_schema(
         summary="Get booking details",
         description="Get detailed information about a specific booking",
         tags=["Admin Bookings"],
         responses={
-            200: BookingDetailSerializer(),
+            200: BookingDetailSerializer,
             403: {"type": "object", "properties": {"detail": {"type": "string"}}},
             404: {"type": "object", "properties": {"detail": {"type": "string"}}}
         }
@@ -92,16 +95,15 @@ class AdminBookingDetailView(APIView):
 class AdminUpdateBookingStatusView(APIView):
     """Update booking status - Admin/Manager only"""
     permission_classes = [IsAuthenticated]
+    serializer_class = AdminUpdateBookingStatusSerializer
     
     @extend_schema(
         summary="Update booking status",
         description="Update booking status (confirm, complete, cancel)",
         tags=["Admin Bookings"],
-        request={"type": "object", "properties": {
-            "status": {"type": "string", "enum": ["pending", "confirmed", "in_progress", "completed", "cancelled"]}
-        }},
+        request=AdminUpdateBookingStatusSerializer,
         responses={
-            200: BookingDetailSerializer(),
+            200: BookingDetailSerializer,
             400: {"type": "object", "properties": {"detail": {"type": "string"}}},
             403: {"type": "object", "properties": {"detail": {"type": "string"}}},
             404: {"type": "object", "properties": {"detail": {"type": "string"}}}
