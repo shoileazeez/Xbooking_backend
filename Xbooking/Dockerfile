@@ -17,10 +17,6 @@ RUN apt-get update \
 # Set working directory
 WORKDIR /app
 
-# Create non-root user for security
-RUN addgroup --system django \
-    && adduser --system --ingroup django django
-
 # Copy requirements file first (for better caching)
 COPY requirements.txt /app/
 
@@ -31,13 +27,20 @@ RUN pip install --upgrade pip \
 # Copy project files
 COPY . /app/
 
+# Copy and set permissions for entrypoint script
+COPY docker-entrypoint.sh /app/
+RUN chmod +x /app/docker-entrypoint.sh
+
+# Create non-root user for security
+RUN addgroup --system django \
+    && adduser --system --ingroup django django
+
+# Create directories for static and media files with proper permissions
+RUN mkdir -p /app/staticfiles /app/media \
+    && chown -R django:django /app
 
 # Switch to non-root user
 USER django
-
-# Run migrations and collect static files
-RUN python manage.py migrate --noinput || echo "Migration failed, continuing..."
-RUN python manage.py collectstatic --noinput --clear || echo "Static files collection failed, continuing..."
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
@@ -45,6 +48,9 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
 
 # Expose port
 EXPOSE 8000
+
+# Use entrypoint script
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
 
 # Command to run the application
 CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "3", "--timeout", "120", "Xbooking.wsgi:application"]
