@@ -204,13 +204,31 @@ SPECTACULAR_SETTINGS = {
     'SERVERS': [
         {'url': 'http://localhost:8000', 'description': 'Development Server'},
         {'url': 'https://api.xbooking.com', 'description': 'Production Server'},
-        {'url': 'https://xbooking-backend.onrender.com', 'description': 'test production Server'},
+        {'url': 'https://xbooking-backend.onrender.com', 'description': 'Render Deployment'},
     ],
     'CONTACT': {
         'name': 'Xbooking Support',
         'email': 'support@xbooking.com',
     },
+
+    # 👇 This is what makes the "Authorize" button work
+    'SWAGGER_UI_SETTINGS': {
+        'persistAuthorization': True,
+    },
+
+    'SECURITY': [{'BearerAuth': []}],
+    'COMPONENTS': {
+        'securitySchemes': {
+            'BearerAuth': {
+                'type': 'http',
+                'scheme': 'bearer',
+                'bearerFormat': 'JWT',
+                'description': 'JWT Authorization using the Bearer scheme. Example: "Authorization: Bearer <token>"',
+            },
+        },
+    },
 }
+
 
 # Celery Configuration
 CELERY_BROKER_URL = config('CELERY_BROKER_URL', default='redis://localhost:6379/0')
