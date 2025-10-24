@@ -37,8 +37,6 @@ COPY . /app/
 # Switch to non-root user
 USER django
 
-# Run migrations and collect static files
-RUN python manage.py migrate --noinput || echo "Migration failed, continuing..."
 # Health check
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD python -c "import django; django.setup(); from django.http import HttpRequest; from django.test import Client; client = Client(); response = client.get('/'); assert response.status_code in [200, 301, 302]" || exit 1
@@ -47,4 +45,5 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
 EXPOSE 8000
 
 # Command to run the application
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "3", "--timeout", "120", "Xbooking.wsgi:application"]
+CMD ["bash", "-c", "python manage.py migrate --noinput && gunicorn --bind 0.0.0.0:8000 --workers 3 --timeout 120 Xbooking.wsgi:application"]
+
