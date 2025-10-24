@@ -89,7 +89,7 @@ WSGI_APPLICATION = 'Xbooking.wsgi.application'
 # Use DATABASE_URL from environment variable, fallback to SQLite for development
 DATABASES = {
     'default': dj_database_url.config(
-        default=f'sqlite:///{BASE_DIR / "db.sqlite3"}',
+        default=f'sqlite:///{str(BASE_DIR / "db.sqlite3")}',
         conn_max_age=600,
         conn_health_checks=True,
     )
