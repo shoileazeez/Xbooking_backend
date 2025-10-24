@@ -21,6 +21,8 @@ WORKDIR /app
 RUN addgroup --system django \
     && adduser --system --ingroup django django
 
+RUN mkdir -p /app && chmod -R 777 /app
+
 # Copy requirements file first (for better caching)
 COPY requirements.txt /app/
 
@@ -37,8 +39,6 @@ USER django
 
 # Run migrations and collect static files
 RUN python manage.py migrate --noinput || echo "Migration failed, continuing..."
-RUN python manage.py collectstatic --noinput --clear || echo "Static files collection failed, continuing..."
-
 # Health check
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD python -c "import django; django.setup(); from django.http import HttpRequest; from django.test import Client; client = Client(); response = client.get('/'); assert response.status_code in [200, 301, 302]" || exit 1
