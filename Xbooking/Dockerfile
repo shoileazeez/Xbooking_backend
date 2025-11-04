@@ -21,6 +21,8 @@ WORKDIR /app
 RUN addgroup --system django \
     && adduser --system --ingroup django django
 
+RUN mkdir -p /app && chmod -R 777 /app
+
 # Copy requirements file first (for better caching)
 COPY requirements.txt /app/
 
@@ -35,9 +37,7 @@ COPY . /app/
 # Switch to non-root user
 USER django
 
-# Run migrations and collect static files
-RUN python manage.py migrate --noinput || echo "Migration failed, continuing..."
-RUN python manage.py collectstatic --noinput --clear || echo "Static files collection failed, continuing..."
+RUN python manage.py collectstatic --noinput --clear || echo "Static collection failed, continuing..."
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
@@ -47,4 +47,5 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
 EXPOSE 8000
 
 # Command to run the application
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "3", "--timeout", "120", "Xbooking.wsgi:application"]
+CMD ["bash", "-c", "python manage.py migrate --noinput && gunicorn --bind 0.0.0.0:8000 --workers 3 --timeout 120 Xbooking.wsgi:application"]
+

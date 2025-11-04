@@ -14,6 +14,7 @@ from pathlib import Path
 from datetime import timedelta
 import os
 from decouple import config
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -38,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
+    'django.contrib.staticfiles',
     'django.contrib.messages',
     "user",
     "workspace",
@@ -54,6 +56,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     "corsheaders.middleware.CorsMiddleware",
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -85,11 +88,13 @@ WSGI_APPLICATION = 'Xbooking.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# Use DATABASE_URL from environment variable, fallback to SQLite for development
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default=f'sqlite:///{str(BASE_DIR / "db.sqlite3")}',
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 }
 
 
@@ -201,13 +206,31 @@ SPECTACULAR_SETTINGS = {
     'SERVERS': [
         {'url': 'http://localhost:8000', 'description': 'Development Server'},
         {'url': 'https://api.xbooking.com', 'description': 'Production Server'},
-        {'url': 'https://xbooking-backend.onrender.com', 'description': 'test production Server'},
+        {'url': 'https://xbooking-backend.onrender.com', 'description': 'Render Deployment'},
     ],
     'CONTACT': {
         'name': 'Xbooking Support',
         'email': 'support@xbooking.com',
     },
+
+    # 👇 This is what makes the "Authorize" button work
+    'SWAGGER_UI_SETTINGS': {
+        'persistAuthorization': True,
+    },
+
+    'SECURITY': [{'BearerAuth': []}],
+    'COMPONENTS': {
+        'securitySchemes': {
+            'BearerAuth': {
+                'type': 'http',
+                'scheme': 'bearer',
+                'bearerFormat': 'JWT',
+                'description': 'JWT Authorization using the Bearer scheme. Example: "Authorization: Bearer <token>"',
+            },
+        },
+    },
 }
+
 
 # Celery Configuration
 CELERY_BROKER_URL = config('CELERY_BROKER_URL', default='redis://localhost:6379/0')
@@ -229,6 +252,15 @@ CACHES = {
         }
     }
 }
+
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Media files
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # Payment Gateway Configuration
 PAYSTACK_SECRET_KEY = config('PAYSTACK_SECRET_KEY', default='')
