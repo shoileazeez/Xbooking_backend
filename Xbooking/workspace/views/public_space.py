@@ -24,7 +24,7 @@ class PublicSpaceListView(APIView):
         """Get all spaces that are available for booking"""
         # Filter active spaces from active branches in active workspaces
         spaces = Space.objects.filter(
-            is_active=True,
+            is_available=True,
             branch__is_active=True,
             branch__workspace__is_active=True
         ).select_related('branch', 'branch__workspace')
@@ -75,7 +75,7 @@ class PublicSpaceDetailView(APIView):
                 'branch', 'branch__workspace'
             ).get(
                 id=space_id,
-                is_active=True,
+                is_available=True,
                 branch__is_active=True,
                 branch__workspace__is_active=True
             )
