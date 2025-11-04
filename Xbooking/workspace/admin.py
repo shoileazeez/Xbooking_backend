@@ -137,7 +137,7 @@ class WorkspaceUserAdmin(admin.ModelAdmin):
 @admin.register(Space)
 class SpaceAdmin(admin.ModelAdmin):
     """Admin interface for Space"""
-    list_display = ['name', 'branch', 'space_type', 'capacity', 'hourly_rate', 'is_available', 'created_at']
+    list_display = ['name', 'branch', 'space_type', 'capacity', 'is_available', 'created_at']
     list_filter = ['space_type', 'is_available', 'branch__workspace', 'created_at']
     search_fields = ['name', 'branch__name', 'branch__workspace__name']
     readonly_fields = ['id', 'created_at', 'updated_at']

@@ -22,8 +22,8 @@ class WorkspaceSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'name', 'description', 'admin', 'admin_name', 'admin_email',
             'logo_url', 'website', 'email', 'phone', 'address', 'city', 'state',
-            'country', 'postal_code', 'is_active', 'members_count', 'branches_count',
-            'created_at', 'updated_at'
+            'country', 'postal_code', 'social_media_links', 'is_active', 
+            'members_count', 'branches_count', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
 
@@ -108,8 +108,8 @@ class BranchSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'workspace', 'workspace_name', 'name', 'description', 'manager',
             'manager_name', 'manager_email', 'email', 'phone', 'address', 'city',
-            'state', 'country', 'postal_code', 'latitude', 'longitude', 'is_active',
-            'spaces_count', 'created_at', 'updated_at'
+            'state', 'country', 'postal_code', 'latitude', 'longitude', 'operating_hours',
+            'images', 'is_active', 'spaces_count', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
 
@@ -149,8 +149,8 @@ class SpaceSimpleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Space
         fields = [
-            'id', 'name', 'branch_name', 'space_type', 'capacity', 'hourly_rate',
-            'daily_rate', 'monthly_rate', 'is_available', 'created_at'
+            'id', 'name', 'branch_name', 'space_type', 'capacity', 'price_per_hour',
+            'daily_rate', 'monthly_rate', 'image_url', 'is_available', 'created_at'
         ]
         read_only_fields = ['id', 'created_at']
 
@@ -164,8 +164,10 @@ class SpaceSerializer(serializers.ModelSerializer):
         model = Space
         fields = [
             'id', 'branch', 'branch_name', 'workspace_name', 'name', 'description',
-            'space_type', 'capacity', 'hourly_rate', 'daily_rate', 'monthly_rate',
-            'image_url', 'amenities', 'is_available', 'created_at', 'updated_at'
+            'space_type', 'capacity', 'price_per_hour', 'daily_rate', 'monthly_rate',
+            'image_url', 'amenities', 'rules', 'cancellation_policy', 
+            'operational_hours', 'availability_schedule', 'is_available', 
+            'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
 
@@ -180,8 +182,10 @@ class SpaceDetailSerializer(serializers.ModelSerializer):
         model = Space
         fields = [
             'id', 'branch', 'workspace_name', 'workspace_id', 'name', 'description',
-            'space_type', 'capacity', 'hourly_rate', 'daily_rate', 'monthly_rate',
-            'image_url', 'amenities', 'is_available', 'created_at', 'updated_at'
+            'space_type', 'capacity', 'price_per_hour', 'daily_rate', 'monthly_rate',
+            'image_url', 'amenities', 'rules', 'cancellation_policy', 
+            'operational_hours', 'availability_schedule', 'is_available', 
+            'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
 

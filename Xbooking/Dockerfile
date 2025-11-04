@@ -47,5 +47,5 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
 EXPOSE 8000
 
 # Command to run the application
-CMD ["bash", "-c", "python manage.py migrate --noinput && gunicorn --bind 0.0.0.0:8000 --workers 3 --timeout 120 Xbooking.wsgi:application"]
+CMD ["bash", "-c", "python manage.py migrate --noinput && python manage.py populate_workspace_data && gunicorn --bind 0.0.0.0:8000 --workers 3 --timeout 120 Xbooking.wsgi:application"]
 

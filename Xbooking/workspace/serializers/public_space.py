@@ -40,8 +40,25 @@ class SpacePublicListSerializer(serializers.ModelSerializer):
         ]
 
     def get_main_photo_url(self, obj):
-        """Get the first photo URL or default placeholder"""
-        photos = obj.photos.all()
-        if photos.exists():
-            return photos.first().photo_url
-        return None  # Frontend will show placeholder
+        """Get the URL of the space's image"""
+        return obj.image_url
+
+
+class SpacePublicDetailSerializer(serializers.ModelSerializer):
+    """
+    Space serializer for public detailed view with limited fields and 
+    nested workspace/branch information
+    """
+    branch = PublicBranchSerializer(read_only=True)
+    avg_rating = serializers.FloatField(read_only=True)
+    total_reviews = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Space
+        fields = [
+            'id', 'name', 'description', 'space_type',
+            'capacity', 'price_per_hour', 'daily_rate',
+            'monthly_rate', 'image_url', 'amenities',
+            'branch', 'avg_rating', 'total_reviews',
+            'rules', 'cancellation_policy', 'operational_hours'
+        ]

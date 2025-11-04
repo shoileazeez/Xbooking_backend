@@ -8,7 +8,7 @@ from rest_framework.permissions import AllowAny
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
 from workspace.models import Space, Branch, Workspace
-from workspace.serializers.workspace import SpaceDetailSerializer, SpacePublicListSerializer
+from workspace.serializers.public_space import SpacePublicListSerializer, SpacePublicDetailSerializer
 
 
 class PublicSpaceListView(APIView):
@@ -61,10 +61,10 @@ class PublicSpaceListView(APIView):
 class PublicSpaceDetailView(APIView):
     """Get public space details without authentication"""
     permission_classes = [AllowAny]
-    serializer_class = SpaceDetailSerializer
+    serializer_class = SpacePublicDetailSerializer
 
     @extend_schema(
-        responses={200: SpaceDetailSerializer},
+        responses={200: SpacePublicDetailSerializer},
         description="Get public space details by ID"
     )
     def get(self, request, space_id):
@@ -85,7 +85,7 @@ class PublicSpaceDetailView(APIView):
                 'message': 'Space not found or not available'
             }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = SpaceDetailSerializer(space)
+        serializer = SpacePublicDetailSerializer(space)
         return Response({
             'success': True,
             'space': serializer.data

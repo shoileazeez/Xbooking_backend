@@ -15,13 +15,12 @@ class Command(BaseCommand):
         admin_user, created = User.objects.get_or_create(
             email='admin@example.com',
             defaults={
-                'first_name': 'Admin',
-                'last_name': 'User',
-                'is_staff': True,
-                'is_superuser': True
+                'full_name': 'Admin User',
+                'is_active': True
             }
         )
         if created:
+            admin_user.set_password('admin123')
             admin_user.set_password('admin123')
             admin_user.save()
             self.stdout.write(self.style.SUCCESS('Created admin user'))
@@ -52,13 +51,13 @@ class Command(BaseCommand):
             }
         ]
 
-        space_types = ['MEETING_ROOM', 'CONFERENCE_ROOM', 'PRIVATE_OFFICE', 'OPEN_SPACE']
+        space_types = ['meeting_room', 'office', 'coworking', 'event_space', 'desk', 'lounge']
         
         for workspace_info in workspace_data:
             workspace = Workspace.objects.create(
                 name=workspace_info['name'],
                 description=workspace_info['description'],
-                owner=admin_user,
+                admin=admin_user,
                 is_active=True,
                 social_media_links={
                     'twitter': f'https://twitter.com/{workspace_info["name"].lower().replace(" ", "")}',
@@ -105,7 +104,7 @@ class Command(BaseCommand):
                         space_type=space_type,
                         capacity=capacity,
                         price_per_hour=price,
-                        is_active=True,
+                        is_available=True,
                         rules='''
                         1. No smoking
                         2. Keep the space clean and tidy
