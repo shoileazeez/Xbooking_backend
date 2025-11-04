@@ -54,42 +54,54 @@ class Command(BaseCommand):
         space_types = ['meeting_room', 'office', 'coworking', 'event_space', 'desk', 'lounge']
         
         for workspace_info in workspace_data:
-            workspace = Workspace.objects.create(
+            workspace, created = Workspace.objects.get_or_create(
                 name=workspace_info['name'],
-                description=workspace_info['description'],
-                admin=admin_user,
-                is_active=True,
-                social_media_links={
-                    'twitter': f'https://twitter.com/{workspace_info["name"].lower().replace(" ", "")}',
-                    'instagram': f'https://instagram.com/{workspace_info["name"].lower().replace(" ", "")}',
-                    'linkedin': f'https://linkedin.com/company/{workspace_info["name"].lower().replace(" ", "")}'
+                defaults={
+                    'description': workspace_info['description'],
+                    'admin': admin_user,
+                    'email': f'info@{workspace_info["name"].lower().replace(" ", "")}.com',
+                    'is_active': True,
+                    'social_media_links': {
+                        'twitter': f'https://twitter.com/{workspace_info["name"].lower().replace(" ", "")}',
+                        'instagram': f'https://instagram.com/{workspace_info["name"].lower().replace(" ", "")}',
+                        'linkedin': f'https://linkedin.com/company/{workspace_info["name"].lower().replace(" ", "")}'
+                    }
                 }
             )
-            self.stdout.write(f'Created workspace: {workspace.name}')
+            if created:
+                self.stdout.write(f'Created workspace: {workspace.name}')
+            else:
+                self.stdout.write(f'Using existing workspace: {workspace.name}')
 
             # Create branches for each workspace
             for branch_name in workspace_info['branches']:
-                branch = Branch.objects.create(
+                branch, created = Branch.objects.get_or_create(
                     workspace=workspace,
                     name=branch_name,
-                    address=f'{branch_name}, Lagos, Nigeria',
-                    phone=f'+234{random.randint(7000000000, 9999999999)}',
-                    is_active=True,
-                    operating_hours={
-                        'monday': {'open': '09:00', 'close': '18:00'},
-                        'tuesday': {'open': '09:00', 'close': '18:00'},
-                        'wednesday': {'open': '09:00', 'close': '18:00'},
-                        'thursday': {'open': '09:00', 'close': '18:00'},
-                        'friday': {'open': '09:00', 'close': '18:00'},
-                        'saturday': {'open': '10:00', 'close': '16:00'},
-                        'sunday': None
-                    },
-                    images=[
-                        f'https://example.com/branches/{workspace_info["name"].lower().replace(" ", "")}/{branch_name.lower().replace(" ", "")}/1.jpg',
-                        f'https://example.com/branches/{workspace_info["name"].lower().replace(" ", "")}/{branch_name.lower().replace(" ", "")}/2.jpg'
-                    ]
+                    defaults={
+                        'address': f'{branch_name}, Lagos, Nigeria',
+                        'email': f'{branch_name.lower().replace(" ", "")}@{workspace_info["name"].lower().replace(" ", "")}.com',
+                        'phone': f'+234{random.randint(7000000000, 9999999999)}',
+                        'is_active': True,
+                        'operating_hours': {
+                            'monday': {'open': '09:00', 'close': '18:00'},
+                            'tuesday': {'open': '09:00', 'close': '18:00'},
+                            'wednesday': {'open': '09:00', 'close': '18:00'},
+                            'thursday': {'open': '09:00', 'close': '18:00'},
+                            'friday': {'open': '09:00', 'close': '18:00'},
+                            'saturday': {'open': '10:00', 'close': '16:00'},
+                            'sunday': None
+                        },
+                        'images': [
+                            f'https://example.com/branches/{workspace_info["name"].lower().replace(" ", "")}/{branch_name.lower().replace(" ", "")}/1.jpg',
+                            f'https://example.com/branches/{workspace_info["name"].lower().replace(" ", "")}/{branch_name.lower().replace(" ", "")}/2.jpg'
+                        ]
+                    }
                 )
-                self.stdout.write(f'Created branch: {branch.name}')
+                if created:
+                    self.stdout.write(f'Created branch: {branch.name}')
+                else:
+                    self.stdout.write(f'Using existing branch: {branch.name}')
 
                 # Create 3-5 spaces for each branch
                 for _ in range(random.randint(3, 5)):
