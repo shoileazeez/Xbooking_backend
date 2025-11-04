@@ -175,3 +175,4 @@ class SpaceDetailView(APIView):
             'success': True,
             'message': 'Space deleted successfully'
         }, status=status.HTTP_200_OK)
+
