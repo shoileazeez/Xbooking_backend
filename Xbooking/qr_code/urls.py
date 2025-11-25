@@ -15,9 +15,9 @@ app_name = 'qr_code'
 
 urlpatterns = [
     # User QR Code URLs (Generate & Retrieve)
-    path('workspaces/<uuid:workspace_id>/orders/<uuid:order_id>/qr-code/generate/', 
+    path('orders/<uuid:order_id>/qr-code/generate/', 
          GenerateOrderQRCodeView.as_view(), name='generate_qr_code'),
-    path('workspaces/<uuid:workspace_id>/orders/<uuid:order_id>/qr-code/', 
+    path('orders/<uuid:order_id>/qr-code/', 
          GetOrderQRCodeView.as_view(), name='get_qr_code'),
     
     # Admin QR Code URLs (Verify & Manage)

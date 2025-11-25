@@ -104,7 +104,6 @@ def send_qr_code_email(order_id, qr_code_id):
             'order_number': order.order_number,
             'user_name': order.user.first_name or order.user.email,
             'total_amount': order.total_amount,
-            'verification_code': qr_code.verification_code,
             'bookings_count': order.bookings.count(),
         }
         

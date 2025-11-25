@@ -4,6 +4,7 @@ Celery tasks for Guest Management
 from celery import shared_task
 from django.utils import timezone
 from booking.models import Booking, Guest
+from notifications.models import Notification
 import logging
 import qrcode
 from io import BytesIO
@@ -16,7 +17,7 @@ logger = logging.getLogger(__name__)
 def send_guest_qr_code_email(self, guest_id, booking_id):
     """
     Send QR code email to guest
-    Generates QR code with verification code and sends to guest email
+    Generates QR code and sends to guest email
     """
     try:
         guest = Guest.objects.get(id=guest_id)
@@ -24,64 +25,101 @@ def send_guest_qr_code_email(self, guest_id, booking_id):
         
         logger.info(f"Generating QR code for guest {guest.id}: {guest.email}")
         
-        # Generate QR code data
-        qr_data = {
-            'guest_id': str(guest.id),
-            'verification_code': guest.qr_code_verification_code,
-            'guest_name': f"{guest.first_name} {guest.last_name}",
-            'booking_id': str(booking.id),
-            'space_name': booking.space.name,
-            'check_in': booking.check_in.isoformat(),
-            'check_out': booking.check_out.isoformat(),
-            'workspace': booking.workspace.name,
-        }
+        # QR code data - URL for verification
+        # Using a similar format to qr_code app
+        qr_data = f"https://xbooking.com/verify-guest/{guest.qr_code_verification_code}?booking={booking.id}"
         
         # Generate QR code image
         qr = qrcode.QRCode(
             version=1,
             error_correction=qrcode.constants.ERROR_CORRECT_L,
             box_size=10,
-            border=2,
+            border=4,
         )
-        qr.add_data(guest.qr_code_verification_code)
+        qr.add_data(qr_data)
         qr.make(fit=True)
         
         img = qr.make_image(fill_color="black", back_color="white")
         
         # Save QR code image to BytesIO
-        qr_image_bytes = BytesIO()
-        img.save(qr_image_bytes, format='PNG')
-        qr_image_bytes.seek(0)
+        img_io = BytesIO()
+        img.save(img_io, format='PNG')
+        img_io.seek(0)
         
-        # Send notification with QR code
-        from notifications.tasks import send_notification
+        # Prepare email content
+        from django.template.loader import render_to_string
+        from django.core.mail import EmailMultiAlternatives
         
-        notification_data = {
-            'qr_code_verification': guest.qr_code_verification_code,
-            'check_in': str(booking.check_in),
-            'check_out': str(booking.check_out),
+        context = {
+            'guest_name': f"{guest.first_name} {guest.last_name}",
             'space_name': booking.space.name,
+            'check_in': booking.check_in,
+            'check_out': booking.check_out,
             'booking_reference': str(booking.id),
         }
         
-        send_notification.delay(
-            user_id=None,  # Not a registered user
-            notification_type='guest_qr_code',
-            channel='email',
-            recipient_email=guest.email,
-            title=f'Your Check-in QR Code - {booking.space.name}',
-            message=f'Hello {guest.first_name},\n\n'
-                    f'Your QR code for checking in to {booking.space.name} is ready.\n'
-                    f'Check-in opens: {booking.check_in}\n'
-                    f'Check-out time: {booking.check_out}\n\n'
-                    f'Please use the QR code attached or code: {guest.qr_code_verification_code}',
-            data=notification_data
+        # Render HTML template (assuming we have one or reuse a generic one)
+        # For now, I'll use a simple string or we should create a template.
+        # The user said "do the same", so I should probably use a template.
+        # I'll assume 'emails/guest_qr_code_email.html' exists or I'll create it.
+        # Since I can't create it right now without a separate tool call, I'll use a basic template or try to reuse.
+        # Let's try to render a simple HTML here if template doesn't exist, but better to assume it will.
+        # Actually, I'll use a try-except block or just define the content here if I can't rely on the template file yet.
+        # But to be "correct", I should use a template. I'll assume 'booking/email/guest_qr_code.html'
+        
+        try:
+            html_content = render_to_string('booking/email/guest_qr_code.html', context)
+            text_content = render_to_string('booking/email/guest_qr_code.txt', context)
+        except Exception:
+            # Fallback if template missing
+            html_content = f"""
+            <h1>Your Check-in QR Code</h1>
+            <p>Hello {guest.first_name},</p>
+            <p>Here is your QR code for {booking.space.name}.</p>
+            <p>Check-in: {booking.check_in}</p>
+            <p>Check-out: {booking.check_out}</p>
+            """
+            text_content = f"Hello {guest.first_name}, Here is your QR code for {booking.space.name}."
+        
+        # Create email
+        email = EmailMultiAlternatives(
+            subject=f'Your Check-in QR Code - {booking.space.name}',
+            body=text_content,
+            from_email='bookings@xbooking.com',
+            to=[guest.email]
         )
+        email.attach_alternative(html_content, "text/html")
+        
+        # Attach QR code image
+        filename = f"qr_{guest.qr_code_verification_code}.png"
+        email.attach(filename, img_io.getvalue(), 'image/png')
+        
+        # Send email
+        email.send()
         
         # Update guest QR code sent status
         guest.qr_code_sent = True
         guest.qr_code_sent_at = timezone.now()
         guest.save()
+        
+        # Log notification (optional, but good for tracking)
+        from notifications.tasks import send_notification
+        # We still log it, but maybe without the image data since we sent it via email
+        Notification.objects.create(
+            user=booking.user, # Notify the booker that guest received QR? Or just log?
+            # The guest is not a User, so we can't log a notification for them in the DB easily if it requires a User FK.
+            # But we can notify the booker.
+            notification_type='guest_qr_code_sent',
+            channel='email',
+            title='Guest QR Code Sent',
+            message=f'QR code sent to guest {guest.first_name} {guest.last_name}',
+            is_sent=True,
+            sent_at=timezone.now(),
+            data={
+                'guest_id': str(guest.id),
+                'booking_id': str(booking.id)
+            }
+        )
         
         logger.info(f"QR code email sent successfully to {guest.email}")
         return {

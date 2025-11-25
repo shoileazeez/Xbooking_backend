@@ -1,0 +1,13 @@
+Hello {{ guest_name }},
+
+You have been added as a guest for a booking at {{ space_name }}.
+
+Please find your check-in QR code attached to this email. You will need to scan this code upon arrival.
+
+Check-in: {{ check_in }}
+Check-out: {{ check_out }}
+Booking Reference: {{ booking_reference }}
+
+We look forward to seeing you!
+
+Xbooking Team

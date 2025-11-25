@@ -72,7 +72,7 @@ class Cart(models.Model):
     """Model for shopping cart"""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='cart')
-    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, related_name='carts')
+    # Cart is now per-user (can contain items from multiple workspaces)
     
     # Pricing totals
     subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0'))
@@ -87,7 +87,7 @@ class Cart(models.Model):
     
     class Meta:
         db_table = 'booking_cart'
-        unique_together = ('user', 'workspace')
+        # unique per user only
     
     def __str__(self):
         return f"Cart {self.id} - {self.user.email}"
@@ -177,18 +177,12 @@ class Guest(models.Model):
     """Model for booking guests with QR code verification"""
     
     GUEST_STATUS_CHOICES = [
-        ('pending', 'Pending - Awaiting Verification'),
-        ('verified', 'Verified - QR code sent'),
+        ('pending', 'Pending - QR code sent'),
         ('checked_in', 'Checked In'),
         ('checked_out', 'Checked Out'),
-        ('rejected', 'Rejected by Admin'),
     ]
     
-    VERIFICATION_STATUS_CHOICES = [
-        ('pending', 'Pending Admin Verification'),
-        ('verified', 'Verified by Admin'),
-        ('rejected', 'Rejected by Admin'),
-    ]
+
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     booking = models.ForeignKey(Booking, on_delete=models.CASCADE, related_name='guests')
@@ -201,12 +195,6 @@ class Guest(models.Model):
     
     # Status tracking
     status = models.CharField(max_length=20, choices=GUEST_STATUS_CHOICES, default='pending')
-    
-    # Admin verification
-    verification_status = models.CharField(max_length=20, choices=VERIFICATION_STATUS_CHOICES, default='pending')
-    verified_by = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True, related_name='verified_guests')
-    verified_at = models.DateTimeField(blank=True, null=True)
-    rejection_reason = models.TextField(blank=True, null=True, help_text='Reason for rejecting guest')
     
     # QR Code tracking
     qr_code_sent = models.BooleanField(default=False)

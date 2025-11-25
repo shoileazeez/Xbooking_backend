@@ -71,21 +71,7 @@ class GuestCheckOutSerializer(serializers.Serializer):
         fields = ['verification_code', 'notes']
 
 
-class GuestQRCodeSerializer(serializers.Serializer):
-    """Response serializer for guest QR code"""
-    guest_id = serializers.CharField()
-    verification_code = serializers.CharField()
-    guest_name = serializers.CharField()
-    booking_id = serializers.CharField()
-    space_name = serializers.CharField()
-    check_in = serializers.DateTimeField()
-    check_out = serializers.DateTimeField()
-    
-    class Meta:
-        fields = [
-            'guest_id', 'verification_code', 'guest_name',
-            'booking_id', 'space_name', 'check_in', 'check_out'
-        ]
+
 
 
 class BookingGuestListSerializer(serializers.Serializer):

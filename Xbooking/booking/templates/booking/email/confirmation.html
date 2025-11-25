@@ -1,0 +1,24 @@
+{% extends 'notifications/email/base.html' %}
+
+{% block title %}Booking Confirmation - {{ booking.booking_reference }}{% endblock %}
+
+{% block header %}Booking Confirmed!{% endblock %}
+
+{% block content %}
+    <h2>Hello {{ user.first_name }},</h2>
+    <p>Your booking has been successfully confirmed. We are excited to host you!</p>
+    
+    <div style="background-color: #f9f9f9; padding: 15px; border-radius: 4px; margin: 20px 0;">
+        <h3 style="margin-top: 0;">Booking Details</h3>
+        <p><strong>Reference:</strong> {{ booking.booking_reference }}</p>
+        <p><strong>Space:</strong> {{ booking.space.name }}</p>
+        <p><strong>Location:</strong> {{ booking.space.branch.name }} - {{ booking.space.branch.address }}</p>
+        <p><strong>Check-in:</strong> {{ booking.check_in|date:"l, F j, Y, P" }}</p>
+        <p><strong>Check-out:</strong> {{ booking.check_out|date:"l, F j, Y, P" }}</p>
+        <p><strong>Total Amount:</strong> {{ booking.total_amount }} {{ booking.currency }}</p>
+    </div>
+
+    <p>Please have your QR code ready for check-in upon arrival.</p>
+    
+    <a href="{{ dashboard_url }}" class="button">View Booking</a>
+{% endblock %}

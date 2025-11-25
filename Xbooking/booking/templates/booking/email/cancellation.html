@@ -1,0 +1,25 @@
+{% extends 'notifications/email/base.html' %}
+
+{% block title %}Booking Cancelled - {{ booking.booking_reference }}{% endblock %}
+
+{% block header %}Booking Cancelled{% endblock %}
+
+{% block content %}
+    <h2>Hello {{ user.first_name }},</h2>
+    <p>Your booking has been cancelled as requested.</p>
+    
+    <div style="background-color: #fff0f0; padding: 15px; border-radius: 4px; margin: 20px 0; border: 1px solid #ffcccc;">
+        <h3 style="margin-top: 0; color: #c0392b;">Cancellation Details</h3>
+        <p><strong>Reference:</strong> {{ booking.booking_reference }}</p>
+        <p><strong>Space:</strong> {{ booking.space.name }}</p>
+        <p><strong>Original Check-in:</strong> {{ booking.check_in|date:"l, F j, Y, P" }}</p>
+    </div>
+
+    {% if refund_amount %}
+    <p>A refund of <strong>{{ refund_amount }} {{ booking.currency }}</strong> has been initiated and should appear in your account within 5-10 business days.</p>
+    {% endif %}
+    
+    <p>We hope to see you again soon!</p>
+    
+    <a href="{{ dashboard_url }}" class="button">Book Another Space</a>
+{% endblock %}

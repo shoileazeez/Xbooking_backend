@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #f8f9fa; padding: 20px; text-align: center; }
+        .content { padding: 20px; }
+        .footer { text-align: center; padding: 20px; font-size: 12px; color: #666; }
+        .details { background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Your Check-in QR Code</h2>
+        </div>
+        <div class="content">
+            <p>Hello {{ guest_name }},</p>
+            
+            <p>You have been added as a guest for a booking at <strong>{{ space_name }}</strong>.</p>
+            
+            <p>Please find your check-in QR code attached to this email. You will need to scan this code upon arrival.</p>
+            
+            <div class="details">
+                <p><strong>Check-in:</strong> {{ check_in }}</p>
+                <p><strong>Check-out:</strong> {{ check_out }}</p>
+                <p><strong>Booking Reference:</strong> {{ booking_reference }}</p>
+            </div>
+            
+            <p>We look forward to seeing you!</p>
+        </div>
+        <div class="footer">
+            <p>&copy; 2024 Xbooking. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -8,18 +8,16 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
 from django.db import transaction
-from django.shortcuts import get_object_or_404
 import secrets
 import string
 
 from booking.models import Booking, Guest
 from booking.guest_serializers import (
-    GuestSerializer, CreateGuestSerializer, AddGuestsSerializer,
+    GuestSerializer, AddGuestsSerializer,
     GuestCheckInSerializer, GuestCheckOutSerializer,
-    GuestQRCodeSerializer, BookingGuestListSerializer
+    BookingGuestListSerializer
 )
 from workspace.permissions import check_workspace_member
-from workspace.models import Workspace
 from drf_spectacular.utils import extend_schema
 
 
@@ -41,18 +39,17 @@ class AddGuestsToBookingView(APIView):
         }
     )
     @transaction.atomic
-    def post(self, request, workspace_id, booking_id):
+    def post(self, request, booking_id):
         """Add guests to booking"""
-        # Check workspace access
-        if not check_workspace_member(request.user, workspace_id, ['user', 'staff', 'manager', 'admin']):
-            return Response(
-                {'error': 'You do not have access to this workspace'},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        
         try:
-            workspace = Workspace.objects.get(id=workspace_id)
-            booking = Booking.objects.get(id=booking_id, workspace=workspace, user=request.user)
+            booking = Booking.objects.get(id=booking_id)
+            
+            # Check if user owns the booking
+            if booking.user != request.user:
+                return Response(
+                    {'error': 'You do not have permission to add guests to this booking'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
         except Booking.DoesNotExist:
             return Response(
                 {'error': 'Booking not found'},
@@ -90,7 +87,9 @@ class AddGuestsToBookingView(APIView):
                 email=guest_data['email'],
                 phone=guest_data.get('phone', ''),
                 qr_code_verification_code=verification_code,
-                status='pending'
+                status='pending', # Pending check-in, but QR code is sent immediately
+                qr_code_sent=True,
+                qr_code_sent_at=timezone.now()
             )
             
             # Send QR code email in background
@@ -128,25 +127,20 @@ class GetBookingGuestsView(APIView):
             404: {"type": "object", "properties": {"detail": {"type": "string"}}}
         }
     )
-    def get(self, request, workspace_id, booking_id):
+    def get(self, request, booking_id):
         """Get booking guests"""
-        # Check workspace access
-        if not check_workspace_member(request.user, workspace_id, ['user', 'staff', 'manager', 'admin']):
-            return Response(
-                {'error': 'You do not have access to this workspace'},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        
         try:
-            workspace = Workspace.objects.get(id=workspace_id)
-            booking = Booking.objects.get(id=booking_id, workspace=workspace)
+            booking = Booking.objects.get(id=booking_id)
             
-            # Check if user owns the booking or is staff
-            if booking.user != request.user and not check_workspace_member(request.user, workspace_id, ['staff', 'manager', 'admin']):
-                return Response(
-                    {'error': 'You do not have permission to view this booking'},
-                    status=status.HTTP_403_FORBIDDEN
-                )
+            # Check if user owns the booking
+            if booking.user != request.user:
+                 # Allow workspace staff/admin to view guests too
+                 # We need to import check_workspace_member here or check workspace admin
+                 if not check_workspace_member(request.user, booking.workspace, ['staff', 'manager', 'admin']):
+                    return Response(
+                        {'error': 'You do not have permission to view this booking'},
+                        status=status.HTTP_403_FORBIDDEN
+                    )
             
             guests = booking.guests.all().order_by('created_at')
             checked_in_count = guests.filter(status='checked_in').count()
@@ -305,18 +299,19 @@ class AdminCheckInGuestView(APIView):
         }
     )
     @transaction.atomic
-    def post(self, request, workspace_id, guest_id):
+    def post(self, request, guest_id):
         """Admin check-in guest"""
-        # Check if user is workspace admin/manager/staff
-        if not check_workspace_member(request.user, workspace_id, ['staff', 'manager', 'admin']):
-            return Response(
-                {'error': 'You do not have permission to perform this action'},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        
         try:
-            workspace = Workspace.objects.get(id=workspace_id)
-            guest = Guest.objects.get(id=guest_id, booking__workspace=workspace)
+            guest = Guest.objects.select_related('booking__workspace').get(id=guest_id)
+            workspace = guest.booking.workspace
+            
+            # Check if user is workspace admin/manager/staff
+            if not check_workspace_member(request.user, workspace, ['staff', 'manager', 'admin']):
+                return Response(
+                    {'error': 'You do not have permission to perform this action'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+                
         except Guest.DoesNotExist:
             return Response(
                 {'error': 'Guest not found'},
@@ -355,18 +350,19 @@ class AdminCheckOutGuestView(APIView):
         }
     )
     @transaction.atomic
-    def post(self, request, workspace_id, guest_id):
+    def post(self, request, guest_id):
         """Admin check-out guest"""
-        # Check if user is workspace admin/manager/staff
-        if not check_workspace_member(request.user, workspace_id, ['staff', 'manager', 'admin']):
-            return Response(
-                {'error': 'You do not have permission to perform this action'},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        
         try:
-            workspace = Workspace.objects.get(id=workspace_id)
-            guest = Guest.objects.get(id=guest_id, booking__workspace=workspace)
+            guest = Guest.objects.select_related('booking__workspace').get(id=guest_id)
+            workspace = guest.booking.workspace
+            
+            # Check if user is workspace admin/manager/staff
+            if not check_workspace_member(request.user, workspace, ['staff', 'manager', 'admin']):
+                return Response(
+                    {'error': 'You do not have permission to perform this action'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+                
         except Guest.DoesNotExist:
             return Response(
                 {'error': 'Guest not found'},
@@ -385,5 +381,135 @@ class AdminCheckOutGuestView(APIView):
         
         return Response(
             GuestSerializer(guest).data,
+            status=status.HTTP_200_OK
+        )
+
+
+class AdminQRCodeCheckInView(APIView):
+    """Admin endpoint to check-in guest using QR code verification code"""
+    permission_classes = [IsAuthenticated]
+    serializer_class = GuestCheckInSerializer
+    
+    @extend_schema(
+        summary="Admin QR code guest check-in",
+        description="Admin checks in guest using QR code verification code",
+        tags=["Admin Guest Management"],
+        request=GuestCheckInSerializer,
+        responses={
+            200: GuestSerializer,
+            400: {"type": "object", "properties": {"detail": {"type": "string"}}},
+            403: {"type": "object", "properties": {"detail": {"type": "string"}}},
+            404: {"type": "object", "properties": {"detail": {"type": "string"}}}
+        }
+    )
+    @transaction.atomic
+    def post(self, request):
+        """Admin check-in guest via QR code"""
+        serializer = GuestCheckInSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        verification_code = serializer.validated_data['verification_code']
+        
+        try:
+            guest = Guest.objects.select_related('booking__workspace').get(
+                qr_code_verification_code=verification_code
+            )
+            workspace = guest.booking.workspace
+            
+            # Check if user is workspace admin/manager/staff
+            if not check_workspace_member(request.user, workspace, ['staff', 'manager', 'admin']):
+                return Response(
+                    {'error': 'You do not have permission to perform this action'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+        except Guest.DoesNotExist:
+            return Response(
+                {'error': 'Invalid verification code'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        if guest.status == 'checked_in':
+            return Response(
+                {'error': f'Guest {guest.first_name} is already checked in'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        booking = guest.booking
+        now = timezone.now()
+        
+        guest.status = 'checked_in'
+        guest.checked_in_at = now
+        guest.checked_in_by = request.user
+        guest.save()
+        
+        return Response(
+            {
+                **GuestSerializer(guest).data,
+                'message': f'Guest {guest.first_name} checked in successfully'
+            },
+            status=status.HTTP_200_OK
+        )
+
+
+class AdminQRCodeCheckOutView(APIView):
+    """Admin endpoint to check-out guest using QR code verification code"""
+    permission_classes = [IsAuthenticated]
+    serializer_class = GuestCheckOutSerializer
+    
+    @extend_schema(
+        summary="Admin QR code guest check-out",
+        description="Admin checks out guest using QR code verification code",
+        tags=["Admin Guest Management"],
+        request=GuestCheckOutSerializer,
+        responses={
+            200: GuestSerializer,
+            400: {"type": "object", "properties": {"detail": {"type": "string"}}},
+            403: {"type": "object", "properties": {"detail": {"type": "string"}}},
+            404: {"type": "object", "properties": {"detail": {"type": "string"}}}
+        }
+    )
+    @transaction.atomic
+    def post(self, request):
+        """Admin check-out guest via QR code"""
+        serializer = GuestCheckOutSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        verification_code = serializer.validated_data['verification_code']
+        
+        try:
+            guest = Guest.objects.select_related('booking__workspace').get(
+                qr_code_verification_code=verification_code
+            )
+            workspace = guest.booking.workspace
+            
+            # Check if user is workspace admin/manager/staff
+            if not check_workspace_member(request.user, workspace, ['staff', 'manager', 'admin']):
+                return Response(
+                    {'error': 'You do not have permission to perform this action'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+        except Guest.DoesNotExist:
+            return Response(
+                {'error': 'Invalid verification code'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        if guest.status != 'checked_in':
+            return Response(
+                {'error': f'Guest {guest.first_name} is not checked in'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        guest.status = 'checked_out'
+        guest.checked_out_at = timezone.now()
+        guest.save()
+        
+        return Response(
+            {
+                **GuestSerializer(guest).data,
+                'message': f'Guest {guest.first_name} checked out successfully'
+            },
             status=status.HTTP_200_OK
         )

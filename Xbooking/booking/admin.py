@@ -166,14 +166,14 @@ class BookingAdmin(admin.ModelAdmin):
 
 @admin.register(Cart)
 class CartAdmin(admin.ModelAdmin):
-    list_display = ['cart_id_display', 'user_display', 'workspace_display', 'item_count_display', 'total_display', 'last_updated']
-    list_filter = ['created_at', 'updated_at', 'workspace']
-    search_fields = ['user__email', 'user__first_name', 'user__last_name', 'workspace__name']
+    list_display = ['cart_id_display', 'user_display', 'item_count_display', 'total_display', 'last_updated']
+    list_filter = ['created_at', 'updated_at']
+    search_fields = ['user__email', 'user__first_name', 'user__last_name']
     readonly_fields = ['id', 'created_at', 'updated_at', 'cart_summary']
     
     fieldsets = (
         ('Cart Information', {
-            'fields': ('id', 'user', 'workspace')
+            'fields': ('id', 'user')
         }),
         ('Cart Summary', {
             'fields': ('item_count_display', 'total_display', 'cart_summary'),
@@ -196,9 +196,7 @@ class CartAdmin(admin.ModelAdmin):
         return f"{obj.user.first_name or obj.user.email}"
     user_display.short_description = 'User'
     
-    def workspace_display(self, obj):
-        return obj.workspace.name
-    workspace_display.short_description = 'Workspace'
+
     
     def item_count_display(self, obj):
         count = obj.items.count()
@@ -248,14 +246,14 @@ class CartAdmin(admin.ModelAdmin):
     
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        return qs.select_related('user', 'workspace').prefetch_related('items')
+        return qs.select_related('user').prefetch_related('items')
 
 
 @admin.register(CartItem)
 class CartItemAdmin(admin.ModelAdmin):
     list_display = ['item_id_display', 'space_display', 'user_display', 'time_range', 'price_display', 'status_display', 'added_at']
-    list_filter = ['added_at', 'updated_at', 'cart__workspace']
-    search_fields = ['space__name', 'cart__user__email', 'cart__workspace__name']
+    list_filter = ['added_at', 'updated_at']
+    search_fields = ['space__name', 'cart__user__email']
     readonly_fields = ['id', 'added_at', 'updated_at']
     
     fieldsets = (

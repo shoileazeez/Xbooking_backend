@@ -5,6 +5,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.throttling import ScopedRateThrottle
 from qr_code.models import OrderQRCode
 from qr_code.serializers import OrderQRCodeSerializer, VerifyQRCodeSerializer
 from qr_code.tasks import generate_qr_code_for_order
@@ -19,6 +20,8 @@ from django.db.models import Q
 class GenerateOrderQRCodeView(APIView):
     """Generate QR code for order"""
     permission_classes = [IsAuthenticated]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'sensitive_action'
     serializer_class = OrderQRCodeSerializer
     
     @extend_schema(
@@ -31,16 +34,17 @@ class GenerateOrderQRCodeView(APIView):
             404: {"type": "object", "properties": {"detail": {"type": "string"}}}
         }
     )
-    def post(self, request, workspace_id, order_id):
+    def post(self, request, order_id):
         """Generate QR code for order"""
-        if not check_workspace_member(request.user, workspace_id, ['user', 'staff', 'manager', 'admin']):
-            return Response(
-                {"detail": "You don't have permission to access this workspace"},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        
         try:
-            order = Order.objects.get(id=order_id, workspace_id=workspace_id, user=request.user)
+            order = Order.objects.get(id=order_id, user=request.user)
+            workspace = order.workspace
+            
+            if not check_workspace_member(request.user, workspace, ['user', 'staff', 'manager', 'admin']):
+                return Response(
+                    {"detail": "You don't have permission to access this workspace"},
+                    status=status.HTTP_403_FORBIDDEN
+                )
             
             # Check if order is paid
             if order.status not in ['paid', 'processing', 'completed']:
@@ -83,16 +87,17 @@ class GetOrderQRCodeView(APIView):
             404: {"type": "object", "properties": {"detail": {"type": "string"}}}
         }
     )
-    def get(self, request, workspace_id, order_id):
+    def get(self, request, order_id):
         """Get order QR code"""
-        if not check_workspace_member(request.user, workspace_id, ['user', 'staff', 'manager', 'admin']):
-            return Response(
-                {"detail": "You don't have permission to access this workspace"},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        
         try:
-            order = Order.objects.get(id=order_id, workspace_id=workspace_id, user=request.user)
+            order = Order.objects.get(id=order_id, user=request.user)
+            workspace = order.workspace
+            
+            if not check_workspace_member(request.user, workspace, ['user', 'staff', 'manager', 'admin']):
+                return Response(
+                    {"detail": "You don't have permission to access this workspace"},
+                    status=status.HTTP_403_FORBIDDEN
+                )
             
             try:
                 qr_code = order.qr_code

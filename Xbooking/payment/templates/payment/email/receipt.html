@@ -1,0 +1,48 @@
+{% extends 'notifications/email/base.html' %}
+
+{% block title %}Payment Receipt - {{ payment.order.order_number }}{% endblock %}
+
+{% block header %}Payment Receipt{% endblock %}
+
+{% block content %}
+    <h2>Hello {{ user.first_name }},</h2>
+    <p>Thank you for your payment. Here is your receipt.</p>
+    
+    <div style="background-color: #f9f9f9; padding: 15px; border-radius: 4px; margin: 20px 0;">
+        <h3 style="margin-top: 0;">Payment Details</h3>
+        <p><strong>Order Number:</strong> {{ payment.order.order_number }}</p>
+        <p><strong>Amount Paid:</strong> {{ payment.amount }} {{ payment.currency }}</p>
+        <p><strong>Date:</strong> {{ payment.created_at|date:"F j, Y, P" }}</p>
+        <p><strong>Payment Method:</strong> {{ payment.get_payment_method_display }}</p>
+        <p><strong>Transaction ID:</strong> {{ payment.gateway_transaction_id }}</p>
+    </div>
+
+    <h3>Items</h3>
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+        <thead>
+            <tr style="background-color: #eeeeee;">
+                <th style="padding: 10px; text-align: left;">Description</th>
+                <th style="padding: 10px; text-align: right;">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for booking in payment.order.bookings.all %}
+            <tr>
+                <td style="padding: 10px; border-bottom: 1px solid #eeeeee;">
+                    {{ booking.space.name }}<br>
+                    <small>{{ booking.check_in|date:"M j" }} - {{ booking.check_out|date:"M j" }}</small>
+                </td>
+                <td style="padding: 10px; text-align: right; border-bottom: 1px solid #eeeeee;">
+                    {{ booking.total_amount }} {{ booking.currency }}
+                </td>
+            </tr>
+            {% endfor %}
+            <tr>
+                <td style="padding: 10px; font-weight: bold;">Total</td>
+                <td style="padding: 10px; text-align: right; font-weight: bold;">{{ payment.amount }} {{ payment.currency }}</td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <a href="{{ dashboard_url }}/orders/{{ payment.order.id }}" class="button">View Order</a>
+{% endblock %}

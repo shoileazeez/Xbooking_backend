@@ -11,6 +11,9 @@ from workspace.views.space import (
 from workspace.views.public_space import (
     PublicSpaceListView, PublicSpaceDetailView
 )
+from workspace.views.public_workspace import (
+    PublicWorkspaceListView, PublicWorkspaceDetailView
+)
 from workspace.views.members import (
     AdminRegisterView, AdminProfileView, AdminLoginView, AdminOnboardingView,
     AdminOnboardingStatusView, InviteMemberView,
@@ -45,6 +48,10 @@ urlpatterns = [
     # Public Space URLs (Unauthenticated)
     path('public/spaces/', PublicSpaceListView.as_view(), name='public_space_list'),
     path('public/spaces/<uuid:space_id>/', PublicSpaceDetailView.as_view(), name='public_space_detail'),
+    
+    # Public Workspace URLs (Unauthenticated)
+    path('public/workspaces/', PublicWorkspaceListView.as_view(), name='public_workspace_list'),
+    path('public/workspaces/<uuid:workspace_id>/', PublicWorkspaceDetailView.as_view(), name='public_workspace_detail'),
     
     # Workspace Member Management URLs
     path('workspaces/<uuid:workspace_id>/members/invite/', InviteMemberView.as_view(), name='invite_member'),

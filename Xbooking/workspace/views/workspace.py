@@ -82,11 +82,12 @@ class WorkspaceDetailView(APIView):
         workspace = get_object_or_404(Workspace, id=workspace_id)
         
         # Check if user is admin or member using permission helper
-        if not check_workspace_member(user, workspace):
-            return None, Response({
-                'success': False,
-                'message': 'You do not have permission to access this workspace'
-            }, status=status.HTTP_403_FORBIDDEN)
+        # Relaxed permission: Any authenticated user can view workspace details
+        # if not check_workspace_member(user, workspace):
+        #     return None, Response({
+        #         'success': False,
+        #         'message': 'You do not have permission to access this workspace'
+        #     }, status=status.HTTP_403_FORBIDDEN)
         
         return workspace, None
 

@@ -30,20 +30,9 @@ class CartView(APIView):
         responses={200: CartSerializer},
         description="Get current user's shopping cart"
     )
-    def get(self, request, workspace_id):
-        """Get cart for workspace"""
-        workspace = get_object_or_404(Workspace, id=workspace_id)
-        
-        if not check_workspace_member(request.user, workspace):
-            return Response({
-                'success': False,
-                'message': 'You do not have access to this workspace'
-            }, status=status.HTTP_403_FORBIDDEN)
-        
-        cart, created = Cart.objects.get_or_create(
-            user=request.user,
-            workspace=workspace
-        )
+    def get(self, request):
+        """Get cart for user"""
+        cart, created = Cart.objects.get_or_create(user=request.user)
         
         serializer = CartSerializer(cart)
         return Response({
@@ -62,16 +51,8 @@ class AddToCartView(APIView):
         responses={201: CartItemSerializer},
         description="Add space booking to cart"
     )
-    def post(self, request, workspace_id):
+    def post(self, request):
         """Add item to cart"""
-        workspace = get_object_or_404(Workspace, id=workspace_id)
-        
-        if not check_workspace_member(request.user, workspace):
-            return Response({
-                'success': False,
-                'message': 'You do not have access to this workspace'
-            }, status=status.HTTP_403_FORBIDDEN)
-        
         serializer = AddToCartSerializer(data=request.data)
         if serializer.is_valid():
             try:
@@ -85,10 +66,7 @@ class AddToCartView(APIView):
                     }, status=status.HTTP_400_BAD_REQUEST)
                 
                 # Get or create cart
-                cart, _ = Cart.objects.get_or_create(
-                    user=request.user,
-                    workspace=workspace
-                )
+                cart, _ = Cart.objects.get_or_create(user=request.user)
                 
                 # Calculate price based on booking duration
                 check_in = serializer.validated_data['check_in']
@@ -96,7 +74,7 @@ class AddToCartView(APIView):
                 hours = (check_out - check_in).total_seconds() / 3600
                 
                 # Use hourly rate for calculation
-                price = Decimal(str(space.hourly_rate)) * Decimal(str(hours))
+                price = Decimal(str(space.price_per_hour)) * Decimal(str(hours))
                 
                 # Create cart item
                 cart_item, created = CartItem.objects.update_or_create(
@@ -142,17 +120,9 @@ class RemoveFromCartView(APIView):
     @extend_schema(
         description="Remove item from cart"
     )
-    def delete(self, request, workspace_id, item_id):
+    def delete(self, request, item_id):
         """Remove item from cart"""
-        workspace = get_object_or_404(Workspace, id=workspace_id)
-        
-        if not check_workspace_member(request.user, workspace):
-            return Response({
-                'success': False,
-                'message': 'You do not have access to this workspace'
-            }, status=status.HTTP_403_FORBIDDEN)
-        
-        cart = get_object_or_404(Cart, user=request.user, workspace=workspace)
+        cart = get_object_or_404(Cart, user=request.user)
         cart_item = get_object_or_404(CartItem, id=item_id, cart=cart)
         
         cart_item.delete()
@@ -172,17 +142,9 @@ class ClearCartView(APIView):
     @extend_schema(
         description="Clear all items from shopping cart"
     )
-    def post(self, request, workspace_id):
+    def post(self, request):
         """Clear cart"""
-        workspace = get_object_or_404(Workspace, id=workspace_id)
-        
-        if not check_workspace_member(request.user, workspace):
-            return Response({
-                'success': False,
-                'message': 'You do not have access to this workspace'
-            }, status=status.HTTP_403_FORBIDDEN)
-        
-        cart = get_object_or_404(Cart, user=request.user, workspace=workspace)
+        cart = get_object_or_404(Cart, user=request.user)
         cart.items.all().delete()
         cart.calculate_totals()
         
@@ -201,17 +163,9 @@ class CheckoutView(APIView):
         request=CheckoutSerializer,
         description="Checkout cart items and create bookings"
     )
-    def post(self, request, workspace_id):
+    def post(self, request):
         """Create bookings from cart"""
-        workspace = get_object_or_404(Workspace, id=workspace_id)
-        
-        if not check_workspace_member(request.user, workspace):
-            return Response({
-                'success': False,
-                'message': 'You do not have access to this workspace'
-            }, status=status.HTTP_403_FORBIDDEN)
-        
-        cart = get_object_or_404(Cart, user=request.user, workspace=workspace)
+        cart = get_object_or_404(Cart, user=request.user)
         
         if not cart.items.exists():
             return Response({
@@ -222,8 +176,12 @@ class CheckoutView(APIView):
         # Create bookings from cart items
         bookings = []
         for item in cart.items.all():
+            # Check if space is still available
+            if not item.space.is_available:
+                continue
+                
             booking = Booking.objects.create(
-                workspace=workspace,
+                workspace=item.space.branch.workspace,
                 space=item.space,
                 user=request.user,
                 check_in=item.check_in,
@@ -238,6 +196,12 @@ class CheckoutView(APIView):
             )
             bookings.append(booking)
         
+        if not bookings:
+             return Response({
+                'success': False,
+                'message': 'No bookings could be created (spaces might be unavailable)'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         # Clear cart
         cart.items.all().delete()
         cart.calculate_totals()
@@ -260,20 +224,13 @@ class CreateBookingView(APIView):
         responses={201: BookingSerializer},
         description="Create booking directly for a space"
     )
-    def post(self, request, workspace_id):
+    def post(self, request):
         """Create booking"""
-        workspace = get_object_or_404(Workspace, id=workspace_id)
-        
-        if not check_workspace_member(request.user, workspace):
-            return Response({
-                'success': False,
-                'message': 'You do not have access to this workspace'
-            }, status=status.HTTP_403_FORBIDDEN)
-        
         serializer = CreateBookingSerializer(data=request.data)
         if serializer.is_valid():
             try:
                 space = Space.objects.get(id=serializer.validated_data['space_id'])
+                workspace = space.branch.workspace
                 
                 if not space.is_available:
                     return Response({
@@ -285,7 +242,7 @@ class CreateBookingView(APIView):
                 check_in = serializer.validated_data['check_in']
                 check_out = serializer.validated_data['check_out']
                 hours = (check_out - check_in).total_seconds() / 3600
-                base_price = Decimal(str(space.hourly_rate)) * Decimal(str(hours))
+                base_price = Decimal(str(space.price_per_hour)) * Decimal(str(hours))
                 
                 booking = Booking.objects.create(
                     workspace=workspace,
@@ -330,20 +287,11 @@ class ListBookingsView(APIView):
 
     @extend_schema(
         responses={200: BookingListSerializer(many=True)},
-        description="Get all user bookings for a workspace"
+        description="Get all user bookings"
     )
-    def get(self, request, workspace_id):
+    def get(self, request):
         """Get user bookings"""
-        workspace = get_object_or_404(Workspace, id=workspace_id)
-        
-        if not check_workspace_member(request.user, workspace):
-            return Response({
-                'success': False,
-                'message': 'You do not have access to this workspace'
-            }, status=status.HTTP_403_FORBIDDEN)
-        
         bookings = Booking.objects.filter(
-            workspace=workspace,
             user=request.user
         ).order_by('-created_at')
         
@@ -364,17 +312,9 @@ class BookingDetailView(APIView):
         responses={200: BookingDetailSerializer},
         description="Get detailed booking information"
     )
-    def get(self, request, workspace_id, booking_id):
+    def get(self, request, booking_id):
         """Get booking details"""
-        workspace = get_object_or_404(Workspace, id=workspace_id)
-        
-        if not check_workspace_member(request.user, workspace):
-            return Response({
-                'success': False,
-                'message': 'You do not have access to this workspace'
-            }, status=status.HTTP_403_FORBIDDEN)
-        
-        booking = get_object_or_404(Booking, id=booking_id, workspace=workspace)
+        booking = get_object_or_404(Booking, id=booking_id)
         
         if booking.user != request.user:
             return Response({
@@ -398,17 +338,9 @@ class CancelBookingView(APIView):
         request=CancelBookingSerializer,
         description="Cancel a booking"
     )
-    def post(self, request, workspace_id, booking_id):
+    def post(self, request, booking_id):
         """Cancel booking"""
-        workspace = get_object_or_404(Workspace, id=workspace_id)
-        
-        if not check_workspace_member(request.user, workspace):
-            return Response({
-                'success': False,
-                'message': 'You do not have access to this workspace'
-            }, status=status.HTTP_403_FORBIDDEN)
-        
-        booking = get_object_or_404(Booking, id=booking_id, workspace=workspace)
+        booking = get_object_or_404(Booking, id=booking_id)
         
         if booking.user != request.user:
             return Response({
@@ -444,17 +376,9 @@ class ReviewBookingView(APIView):
         responses={201: BookingReviewSerializer},
         description="Add review for completed booking"
     )
-    def post(self, request, workspace_id, booking_id):
+    def post(self, request, booking_id):
         """Add review"""
-        workspace = get_object_or_404(Workspace, id=workspace_id)
-        
-        if not check_workspace_member(request.user, workspace):
-            return Response({
-                'success': False,
-                'message': 'You do not have access to this workspace'
-            }, status=status.HTTP_403_FORBIDDEN)
-        
-        booking = get_object_or_404(Booking, id=booking_id, workspace=workspace)
+        booking = get_object_or_404(Booking, id=booking_id)
         
         if booking.user != request.user:
             return Response({

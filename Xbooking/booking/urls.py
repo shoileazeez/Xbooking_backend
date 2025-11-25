@@ -16,18 +16,18 @@ app_name = 'booking'
 
 urlpatterns = [
     # Cart URLs
-    path('workspaces/<uuid:workspace_id>/cart/', CartView.as_view(), name='cart'),
-    path('workspaces/<uuid:workspace_id>/cart/add/', AddToCartView.as_view(), name='add_to_cart'),
-    path('workspaces/<uuid:workspace_id>/cart/items/<uuid:item_id>/', RemoveFromCartView.as_view(), name='remove_from_cart'),
-    path('workspaces/<uuid:workspace_id>/cart/clear/', ClearCartView.as_view(), name='clear_cart'),
-    path('workspaces/<uuid:workspace_id>/cart/checkout/', CheckoutView.as_view(), name='checkout'),
+    path('cart/', CartView.as_view(), name='cart'),
+    path('cart/add/', AddToCartView.as_view(), name='add_to_cart'),
+    path('cart/items/<uuid:item_id>/', RemoveFromCartView.as_view(), name='remove_from_cart'),
+    path('cart/clear/', ClearCartView.as_view(), name='clear_cart'),
+    path('cart/checkout/', CheckoutView.as_view(), name='checkout'),
     
     # Booking URLs (User)
-    path('workspaces/<uuid:workspace_id>/bookings/create/', CreateBookingView.as_view(), name='create_booking'),
-    path('workspaces/<uuid:workspace_id>/bookings/', ListBookingsView.as_view(), name='list_bookings'),
-    path('workspaces/<uuid:workspace_id>/bookings/<uuid:booking_id>/', BookingDetailView.as_view(), name='booking_detail'),
-    path('workspaces/<uuid:workspace_id>/bookings/<uuid:booking_id>/cancel/', CancelBookingView.as_view(), name='cancel_booking'),
-    path('workspaces/<uuid:workspace_id>/bookings/<uuid:booking_id>/review/', ReviewBookingView.as_view(), name='review_booking'),
+    path('bookings/create/', CreateBookingView.as_view(), name='create_booking'),
+    path('bookings/', ListBookingsView.as_view(), name='list_bookings'),
+    path('bookings/<uuid:booking_id>/', BookingDetailView.as_view(), name='booking_detail'),
+    path('bookings/<uuid:booking_id>/cancel/', CancelBookingView.as_view(), name='cancel_booking'),
+    path('bookings/<uuid:booking_id>/review/', ReviewBookingView.as_view(), name='review_booking'),
     
     # Admin Booking Management URLs
     path('workspaces/<uuid:workspace_id>/admin/bookings/', AdminListBookingsView.as_view(), name='admin_list_bookings'),

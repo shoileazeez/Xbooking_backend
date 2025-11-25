@@ -2,7 +2,7 @@
 Booking and Cart Serializers
 """
 from rest_framework import serializers
-from booking.models import Booking, Cart, CartItem, BookingReview, Guest
+from booking.models import Booking, Cart, CartItem, BookingReview
 from workspace.models import Space
 from workspace.serializers.workspace import SpaceSimpleSerializer
 from drf_spectacular.utils import extend_schema_field
@@ -27,9 +27,9 @@ class CartSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Cart
-        fields = ['id', 'user', 'workspace', 'items', 'subtotal', 'discount_total', 
+        fields = ['id', 'user', 'items', 'subtotal', 'discount_total', 
                   'tax_total', 'total', 'item_count', 'created_at', 'updated_at']
-        read_only_fields = ['id', 'user', 'workspace', 'subtotal', 'discount_total', 
+        read_only_fields = ['id', 'user', 'subtotal', 'discount_total', 
                            'tax_total', 'total', 'created_at', 'updated_at']
     
     @extend_schema_field(serializers.IntegerField())
@@ -145,34 +145,4 @@ class CheckoutSerializer(serializers.Serializer):
     notes = serializers.CharField(required=False, allow_blank=True)
 
 
-class GuestSerializer(serializers.ModelSerializer):
-    """Serializer for booking guests"""
-    booking_id = serializers.CharField(source='booking.id', read_only=True)
-    verified_by_email = serializers.CharField(source='verified_by.email', read_only=True, allow_null=True)
-    checked_in_by_email = serializers.CharField(source='checked_in_by.email', read_only=True, allow_null=True)
-    
-    class Meta:
-        model = Guest
-        fields = [
-            'id', 'booking_id', 'first_name', 'last_name', 'email', 'phone',
-            'status', 'verification_status', 'verified_by_email', 'verified_at',
-            'rejection_reason', 'qr_code_sent', 'qr_code_sent_at',
-            'qr_code_verification_code', 'checked_in_at', 'checked_out_at',
-            'checked_in_by_email', 'created_at', 'updated_at'
-        ]
-        read_only_fields = [
-            'id', 'booking_id', 'qr_code_verification_code', 'verified_by_email',
-            'verified_at', 'qr_code_sent', 'qr_code_sent_at', 'checked_in_at',
-            'checked_out_at', 'checked_in_by_email', 'created_at', 'updated_at'
-        ]
 
-
-class CreateGuestSerializer(serializers.Serializer):
-    """Serializer for adding guests to a booking"""
-    first_name = serializers.CharField(max_length=100, required=True)
-    last_name = serializers.CharField(max_length=100, required=True)
-    email = serializers.EmailField(required=True)
-    phone = serializers.CharField(max_length=20, required=False, allow_blank=True)
-    
-    class Meta:
-        fields = ['first_name', 'last_name', 'email', 'phone']

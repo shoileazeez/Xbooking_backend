@@ -67,11 +67,12 @@ class ListSpacesView(APIView):
         workspace = branch.workspace
 
         # Check if user has access using permission helper
-        if not check_workspace_member(request.user, workspace):
-            return Response({
-                'success': False,
-                'message': 'You do not have permission to access this branch'
-            }, status=status.HTTP_403_FORBIDDEN)
+        # Relaxed permission: Any authenticated user can view spaces
+        # if not check_workspace_member(request.user, workspace):
+        #     return Response({
+        #         'success': False,
+        #         'message': 'You do not have permission to access this branch'
+        #     }, status=status.HTTP_403_FORBIDDEN)
 
         spaces = branch.spaces.all()
         serializer = SpaceSimpleSerializer(spaces, many=True)
@@ -95,11 +96,12 @@ class SpaceDetailView(APIView):
         workspace = branch.workspace
 
         # Check if user has access to workspace using permission helper
-        if not check_workspace_member(user, workspace):
-            return None, Response({
-                'success': False,
-                'message': 'You do not have permission to access this space'
-            }, status=status.HTTP_403_FORBIDDEN)
+        # Relaxed permission: Any authenticated user can view space details
+        # if not check_workspace_member(user, workspace):
+        #     return None, Response({
+        #         'success': False,
+        #         'message': 'You do not have permission to access this space'
+        #     }, status=status.HTTP_403_FORBIDDEN)
 
         return space, None
 

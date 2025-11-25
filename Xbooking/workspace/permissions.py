@@ -195,15 +195,26 @@ def check_workspace_staff(user, workspace):
     ).exists()
 
 
-def check_workspace_member(user, workspace):
-    """Check if user is any member of workspace (including users who book)"""
+def check_workspace_member(user, workspace, required_roles=None):
+    """
+    Check if user is a member of the workspace with specific roles.
+    If required_roles is None or empty, checks if user is any member.
+    """
     if workspace.admin == user:
         return True
-    return WorkspaceUser.objects.filter(
+        
+    query = WorkspaceUser.objects.filter(
         workspace=workspace,
         user=user,
         is_active=True
-    ).exists()
+    )
+    
+    if required_roles:
+        if isinstance(required_roles, str):
+            required_roles = [required_roles]
+        query = query.filter(role__in=required_roles)
+        
+    return query.exists()
 
 
 def get_user_role(user, workspace):
