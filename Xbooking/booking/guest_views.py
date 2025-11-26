@@ -77,30 +77,20 @@ class AddGuestsToBookingView(APIView):
         
         created_guests = []
         for guest_data in guests_data:
-            # Generate unique verification code for guest QR
-            verification_code = self._generate_verification_code()
-            
             guest = Guest.objects.create(
                 booking=booking,
                 first_name=guest_data['first_name'],
                 last_name=guest_data['last_name'],
                 email=guest_data['email'],
                 phone=guest_data.get('phone', ''),
-                qr_code_verification_code=verification_code,
-                status='pending', # Pending check-in, but QR code is sent immediately
-                qr_code_sent=True,
-                qr_code_sent_at=timezone.now()
+                status='pending'  # QR code will be generated after payment
             )
-            
-            # Send QR code email in background
-            from booking.guest_tasks import send_guest_qr_code_email
-            send_guest_qr_code_email.delay(str(guest.id), str(booking.id))
             
             created_guests.append(GuestSerializer(guest).data)
         
         return Response(
             {
-                'message': f'Successfully added {len(created_guests)} guest(s). QR codes sent to their emails.',
+                'message': f'Successfully added {len(created_guests)} guest(s). QR codes will be sent after payment is confirmed.',
                 'guests': created_guests
             },
             status=status.HTTP_201_CREATED

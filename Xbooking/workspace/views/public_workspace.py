@@ -5,6 +5,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
+from rest_framework.pagination import PageNumberPagination
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
 from workspace.models import Workspace
@@ -39,13 +40,17 @@ class PublicWorkspaceListView(APIView):
             workspaces = workspaces.filter(city__icontains=city)
         if country:
             workspaces = workspaces.filter(country__icontains=country)
-            
-        serializer = WorkspacePublicListSerializer(workspaces, many=True)
-        return Response({
+        
+        # Pagination
+        paginator = PageNumberPagination()
+        paginator.page_size = 20
+        paginated_workspaces = paginator.paginate_queryset(workspaces, request)
+        
+        serializer = WorkspacePublicListSerializer(paginated_workspaces, many=True)
+        return paginator.get_paginated_response({
             'success': True,
-            'count': workspaces.count(),
             'workspaces': serializer.data
-        }, status=status.HTTP_200_OK)
+        })
 
 
 class PublicWorkspaceDetailView(APIView):

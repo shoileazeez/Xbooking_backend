@@ -122,8 +122,12 @@ class PaystackWebhookHandler:
             
             # Trigger background tasks
             from qr_code.tasks import generate_qr_code_for_order, send_payment_confirmation_email
+            from booking.guest_tasks import generate_guest_qr_codes_for_order
             send_payment_confirmation_email.delay(str(order.id))
             generate_qr_code_for_order.delay(str(order.id))
+            
+            # Generate QR codes for all guests in the order's bookings
+            generate_guest_qr_codes_for_order.delay(str(order.id))
             
             logger.info(f"Payment {payment.id} processed successfully")
             
@@ -320,8 +324,12 @@ class FlutterwaveWebhookHandler:
             
             # Trigger background tasks
             from qr_code.tasks import generate_qr_code_for_order, send_payment_confirmation_email
+            from booking.guest_tasks import generate_guest_qr_codes_for_order
             send_payment_confirmation_email.delay(str(order.id))
             generate_qr_code_for_order.delay(str(order.id))
+            
+            # Generate QR codes for all guests in the order's bookings
+            generate_guest_qr_codes_for_order.delay(str(order.id))
             
             logger.info(f"Payment {payment.id} processed successfully via Flutterwave")
             

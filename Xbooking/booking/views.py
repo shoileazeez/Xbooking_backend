@@ -295,12 +295,15 @@ class ListBookingsView(APIView):
             user=request.user
         ).order_by('-created_at')
         
-        serializer = BookingListSerializer(bookings, many=True)
-        return Response({
-            'success': True,
-            'count': len(bookings),
-            'bookings': serializer.data
-        }, status=status.HTTP_200_OK)
+        # Pagination
+        from rest_framework.pagination import PageNumberPagination
+        paginator = PageNumberPagination()
+        paginator.page_size = 20
+        paginated_bookings = paginator.paginate_queryset(bookings, request)
+        
+        serializer = BookingListSerializer(paginated_bookings, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
 
 
 class BookingDetailView(APIView):

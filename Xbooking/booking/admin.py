@@ -193,7 +193,7 @@ class CartAdmin(admin.ModelAdmin):
     cart_id_display.short_description = 'Cart ID'
     
     def user_display(self, obj):
-        return f"{obj.user.first_name or obj.user.email}"
+        return f"{obj.user.full_name or obj.user.email}"
     user_display.short_description = 'User'
     
 

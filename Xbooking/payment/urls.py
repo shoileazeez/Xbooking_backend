@@ -4,8 +4,8 @@ Payment and Order URLs
 from django.urls import path, include
 from payment.views import (
     CreateOrderView, ListOrdersView, OrderDetailView,
-    InitiatePaymentView, PaymentCallbackView, ListPaymentsView,
-    RequestRefundView, PaymentStatusView
+    InitiatePaymentView, PaymentWebhookView, PaymentCallbackView,
+    ListPaymentsView, RequestRefundView, PaymentStatusView
 )
 
 app_name = 'payment'
@@ -21,7 +21,11 @@ urlpatterns = [
     path('payments/', ListPaymentsView.as_view(), name='list_payments'),
     path('payments/<uuid:payment_id>/', PaymentStatusView.as_view(), name='payment_status'),
     
-    # Payment Callback (Webhook)
+    # Payment Webhook (Paystack/Flutterwave → Your Server)
+    path('webhook/paystack/', PaymentWebhookView.as_view(), name='paystack_webhook'),
+    path('webhook/flutterwave/', PaymentWebhookView.as_view(), name='flutterwave_webhook'),
+    
+    # Payment Callback (User Redirect)
     path('payments/callback/', PaymentCallbackView.as_view(), name='payment_callback'),
     
     # Refund URLs

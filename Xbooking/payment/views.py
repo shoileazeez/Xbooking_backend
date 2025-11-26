@@ -1,10 +1,12 @@
 """
-Payment and Order Views
+Payment and Order API Views
 """
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.pagination import PageNumberPagination
+from django.shortcuts import get_object_or_404
 from payment.models import Order, Payment, Refund, PaymentWebhook
 from payment.serializers import (
     OrderSerializer, CreateOrderSerializer, PaymentSerializer,
@@ -147,8 +149,13 @@ class ListOrdersView(APIView):
                 user=request.user
             ).prefetch_related('bookings', 'bookings__space', 'workspace').order_by('-created_at')
             
-            serializer = OrderListSerializer(orders, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            # Pagination
+            paginator = PageNumberPagination()
+            paginator.page_size = 20
+            paginated_orders = paginator.paginate_queryset(orders, request)
+            
+            serializer = OrderListSerializer(paginated_orders, many=True)
+            return paginator.get_paginated_response(serializer.data)
         except Exception as e:
             return Response(
                 {"detail": str(e)},
@@ -341,14 +348,14 @@ class InitiatePaymentView(APIView):
             raise Exception(f"Flutterwave initialization failed: {str(e)}")
 
 
-class PaymentCallbackView(APIView):
-    """Handle payment gateway callbacks"""
-    permission_classes = []  # Public endpoint for webhook
+class PaymentWebhookView(APIView):
+    """Handle payment gateway webhooks (server-to-server from Paystack/Flutterwave)"""
+    permission_classes = []  # Public endpoint - Paystack will call this
     
     @extend_schema(
-        summary="Payment callback",
-        description="Handle payment gateway webhook callback",
-        tags=["Payments"],
+        summary="Payment webhook (Paystack → Your Server)",
+        description="Handle payment gateway webhook. This is called by Paystack/Flutterwave servers, not by users.",
+        tags=["Payments - Webhooks"],
         request=PaymentCallbackSerializer,
         responses={
             200: {"type": "object", "properties": {"status": {"type": "string"}}},
@@ -356,12 +363,12 @@ class PaymentCallbackView(APIView):
         }
     )
     def post(self, request):
-        """Handle payment callback from Paystack or Flutterwave"""
+        """Handle payment webhook from Paystack or Flutterwave"""
         try:
             from payment.webhooks import handle_webhook
             
-            # Determine payment method from request
-            payment_method = request.query_params.get('method', 'paystack')  # Default to paystack
+            # Determine payment method from URL query param
+            payment_method = request.query_params.get('method', 'paystack')
             
             # Get signature header for verification
             signature_header = None
@@ -369,6 +376,8 @@ class PaymentCallbackView(APIView):
                 signature_header = request.META.get('HTTP_X_PAYSTACK_SIGNATURE')
             elif payment_method == 'flutterwave':
                 signature_header = request.META.get('HTTP_VERIFI_HASH')
+            
+            logger.info(f"Received {payment_method} webhook")
             
             # Process webhook
             result = handle_webhook(
@@ -403,6 +412,157 @@ class PaymentCallbackView(APIView):
             )
 
 
+class PaymentCallbackView(APIView):
+    """Handle payment callback (user redirect from Paystack/Flutterwave)"""
+    permission_classes = [IsAuthenticated]  # User must be logged in
+    
+    @extend_schema(
+        summary="Payment callback (User Redirect)",
+        description="Verify payment after user is redirected back from payment gateway. Your frontend should call this endpoint.",
+        tags=["Payments - Callback"],
+        parameters=[
+            {
+                "name": "reference",
+                "in": "query",
+                "required": True,
+                "schema": {"type": "string"},
+                "description": "Payment reference/transaction ID"
+            }
+        ],
+        responses={
+            200: {
+                "type": "object",
+                "properties": {
+                    "success": {"type": "boolean"},
+                    "message": {"type": "string"},
+                    "payment": {"type": "object"},
+                    "order": {"type": "object"}
+                }
+            },
+            400: {"type": "object", "properties": {"error": {"type": "string"}}},
+            403: {"type": "object", "properties": {"error": {"type": "string"}}},
+            404: {"type": "object", "properties": {"error": {"type": "string"}}}
+        }
+    )
+    def get(self, request):
+        """Verify payment after user redirect from payment gateway"""
+        try:
+            reference = request.query_params.get('reference')
+            
+            if not reference:
+                return Response(
+                    {'error': 'Payment reference is required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            logger.info(f"Payment callback for reference: {reference}")
+            
+            # Get payment by reference
+            try:
+                payment = Payment.objects.select_related('order', 'order__user').get(
+                    gateway_transaction_id=reference
+                )
+            except Payment.DoesNotExist:
+                return Response(
+                    {'error': 'Payment not found'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            # Check if user owns this payment
+            if payment.order.user != request.user:
+                return Response(
+                    {'error': 'You do not have permission to view this payment'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            # Verify payment with gateway API
+            if payment.payment_method == 'paystack':
+                from payment.gateways import PaystackGateway
+                gateway = PaystackGateway()
+            elif payment.payment_method == 'flutterwave':
+                from payment.gateways import FlutterwaveGateway
+                gateway = FlutterwaveGateway()
+            else:
+                return Response(
+                    {'error': f'Unknown payment method: {payment.payment_method}'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Verify transaction with payment gateway
+            verify_result = gateway.verify_transaction(reference)
+            
+            if not verify_result['success']:
+                return Response(
+                    {
+                        'success': False,
+                        'error': 'Payment verification failed',
+                        'details': verify_result.get('message', 'Unknown error')
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Check payment status from gateway
+            gateway_status = verify_result.get('status', '').lower()
+            
+            if gateway_status in ['success', 'successful']:
+                # Payment successful - update if not already updated by webhook
+                if payment.status != 'success':
+                    payment.status = 'success'
+                    payment.completed_at = timezone.now()
+                    payment.save()
+                    
+                    # Update order
+                    order = payment.order
+                    if order.status != 'paid':
+                        order.status = 'paid'
+                        order.paid_at = timezone.now()
+                        order.save()
+                        
+                        logger.info(f"Payment {payment.id} verified and updated via callback")
+                
+                return Response(
+                    {
+                        'success': True,
+                        'message': 'Payment verified successfully',
+                        'payment': {
+                            'id': str(payment.id),
+                            'reference': payment.gateway_transaction_id,
+                            'amount': str(payment.amount),
+                            'status': payment.status,
+                            'payment_method': payment.payment_method
+                        },
+                        'order': {
+                            'id': str(payment.order.id),
+                            'order_number': payment.order.order_number,
+                            'status': payment.order.status,
+                            'total_amount': str(payment.order.total_amount)
+                        }
+                    },
+                    status=status.HTTP_200_OK
+                )
+            else:
+                # Payment failed or pending
+                return Response(
+                    {
+                        'success': False,
+                        'message': f'Payment status: {gateway_status}',
+                        'payment': {
+                            'id': str(payment.id),
+                            'reference': payment.gateway_transaction_id,
+                            'status': gateway_status
+                        }
+                    },
+                    status=status.HTTP_200_OK
+                )
+        
+        except Exception as e:
+            logger.error(f"Payment callback error: {str(e)}")
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
 class ListPaymentsView(APIView):
     """List user's payments"""
     permission_classes = [IsAuthenticated]
@@ -423,8 +583,14 @@ class ListPaymentsView(APIView):
                 user=request.user
             ).select_related('order', 'workspace').order_by('-created_at')
             
-            serializer = PaymentListSerializer(payments, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            # Pagination
+            from rest_framework.pagination import PageNumberPagination
+            paginator = PageNumberPagination()
+            paginator.page_size = 20
+            paginated_payments = paginator.paginate_queryset(payments, request)
+            
+            serializer = PaymentListSerializer(paginated_payments, many=True)
+            return paginator.get_paginated_response(serializer.data)
         except Exception as e:
             return Response(
                 {"detail": str(e)},

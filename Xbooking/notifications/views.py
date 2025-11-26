@@ -5,7 +5,10 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.pagination import PageNumberPagination
 from django.utils import timezone
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 from notifications.models import Notification, NotificationPreference, BroadcastNotification
 from notifications.serializers import (
     NotificationSerializer, NotificationPreferenceSerializer, 
@@ -30,6 +33,7 @@ class GetUserNotificationsView(APIView):
         ],
         responses={200: NotificationSerializer(many=True)}
     )
+    @method_decorator(cache_page(60 * 2))  # Cache for 2 minutes
     def get(self, request):
         """Get notifications"""
         unread_only = request.query_params.get('unread_only', 'false').lower() == 'true'
@@ -48,8 +52,13 @@ class GetUserNotificationsView(APIView):
         if channel:
             notifications = notifications.filter(channel=channel)
         
-        serializer = NotificationSerializer(notifications, many=True, context={'request': request})
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        # Pagination
+        paginator = PageNumberPagination()
+        paginator.page_size = 20
+        paginated_notifications = paginator.paginate_queryset(notifications, request)
+        
+        serializer = NotificationSerializer(paginated_notifications, many=True, context={'request': request})
+        return paginator.get_paginated_response(serializer.data)
 
 
 class MarkNotificationAsReadView(APIView):
