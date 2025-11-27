@@ -8,6 +8,7 @@ from workspace.views.branch import (
 from workspace.views.space import (
     CreateSpaceView, ListSpacesView, SpaceDetailView
 )
+from workspace.views.space import SpaceCalendarView
 from workspace.views.public_space import (
     PublicSpaceListView, PublicSpaceDetailView
 )
@@ -44,6 +45,7 @@ urlpatterns = [
     path('branches/<uuid:branch_id>/spaces/create/', CreateSpaceView.as_view(), name='create_space'),
     path('branches/<uuid:branch_id>/spaces/', ListSpacesView.as_view(), name='list_spaces'),
     path('spaces/<uuid:space_id>/', SpaceDetailView.as_view(), name='space_detail'),
+    path('spaces/<uuid:space_id>/calendar/', SpaceCalendarView.as_view(), name='space_calendar'),
     
     # Public Space URLs (Unauthenticated)
     path('public/spaces/', PublicSpaceListView.as_view(), name='public_space_list'),

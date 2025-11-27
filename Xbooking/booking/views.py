@@ -19,6 +19,10 @@ from booking.serializers import (
 )
 from workspace.models import Space, Workspace
 from workspace.permissions import check_workspace_member
+from booking.models import Reservation
+from django.db import transaction
+from django.utils import timezone
+from datetime import timedelta
 
 
 class CartView(APIView):
@@ -57,48 +61,66 @@ class AddToCartView(APIView):
         if serializer.is_valid():
             try:
                 space = Space.objects.get(id=serializer.validated_data['space_id'])
-                
+
                 # Check if space is available
                 if not space.is_available:
                     return Response({
                         'success': False,
                         'message': 'This space is not available'
                     }, status=status.HTTP_400_BAD_REQUEST)
-                
-                # Get or create cart
-                cart, _ = Cart.objects.get_or_create(user=request.user)
-                
-                # Calculate price based on booking duration
+
                 check_in = serializer.validated_data['check_in']
                 check_out = serializer.validated_data['check_out']
+
+                # Check for overlapping bookings
+                if Booking.objects.filter(space=space, check_in__lt=check_out, check_out__gt=check_in).exists():
+                    return Response({'success': False, 'message': 'Selected slot is already booked'}, status=status.HTTP_400_BAD_REQUEST)
+
+                # Check for overlapping active reservations
+                if Reservation.objects.filter(space=space, status__in=['pending', 'held'], start__lt=check_out, end__gt=check_in).exists():
+                    return Response({'success': False, 'message': 'Selected slot is temporarily held by another user'}, status=status.HTTP_409_CONFLICT)
+
+                # Get or create user cart (cart is per-user)
+                cart, _ = Cart.objects.get_or_create(user=request.user)
+
+                # Calculate price based on booking duration (hourly)
                 hours = (check_out - check_in).total_seconds() / 3600
-                
-                # Use hourly rate for calculation
                 price = Decimal(str(space.price_per_hour)) * Decimal(str(hours))
-                
-                # Create cart item
-                cart_item, created = CartItem.objects.update_or_create(
-                    cart=cart,
-                    space=space,
-                    check_in=check_in,
-                    check_out=check_out,
-                    defaults={
-                        'number_of_guests': serializer.validated_data.get('number_of_guests', 1),
-                        'price': price,
-                        'special_requests': serializer.validated_data.get('special_requests', '')
-                    }
-                )
-                
-                # Recalculate cart totals
-                cart.calculate_totals()
-                
+
+                # Create a reservation hold and cart item atomically
+                with transaction.atomic():
+                    reservation = Reservation.objects.create(
+                        space=space,
+                        user=request.user,
+                        start=check_in,
+                        end=check_out,
+                        status='held',
+                        expires_at=timezone.now() + timedelta(minutes=15)
+                    )
+
+                    cart_item, created = CartItem.objects.update_or_create(
+                        cart=cart,
+                        space=space,
+                        check_in=check_in,
+                        check_out=check_out,
+                        defaults={
+                            'number_of_guests': serializer.validated_data.get('number_of_guests', 1),
+                            'price': price,
+                            'special_requests': serializer.validated_data.get('special_requests', ''),
+                            'reservation': reservation
+                        }
+                    )
+
+                    # Recalculate cart totals
+                    cart.calculate_totals()
+
                 cart_item_serializer = CartItemSerializer(cart_item)
                 return Response({
                     'success': True,
-                    'message': 'Item added to cart',
+                    'message': 'Item added to cart and slot held for 15 minutes',
                     'item': cart_item_serializer.data
                 }, status=status.HTTP_201_CREATED)
-                
+
             except Space.DoesNotExist:
                 return Response({
                     'success': False,
@@ -228,50 +250,65 @@ class CreateBookingView(APIView):
         """Create booking"""
         serializer = CreateBookingSerializer(data=request.data)
         if serializer.is_valid():
+            # Defensive validation and safe price calculation to avoid NameError
             try:
                 space = Space.objects.get(id=serializer.validated_data['space_id'])
-                workspace = space.branch.workspace
-                
-                if not space.is_available:
-                    return Response({
-                        'success': False,
-                        'message': 'This space is not available'
-                    }, status=status.HTTP_400_BAD_REQUEST)
-                
-                # Calculate price
-                check_in = serializer.validated_data['check_in']
-                check_out = serializer.validated_data['check_out']
-                hours = (check_out - check_in).total_seconds() / 3600
-                base_price = Decimal(str(space.price_per_hour)) * Decimal(str(hours))
-                
-                booking = Booking.objects.create(
-                    workspace=workspace,
-                    space=space,
-                    user=request.user,
-                    booking_type=serializer.validated_data['booking_type'],
-                    check_in=check_in,
-                    check_out=check_out,
-                    number_of_guests=serializer.validated_data['number_of_guests'],
-                    base_price=base_price,
-                    tax_amount=Decimal('0'),
-                    discount_amount=Decimal('0'),
-                    total_price=base_price,
-                    special_requests=serializer.validated_data.get('special_requests', ''),
-                    status='pending'
-                )
-                
-                booking_serializer = BookingSerializer(booking)
-                return Response({
-                    'success': True,
-                    'message': 'Booking created successfully',
-                    'booking': booking_serializer.data
-                }, status=status.HTTP_201_CREATED)
-                
             except Space.DoesNotExist:
-                return Response({
-                    'success': False,
-                    'message': 'Space not found'
-                }, status=status.HTTP_404_NOT_FOUND)
+                return Response({'success': False, 'message': 'Space not found'}, status=status.HTTP_404_NOT_FOUND)
+
+            workspace = space.branch.workspace
+
+            if not space.is_available:
+                return Response({'success': False, 'message': 'This space is not available'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Validate check-in/check-out presence and ordering
+            check_in = serializer.validated_data.get('check_in')
+            check_out = serializer.validated_data.get('check_out')
+            if not check_in or not check_out:
+                return Response({'success': False, 'message': 'check_in and check_out are required'}, status=status.HTTP_400_BAD_REQUEST)
+            if check_out <= check_in:
+                return Response({'success': False, 'message': 'check_out must be after check_in'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Calculate price (hours) safely
+            try:
+                hours = (check_out - check_in).total_seconds() / 3600
+                if hours <= 0:
+                    return Response({'success': False, 'message': 'Invalid booking duration'}, status=status.HTTP_400_BAD_REQUEST)
+                base_price = Decimal(str(space.price_per_hour)) * Decimal(str(hours))
+            except Exception as e:
+                return Response({'success': False, 'message': f'Error calculating price: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Check for overlapping confirmed/pending bookings
+            if Booking.objects.filter(space=space, check_in__lt=check_out, check_out__gt=check_in).exists():
+                return Response({'success': False, 'message': 'Selected slot is already booked'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Check for overlapping active reservations (pending/held)
+            if Reservation.objects.filter(space=space, status__in=['pending', 'held'], start__lt=check_out, end__gt=check_in).exists():
+                return Response({'success': False, 'message': 'Selected slot is temporarily held by another user'}, status=status.HTTP_409_CONFLICT)
+
+            # Create booking inside a transaction for safety
+            try:
+                with transaction.atomic():
+                    booking = Booking.objects.create(
+                        workspace=workspace,
+                        space=space,
+                        user=request.user,
+                        booking_type=serializer.validated_data.get('booking_type', 'daily'),
+                        check_in=check_in,
+                        check_out=check_out,
+                        number_of_guests=serializer.validated_data.get('number_of_guests', 1),
+                        base_price=base_price,
+                        tax_amount=Decimal('0'),
+                        discount_amount=Decimal('0'),
+                        total_price=base_price,
+                        special_requests=serializer.validated_data.get('special_requests', ''),
+                        status='pending'
+                    )
+            except Exception as e:
+                return Response({'success': False, 'message': f'Error creating booking: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+            booking_serializer = BookingSerializer(booking)
+            return Response({'success': True, 'message': 'Booking created successfully', 'booking': booking_serializer.data}, status=status.HTTP_201_CREATED)
         
         return Response({
             'success': False,

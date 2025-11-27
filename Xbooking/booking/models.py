@@ -68,6 +68,37 @@ class Booking(models.Model):
         return f"Booking {self.id} - {self.space.name} by {self.user.email}"
 
 
+class Reservation(models.Model):
+    """Temporary reservation/hold for a specific space slot.
+
+    Reservations are used to hold a slot while a user completes payment.
+    They should be created when a user selects a slot and expire after a short period.
+    """
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('held', 'Held'),
+        ('purchased', 'Purchased'),
+        ('cancelled', 'Cancelled'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    space = models.ForeignKey(Space, on_delete=models.CASCADE, related_name='reservations')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reservations')
+    start = models.DateTimeField()
+    end = models.DateTimeField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    expires_at = models.DateTimeField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'booking_reservation'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Reservation {self.id} - {self.space.name} ({self.start} - {self.end})"
+
+
 class Cart(models.Model):
     """Model for shopping cart"""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -109,6 +140,8 @@ class CartItem(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
     space = models.ForeignKey(Space, on_delete=models.CASCADE, related_name='cart_items')
+    # Optional reservation hold for this cart item
+    reservation = models.ForeignKey('Reservation', on_delete=models.SET_NULL, null=True, blank=True, related_name='cart_items')
     
     # Booking details
     check_in = models.DateTimeField()

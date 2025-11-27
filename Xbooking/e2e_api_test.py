@@ -21,6 +21,32 @@ def print_step(step):
 
 def run_test():
     session = requests.Session()
+    log_file = 'e2e_api_test_output.log'
+
+    def do_request(method, url, **kwargs):
+        """Wrapper to perform request, log response to file, and return Response."""
+        resp = session.request(method, url, **kwargs)
+        entry = {
+            'timestamp': datetime.utcnow().isoformat() + 'Z',
+            'method': method,
+            'url': url,
+            'status_code': resp.status_code,
+        }
+        # try to parse JSON body for nicer logs
+        try:
+            entry['body'] = resp.json()
+        except Exception:
+            entry['body'] = resp.text
+
+        try:
+            with open(log_file, 'a', encoding='utf-8') as f:
+                f.write(json.dumps(entry, ensure_ascii=False))
+                f.write('\n')
+        except Exception:
+            # if logging fails, don't break the test
+            pass
+
+        return resp
     
     # 1. Register
     print_step("Register User")
@@ -30,7 +56,7 @@ def run_test():
         "confirm_password": PASSWORD,
         "full_name": f"{FIRST_NAME} {LAST_NAME}"
     }
-    response = session.post(f"{BASE_URL}/api/user/register/", json=reg_data)
+    response = do_request("POST", f"{BASE_URL}/api/user/register/", json=reg_data)
     print(f"Status: {response.status_code}")
     if response.status_code != 201:
         print(f"Registration failed: {response.text}")
@@ -43,7 +69,7 @@ def run_test():
         "email": EMAIL,
         "password": PASSWORD
     }
-    response = session.post(f"{BASE_URL}/api/user/login/", json=login_data)
+    response = do_request("POST", f"{BASE_URL}/api/user/login/", json=login_data)
     print(f"Status: {response.status_code}")
     if response.status_code != 200:
         print(f"Login failed: {response.text}")
@@ -63,35 +89,81 @@ def run_test():
 
     # 3. List Public Workspaces (with pagination)
     print_step("List Public Workspaces (Paginated)")
-    response = requests.get(f"{BASE_URL}/api/workspace/public/workspaces/?page=1&page_size=10")
+    response = do_request("GET", f"{BASE_URL}/api/workspace/public/workspaces/?page=1&page_size=10")
     print(f"Status: {response.status_code}")
     if response.status_code != 200:
         print(f"Failed to list workspaces: {response.text}")
         return
     
     workspace_data = response.json()
-    print(f"DEBUG: Workspace Response Keys: {workspace_data.keys()}")
-    if 'results' in workspace_data:
-        print(f"DEBUG: Found {len(workspace_data['results'])} workspaces in 'results'")
-    
-    workspaces = workspace_data.get('workspaces', workspace_data.get('results', []))
-    if not workspaces:
+    print(f"DEBUG: Workspace Response Keys: {list(workspace_data.keys())}")
+
+    # The backend can return several shapes. Handle them robustly:
+    # - Standard DRF pagination: { ..., 'results': [ {...}, ... ] }
+    # - Nested wrapper: { ..., 'results': { 'success': True, 'workspaces': [ ... ] } }
+    # - Non-paginated: { 'workspaces': [ ... ] }
+    def _extract_list(obj):
+        # If it's a dict, try known keys in order
+        if isinstance(obj, dict):
+            # If results is present and is a list -> standard DRF
+            if 'results' in obj:
+                results = obj['results']
+                if isinstance(results, list):
+                    return results
+                if isinstance(results, dict):
+                    # common nested wrapper
+                    if 'workspaces' in results and isinstance(results['workspaces'], list):
+                        return results['workspaces']
+                    # sometimes results may itself contain the items under other keys
+                    for candidate in ('workspaces', 'items', 'results'):
+                        if candidate in results and isinstance(results[candidate], list):
+                            return results[candidate]
+
+            # Top-level workspaces key
+            if 'workspaces' in obj and isinstance(obj['workspaces'], list):
+                return obj['workspaces']
+
+            # Fallback: if any value is a list of dicts, pick the first reasonable one
+            for v in obj.values():
+                if isinstance(v, list) and v and isinstance(v[0], dict):
+                    return v
+
+        # If it's already a list, return as-is
+        if isinstance(obj, list):
+            return obj
+
+        return []
+
+    workspaces_list = _extract_list(workspace_data)
+
+    if not workspaces_list:
         print("No workspaces found. Cannot proceed.")
         return
-    
-    workspace_id = workspaces[0]['id']
+
+    # Choose the first workspace (index 0)
+    first_workspace = workspaces_list[0]
+
+    # workspace may be a dict or just an id string
+    if isinstance(first_workspace, dict):
+        workspace_id = first_workspace.get('id') or first_workspace.get('workspace_id')
+    else:
+        workspace_id = first_workspace
+
+    if not workspace_id:
+        print('Could not determine workspace id from response. Full response logged to file.')
+        return
     print(f"✅ Selected Workspace ID: {workspace_id}")
-    print(f"   Total workspaces: {workspace_data.get('count', len(workspaces))}")
+    print(f"   Total workspaces: {workspace_data.get('count', len(workspaces_list))}")
 
     # 4. Get Workspace Details
     print_step("Get Workspace Details")
-    response = requests.get(f"{BASE_URL}/api/workspace/public/workspaces/{workspace_id}/")
+    response = do_request("GET", f"{BASE_URL}/api/workspace/public/workspaces/{workspace_id}/")
     print(f"Status: {response.status_code}")
     print("✅ Workspace details retrieved")
     
     # 5. List Spaces (with pagination)
     print_step("List Public Spaces (Paginated)")
-    response = requests.get(f"{BASE_URL}/api/workspace/public/spaces/?workspace_id={workspace_id}&page=1&page_size=10")
+    response = do_request("GET", f"{BASE_URL}/api/workspace/public/spaces/?workspace_id={workspace_id}&page=1&page_size=10")
     print(f"Status: {response.status_code}")
     if response.status_code != 200:
         print(f"Failed to list spaces: {response.text}")
@@ -99,13 +171,73 @@ def run_test():
     
     space_data = response.json()
     spaces = space_data.get('spaces', space_data.get('results', []))
-    if not spaces:
+    if isinstance(spaces, dict):
+        spaces_list = list(spaces.values())
+    else:
+        spaces_list = spaces
+
+    if not spaces_list:
         print("No spaces found. Cannot proceed.")
         return
-    
-    space_id = spaces[0]['id']
+
+    first_space = spaces_list[0]
+    if isinstance(first_space, dict):
+        space_id = first_space.get('id') or first_space.get('space_id')
+    else:
+        space_id = first_space
+
+    if not space_id:
+        print('Could not determine space id from response. Full response logged to file.')
+        return
     print(f"✅ Selected Space ID: {space_id}")
     print(f"   Total spaces: {space_data.get('count', len(spaces))}")
+
+    # Calendar tests (hourly, daily, monthly)
+    print_step("Space Calendar - hourly/daily/monthly")
+    from datetime import date as _date
+    target_date = (datetime.now() + timedelta(days=1)).date()
+    date_str = target_date.isoformat()
+    month_str = f"{target_date.year}-{target_date.month:02d}"
+    year_str = f"{target_date.year}"
+
+    # hourly
+    cal_hourly_url = f"{BASE_URL}/api/workspace/spaces/{space_id}/calendar/?mode=hourly&date={date_str}"
+    resp = do_request("GET", cal_hourly_url)
+    print(f"Hourly calendar ({date_str}) - Status: {resp.status_code}")
+    try:
+        cal_hourly = resp.json()
+        slots = cal_hourly.get('slots', cal_hourly.get('data', {}).get('slots', []))
+        print(f"  Slots returned: {len(slots)}")
+        if len(slots) > 0:
+            print(f"  First slot: {slots[0]}")
+    except Exception:
+        print(f"  Failed to parse hourly calendar response: {resp.text}")
+
+    # daily
+    cal_daily_url = f"{BASE_URL}/api/workspace/spaces/{space_id}/calendar/?mode=daily&month={month_str}"
+    resp = do_request("GET", cal_daily_url)
+    print(f"Daily calendar ({month_str}) - Status: {resp.status_code}")
+    try:
+        cal_daily = resp.json()
+        days = cal_daily.get('days', cal_daily.get('data', {}).get('days', []))
+        print(f"  Days returned: {len(days)}")
+        if len(days) > 0:
+            print(f"  Sample day: {days[0]}")
+    except Exception:
+        print(f"  Failed to parse daily calendar response: {resp.text}")
+
+    # monthly
+    cal_monthly_url = f"{BASE_URL}/api/workspace/spaces/{space_id}/calendar/?mode=monthly&year={year_str}"
+    resp = do_request("GET", cal_monthly_url)
+    print(f"Monthly calendar ({year_str}) - Status: {resp.status_code}")
+    try:
+        cal_monthly = resp.json()
+        months = cal_monthly.get('months', cal_monthly.get('data', {}).get('months', []))
+        print(f"  Months returned: {len(months)}")
+        if len(months) > 0:
+            print(f"  Sample month: {months[0]}")
+    except Exception:
+        print(f"  Failed to parse monthly calendar response: {resp.text}")
 
     # 6. Create Booking
     print_step("Create Booking")
@@ -119,19 +251,35 @@ def run_test():
         "check_out": check_out,
         "number_of_guests": 1
     }
-    response = session.post(f"{BASE_URL}/api/booking/bookings/create/", json=booking_data, headers=headers)
+    response = do_request("POST", f"{BASE_URL}/api/booking/bookings/create/", json=booking_data, headers=headers)
     print(f"Status: {response.status_code}")
     if response.status_code != 201:
         print(f"Booking creation failed: {response.text}")
         return
     
-    booking = response.json()['booking']
+    # Be tolerant of different response shapes. Try common keys then fall back to raw json
+    resp_json = {}
+    try:
+        resp_json = response.json()
+    except Exception:
+        print("Failed to parse booking response as JSON")
+        return
+
+    if isinstance(resp_json, dict):
+        booking = resp_json.get('booking') or resp_json.get('data') or resp_json.get('result') or resp_json
+        # If we got a wrapper with success/message, ensure booking is the inner dict
+        if isinstance(booking, dict) and 'id' in booking:
+            booking = booking
+        elif isinstance(booking, dict) and 'booking' in booking:
+            booking = booking['booking']
+    else:
+        booking = resp_json
     booking_id = booking['id']
     print(f"✅ Booking created: {booking_id}")
 
     # 6a. List User Bookings (with pagination)
     print_step("List User Bookings (Paginated)")
-    response = session.get(f"{BASE_URL}/api/booking/bookings/?page=1&page_size=10", headers=headers)
+    response = do_request("GET", f"{BASE_URL}/api/booking/bookings/?page=1&page_size=10", headers=headers)
     print(f"Status: {response.status_code}")
     if response.status_code == 200:
         bookings_data = response.json()
@@ -144,7 +292,7 @@ def run_test():
 
     # 6b. Get Booking Details
     print_step("Get Booking Details")
-    response = session.get(f"{BASE_URL}/api/booking/bookings/{booking_id}/", headers=headers)
+    response = do_request("GET", f"{BASE_URL}/api/booking/bookings/{booking_id}/", headers=headers)
     print(f"Status: {response.status_code}")
     if response.status_code == 200:
         booking_details = response.json()['booking']
@@ -160,7 +308,7 @@ def run_test():
     order_data = {
         "booking_ids": [booking_id]
     }
-    response = session.post(f"{BASE_URL}/api/payment/orders/create/", json=order_data, headers=headers)
+    response = do_request("POST", f"{BASE_URL}/api/payment/orders/create/", json=order_data, headers=headers)
     print(f"Status: {response.status_code}")
     if response.status_code != 201:
         print(f"Order creation failed: {response.text}")
@@ -181,7 +329,7 @@ def run_test():
         "order_id": order_id,
         "payment_method": "paystack"
     }
-    response = session.post(f"{BASE_URL}/api/payment/payments/initiate/", json=payment_data, headers=headers)
+    response = do_request("POST", f"{BASE_URL}/api/payment/payments/initiate/", json=payment_data, headers=headers)
     print(f"Status: {response.status_code}")
     if response.status_code == 200:
         payment_info = response.json()
@@ -192,7 +340,7 @@ def run_test():
 
     # 8a. List User Payments (with pagination)
     print_step("List User Payments (Paginated)")
-    response = session.get(f"{BASE_URL}/api/payment/payments/?page=1&page_size=10", headers=headers)
+    response = do_request("GET", f"{BASE_URL}/api/payment/payments/?page=1&page_size=10", headers=headers)
     print(f"Status: {response.status_code}")
     if response.status_code == 200:
         payments_data = response.json()
@@ -212,7 +360,7 @@ def run_test():
 
     # 8b. List User Orders (with pagination)
     print_step("List User Orders (Paginated)")
-    response = session.get(f"{BASE_URL}/api/payment/orders/?page=1&page_size=10", headers=headers)
+    response = do_request("GET", f"{BASE_URL}/api/payment/orders/?page=1&page_size=10", headers=headers)
     print(f"Status: {response.status_code}")
     if response.status_code == 200:
         orders_data = response.json()
@@ -232,7 +380,7 @@ def run_test():
 
     # 9. Check Notifications
     print_step("Check User Notifications")
-    response = session.get(f"{BASE_URL}/api/notifications/?page=1&page_size=10", headers=headers)
+    response = do_request("GET", f"{BASE_URL}/api/notifications/?page=1&page_size=10", headers=headers)
     print(f"Status: {response.status_code}")
     if response.status_code == 200:
         notifications_data = response.json()
@@ -245,7 +393,7 @@ def run_test():
 
     # 10. Get Notification Preferences
     print_step("Get Notification Preferences")
-    response = session.get(f"{BASE_URL}/api/notifications/preferences/", headers=headers)
+    response = do_request("GET", f"{BASE_URL}/api/notifications/preferences/", headers=headers)
     print(f"Status: {response.status_code}")
     if response.status_code == 200:
         prefs = response.json()
@@ -257,7 +405,7 @@ def run_test():
 
     # 11. Generate QR Code
     print_step("Generate QR Code")
-    response = session.post(f"{BASE_URL}/api/qr/orders/{order_id}/qr-code/generate/", headers=headers)
+    response = do_request("POST", f"{BASE_URL}/api/qr/orders/{order_id}/qr-code/generate/", headers=headers)
     print(f"Status: {response.status_code}")
     if response.status_code == 400 and "paid" in response.text:
         print("⚠️  Expected: Order must be paid first")

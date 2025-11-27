@@ -40,11 +40,6 @@ class GenerateOrderQRCodeView(APIView):
             order = Order.objects.get(id=order_id, user=request.user)
             workspace = order.workspace
             
-            if not check_workspace_member(request.user, workspace, ['user', 'staff', 'manager', 'admin']):
-                return Response(
-                    {"detail": "You don't have permission to access this workspace"},
-                    status=status.HTTP_403_FORBIDDEN
-                )
             
             # Check if order is paid
             if order.status not in ['paid', 'processing', 'completed']:
@@ -92,12 +87,6 @@ class GetOrderQRCodeView(APIView):
         try:
             order = Order.objects.get(id=order_id, user=request.user)
             workspace = order.workspace
-            
-            if not check_workspace_member(request.user, workspace, ['user', 'staff', 'manager', 'admin']):
-                return Response(
-                    {"detail": "You don't have permission to access this workspace"},
-                    status=status.HTTP_403_FORBIDDEN
-                )
             
             try:
                 qr_code = order.qr_code

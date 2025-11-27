@@ -1,5 +1,8 @@
 from django.core.management.base import BaseCommand
 from workspace.models import Workspace, Branch, Space
+from booking.models import Reservation
+from datetime import timedelta
+from django.utils import timezone
 from django.contrib.auth import get_user_model
 import random
 
@@ -155,6 +158,23 @@ class Command(BaseCommand):
                     space.image_url = f'https://example.com/spaces/{space.id}.jpg'
                     space.save()
                     
+                    # Optionally create a sample reservation for testing (use timezone-aware datetimes)
+                    if random.choice([True, False]):
+                        start_dt = timezone.now() + timedelta(days=1, hours=9)
+                        end_dt = start_dt + timedelta(hours=1)
+                        try:
+                            Reservation.objects.create(
+                                space=space,
+                                user=admin_user,
+                                start=start_dt,
+                                end=end_dt,
+                                status='held',
+                                expires_at=timezone.now() + timedelta(minutes=30)
+                            )
+                            self.stdout.write(f'Created sample reservation for {space.name}')
+                        except Exception:
+                            pass
+
                     self.stdout.write(f'Created space: {space.name} in {branch.name}')
 
         self.stdout.write(self.style.SUCCESS('Successfully populated database'))

@@ -117,6 +117,8 @@ class Space(models.Model):
     image_url = models.URLField(blank=True, null=True)
     amenities = models.JSONField(default=list, blank=True)  # List of amenities
     is_available = models.BooleanField(default=True)
+    # Time interval in minutes for slot generation (e.g., 60 for 1 hour slots)
+    time_interval_minutes = models.IntegerField(default=60, help_text='Slot interval in minutes')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
