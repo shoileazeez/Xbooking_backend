@@ -1,0 +1,36 @@
+Your Booking QR Code{% if is_multiple %}s{% endif %} - XBooking
+==============================================
+
+Hello {{ user_name }}!
+
+Your payment has been confirmed! Please find your QR code{% if is_multiple %}s{% endif %} attached to this email for check-in.
+
+ORDER DETAILS
+-------------
+Order Number: {{ order_number }}
+Total Bookings: {{ bookings_count }}
+
+
+YOUR BOOKING{% if is_multiple %}S{% endif %}
+-------------
+{% for booking in bookings %}
+{{ booking.space_name }}
+  Check-in: {{ booking.check_in }}
+  Check-out: {{ booking.check_out }}
+  QR Code: {{ booking.verification_code }}
+
+{% endfor %}
+
+IMPORTANT INFORMATION
+---------------------
+* Keep your QR code{% if is_multiple %}s{% endif %} safe and accessible
+* Show the appropriate QR code to staff at check-in
+{% if is_multiple %}* Each space requires its own QR code
+{% endif %}* QR codes are valid until your checkout time
+
+
+Thank you for choosing XBooking!
+
+---
+XBooking - Space Booking Platform
+This is an automated email. Please do not reply.

@@ -33,19 +33,11 @@ RUN pip install --upgrade pip \
 # Copy project files
 COPY . /app/
 
-
-# Switch to non-root user
-USER django
-
 RUN python manage.py collectstatic --noinput --clear || echo "Static collection failed, continuing..."
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD python -c "import django; django.setup(); from django.http import HttpRequest; from django.test import Client; client = Client(); response = client.get('/'); assert response.status_code in [200, 301, 302]" || exit 1
 
 # Expose port
 EXPOSE 8000
 
-# Command to run the application
+# Default command for web service (override in render.yaml for workers)
 CMD ["bash", "-c", "python manage.py migrate --noinput && python manage.py populate_workspace_data && gunicorn --bind 0.0.0.0:8000 --workers 3 --timeout 120 Xbooking.wsgi:application"]
 

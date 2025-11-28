@@ -432,3 +432,297 @@ def send_upcoming_booking_reminders():
             'success': False,
             'error': str(e)
         }
+
+
+@shared_task
+def generate_booking_qr_codes_for_order(order_id):
+    """
+    Generate QR code for each booking in an order (for the booker).
+    Each booking gets its own QR code stored in BookingQRCode model.
+    After generating all QR codes, sends an email to the booker with all QR codes attached.
+    
+    Args:
+        order_id (str): UUID of the order
+        
+    Returns:
+        dict: Result with QR code IDs
+    """
+    try:
+        from qr_code.models import BookingQRCode
+        from booking.models import Booking
+        
+        order = Order.objects.get(id=order_id)
+        booking_qr_codes = []
+        
+        for booking in order.bookings.filter(status='confirmed'):
+            # Skip if QR code already exists for this booking
+            if hasattr(booking, 'qr_code') and booking.qr_code:
+                booking_qr_codes.append(booking.qr_code)
+                continue
+            
+            # Generate unique verification code
+            verification_code = f"BKG-{uuid.uuid4().hex[:12].upper()}"
+            
+            # QR code data - includes booking ID, space info, verification code
+            qr_data = {
+                'type': 'booking',
+                'verification_code': verification_code,
+                'booking_id': str(booking.id),
+                'space_id': str(booking.space.id),
+                'space_name': booking.space.name,
+                'check_in': booking.check_in.isoformat() if booking.check_in else None,
+                'check_out': booking.check_out.isoformat() if booking.check_out else None,
+            }
+            qr_url = f"https://xbooking.com/verify-booking/{verification_code}?booking={booking.id}"
+            
+            # Generate QR code image
+            qr = qrcode.QRCode(
+                version=1,
+                error_correction=qrcode.constants.ERROR_CORRECT_L,
+                box_size=10,
+                border=4,
+            )
+            qr.add_data(qr_url)
+            qr.make(fit=True)
+            
+            # Convert to image
+            img = qr.make_image(fill_color="black", back_color="white")
+            
+            # Save to file
+            img_io = io.BytesIO()
+            img.save(img_io, format='PNG')
+            img_io.seek(0)
+            
+            # Set expiry to booking checkout time
+            expires_at = booking.check_out if booking.check_out else (timezone.now() + timedelta(hours=24))
+            
+            # Create BookingQRCode record
+            booking_qr = BookingQRCode.objects.create(
+                booking=booking,
+                order=order,
+                verification_code=verification_code,
+                qr_code_data=str(qr_data),
+                status='generated',
+                expires_at=expires_at,
+            )
+            
+            # Save image
+            filename = f"booking_qr_{booking.id}_{verification_code}.png"
+            booking_qr.qr_code_image.save(filename, ContentFile(img_io.getvalue()))
+            booking_qr.save()
+            
+            booking_qr_codes.append(booking_qr)
+        
+        # Send email with all booking QR codes
+        if booking_qr_codes:
+            send_booking_qr_codes_email.delay(order_id)
+        
+        return {
+            'success': True,
+            'qr_codes_generated': len(booking_qr_codes),
+            'qr_code_ids': [str(qr.id) for qr in booking_qr_codes],
+            'message': f'Generated {len(booking_qr_codes)} booking QR codes'
+        }
+    
+    except Order.DoesNotExist:
+        return {
+            'success': False,
+            'error': f'Order {order_id} not found'
+        }
+    except Exception as e:
+        return {
+            'success': False,
+            'error': str(e)
+        }
+
+
+@shared_task
+def send_booking_qr_codes_email(order_id):
+    """
+    Send email to booker with QR codes for all their bookings.
+    Supports both single and multiple bookings in one email.
+    
+    Args:
+        order_id (str): UUID of the order
+        
+    Returns:
+        dict: Result status
+    """
+    try:
+        from qr_code.models import BookingQRCode
+        
+        order = Order.objects.get(id=order_id)
+        user = order.user
+        
+        # Check user notification preference
+        if hasattr(user, 'notification_preferences'):
+            if not user.notification_preferences.email_qr_code:
+                return {'success': True, 'message': 'User disabled QR code email notifications'}
+        
+        # Get all booking QR codes for this order
+        booking_qr_codes = BookingQRCode.objects.filter(order=order).select_related('booking', 'booking__space')
+        
+        if not booking_qr_codes.exists():
+            return {'success': False, 'error': 'No booking QR codes found for order'}
+        
+        # Prepare email content
+        bookings_data = []
+        for qr in booking_qr_codes:
+            bookings_data.append({
+                'space_name': qr.booking.space.name,
+                'check_in': qr.booking.check_in,
+                'check_out': qr.booking.check_out,
+                'verification_code': qr.verification_code,
+            })
+        
+        context = {
+            'order_number': order.order_number,
+            'user_name': user.full_name or user.email,
+            'bookings_count': booking_qr_codes.count(),
+            'bookings': bookings_data,
+            'is_multiple': booking_qr_codes.count() > 1,
+        }
+        
+        # Try to render template, fallback to basic HTML
+        try:
+            html_content = render_to_string('emails/booking_qr_codes_email.html', context)
+            text_content = render_to_string('emails/booking_qr_codes_email.txt', context)
+        except Exception:
+            # Fallback if template doesn't exist
+            bookings_html = ""
+            bookings_text = ""
+            for b in bookings_data:
+                bookings_html += f"<li><strong>{b['space_name']}</strong> - Check-in: {b['check_in']}, Check-out: {b['check_out']}</li>"
+                bookings_text += f"- {b['space_name']} - Check-in: {b['check_in']}, Check-out: {b['check_out']}\n"
+            
+            html_content = f"""
+            <html>
+            <body>
+            <h1>Your Booking QR Codes</h1>
+            <p>Hello {context['user_name']},</p>
+            <p>Your payment for order <strong>{context['order_number']}</strong> has been confirmed!</p>
+            <p>Please find attached your QR code(s) for check-in at the following booking(s):</p>
+            <ul>{bookings_html}</ul>
+            <p>Present the appropriate QR code when you arrive at each space for quick check-in.</p>
+            <p>Thank you for choosing XBooking!</p>
+            </body>
+            </html>
+            """
+            text_content = f"""
+Your Booking QR Codes
+
+Hello {context['user_name']},
+
+Your payment for order {context['order_number']} has been confirmed!
+
+Please find attached your QR code(s) for check-in at the following booking(s):
+{bookings_text}
+
+Present the appropriate QR code when you arrive at each space for quick check-in.
+
+Thank you for choosing XBooking!
+            """
+        
+        # Create email
+        subject = f'Your Booking QR Code{"s" if booking_qr_codes.count() > 1 else ""} - Order {order.order_number}'
+        email = EmailMultiAlternatives(
+            subject=subject,
+            body=text_content,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[user.email]
+        )
+        email.attach_alternative(html_content, "text/html")
+        
+        # Attach all QR code images
+        for qr in booking_qr_codes:
+            if qr.qr_code_image:
+                try:
+                    filename = f"QR_{qr.booking.space.name.replace(' ', '_')}_{qr.verification_code}.png"
+                    email.attach_file(qr.qr_code_image.path)
+                except Exception as e:
+                    # If file not accessible, try reading from storage
+                    pass
+        
+        # Send email
+        email.send()
+        
+        # Update QR code statuses
+        booking_qr_codes.update(status='sent', sent_at=timezone.now())
+        
+        # Log notification
+        Notification.objects.create(
+            user=user,
+            notification_type='booking_qr_codes_sent',
+            channel='email',
+            title='Booking QR Codes Sent',
+            message=f'Your QR code(s) for order {order.order_number} have been sent to your email',
+            is_sent=True,
+            sent_at=timezone.now(),
+            data={
+                'order_id': str(order.id),
+                'bookings_count': booking_qr_codes.count()
+            }
+        )
+        
+        return {
+            'success': True,
+            'message': f'Booking QR codes email sent successfully with {booking_qr_codes.count()} QR code(s)'
+        }
+    
+    except Order.DoesNotExist:
+        return {
+            'success': False,
+            'error': f'Order {order_id} not found'
+        }
+    except Exception as e:
+        return {
+            'success': False,
+            'error': str(e)
+        }
+
+
+@shared_task
+def expire_booking_qr_codes():
+    """
+    Mark BookingQRCode records as expired based on booking status:
+    - Booking is completed (checked in AND checked out)
+    - OR checkout date/time has passed
+    """
+    try:
+        from qr_code.models import BookingQRCode
+        
+        now = timezone.now()
+        expired_count = 0
+        
+        # Get all active booking QR codes
+        active_qr_codes = BookingQRCode.objects.filter(
+            status__in=['generated', 'sent']
+        ).select_related('booking')
+        
+        for qr_code in active_qr_codes:
+            booking = qr_code.booking
+            should_expire = False
+            
+            # Expire if booking is completed
+            if booking.status == 'completed':
+                should_expire = True
+            
+            # Expire if checkout date/time has passed
+            elif booking.check_out and booking.check_out < now:
+                should_expire = True
+            
+            if should_expire:
+                qr_code.status = 'expired'
+                qr_code.save()
+                expired_count += 1
+        
+        return {
+            'success': True,
+            'expired_count': expired_count,
+            'message': f'{expired_count} booking QR codes marked as expired'
+        }
+    except Exception as e:
+        return {
+            'success': False,
+            'error': str(e)
+        }

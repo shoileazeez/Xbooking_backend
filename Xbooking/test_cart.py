@@ -201,11 +201,11 @@ def run_cart_test():
     print_step("Add Spaces to Cart")
     
     cart_items = []
-    base_date = datetime.now() + timedelta(days=7)  # Start booking 7 days from now
+    base_date = datetime.now() + timedelta(days=2)  # Start booking 7 days from now
     
     for i, space_info in enumerate(spaces_to_book):
-        # Each booking is 2 hours, staggered by 3 hours
-        check_in = base_date + timedelta(hours=i * 3)
+        # Each booking is 2 hours, staggered by 2 hours
+        check_in = base_date + timedelta(hours=i * 2)
         check_out = check_in + timedelta(hours=2)
         
         add_to_cart_data = {

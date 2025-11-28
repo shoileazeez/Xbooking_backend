@@ -142,10 +142,20 @@ class PaystackWebhookHandler:
                 booking.save()
             
             # Trigger background tasks
-            from qr_code.tasks import generate_qr_code_for_order, send_payment_confirmation_email
+            from qr_code.tasks import (
+                generate_qr_code_for_order, 
+                send_payment_confirmation_email,
+                generate_booking_qr_codes_for_order
+            )
             from booking.guest_tasks import generate_guest_qr_codes_for_order
+            
             send_payment_confirmation_email.delay(str(order.id))
+            
+            # Generate order-level QR code
             generate_qr_code_for_order.delay(str(order.id))
+            
+            # Generate QR code per booking for the booker
+            generate_booking_qr_codes_for_order.delay(str(order.id))
             
             # Generate QR codes for all guests in the order's bookings
             generate_guest_qr_codes_for_order.delay(str(order.id))
@@ -344,10 +354,20 @@ class FlutterwaveWebhookHandler:
                 booking.save()
             
             # Trigger background tasks
-            from qr_code.tasks import generate_qr_code_for_order, send_payment_confirmation_email
+            from qr_code.tasks import (
+                generate_qr_code_for_order, 
+                send_payment_confirmation_email,
+                generate_booking_qr_codes_for_order
+            )
             from booking.guest_tasks import generate_guest_qr_codes_for_order
+            
             send_payment_confirmation_email.delay(str(order.id))
+            
+            # Generate order-level QR code
             generate_qr_code_for_order.delay(str(order.id))
+            
+            # Generate QR code per booking for the booker
+            generate_booking_qr_codes_for_order.delay(str(order.id))
             
             # Generate QR codes for all guests in the order's bookings
             generate_guest_qr_codes_for_order.delay(str(order.id))

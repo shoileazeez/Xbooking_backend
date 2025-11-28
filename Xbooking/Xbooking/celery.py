@@ -26,6 +26,11 @@ app.conf.beat_schedule = {
         'task': 'qr_code.tasks.expire_old_qr_codes',
         'schedule': crontab(minute=0),  # Every hour
     },
+    # Expire old booking QR codes every hour
+    'expire-booking-qr-codes': {
+        'task': 'qr_code.tasks.expire_booking_qr_codes',
+        'schedule': crontab(minute=0),  # Every hour
+    },
     # Send booking reminders 1 hour before check-in (checks every hour)
     'send-booking-reminders': {
         'task': 'qr_code.tasks.send_upcoming_booking_reminders',
