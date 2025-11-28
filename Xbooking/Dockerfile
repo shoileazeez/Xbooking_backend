@@ -17,11 +17,8 @@ RUN apt-get update \
 # Set working directory
 WORKDIR /app
 
-# Create non-root user for security
-RUN addgroup --system django \
-    && adduser --system --ingroup django django
-
-RUN mkdir -p /app && chmod -R 777 /app
+# Create directories for static and media files
+RUN mkdir -p /app/staticfiles /app/media
 
 # Copy requirements file first (for better caching)
 COPY requirements.txt /app/
@@ -33,11 +30,9 @@ RUN pip install --upgrade pip \
 # Copy project files
 COPY . /app/
 
-RUN python manage.py collectstatic --noinput --clear || echo "Static collection failed, continuing..."
-
 # Expose port
 EXPOSE 8000
 
-# Default command for web service (override in render.yaml for workers)
-CMD ["bash", "-c", "python manage.py migrate --noinput && python manage.py populate_workspace_data && gunicorn --bind 0.0.0.0:8000 --workers 3 --timeout 120 Xbooking.wsgi:application"]
+# Default command (can be overridden in docker-compose)
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "3", "--timeout", "120", "Xbooking.wsgi:application"]
 
