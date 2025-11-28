@@ -8,8 +8,8 @@ import time
 import uuid
 from datetime import datetime, timedelta
 
-BASE_URL = "http://localhost:8000"
-EMAIL = f"testuser_{uuid.uuid4()}@example.com"
+BASE_URL = "https://6a63f43d1a91.ngrok-free.app/"
+EMAIL = f" promptforge.customservice@gmail.com"
 PASSWORD = "TestPassword123!"
 FIRST_NAME = "Test"
 LAST_NAME = "User"
@@ -56,6 +56,7 @@ def run_test():
         "confirm_password": PASSWORD,
         "full_name": f"{FIRST_NAME} {LAST_NAME}"
     }
+    print(EMAIL)
     response = do_request("POST", f"{BASE_URL}/api/user/register/", json=reg_data)
     print(f"Status: {response.status_code}")
     if response.status_code != 201:
@@ -241,15 +242,15 @@ def run_test():
 
     # 6. Create Booking
     print_step("Create Booking")
-    check_in = (datetime.now() + timedelta(days=1)).isoformat() + "Z"
-    check_out = (datetime.now() + timedelta(days=1, hours=4)).isoformat() + "Z"
+    check_in = (datetime.now() + timedelta(days=5)).isoformat() + "Z"
+    check_out = (datetime.now() + timedelta(days=5, hours=1)).isoformat() + "Z"
     
     booking_data = {
         "space_id": space_id,
         "booking_type": "hourly",
         "check_in": check_in,
         "check_out": check_out,
-        "number_of_guests": 1
+        "number_of_guests": 3  # Allow for 2 guests plus primary booker
     }
     response = do_request("POST", f"{BASE_URL}/api/booking/bookings/create/", json=booking_data, headers=headers)
     print(f"Status: {response.status_code}")
@@ -303,6 +304,53 @@ def run_test():
     else:
         print(f"Failed to get booking details: {response.text}")
 
+    # 6c. Add Guests to Booking (multiple at once)
+    print_step("Add Guests to Booking")
+    # API expects: {"guests": [{"first_name": "...", "last_name": "...", "email": "...", "phone": "..."}]}
+    guests_payload = {
+        "guests": [
+            {
+                "first_name": "John",
+                "last_name": "Guest",
+                "email": "shoabdulazeez@gmail.com",
+                "phone": "+2348012345678"
+            },
+            {
+                "first_name": "Jane",
+                "last_name": "Visitor",
+                "email": "abdulazeezshoile@gmail.com",
+                "phone": "+2348087654321"
+            }
+        ]
+    }
+    response = do_request("POST", f"{BASE_URL}/api/booking/bookings/{booking_id}/guests/", json=guests_payload, headers=headers)
+    print(f"Status: {response.status_code}")
+    if response.status_code in [200, 201]:
+        guest_resp = response.json()
+        guests_added = guest_resp.get('guests', [])
+        print(f"✅ Added {len(guests_added)} guest(s) to booking")
+        for i, g in enumerate(guests_added, 1):
+            full_name = g.get('full_name', f"{g.get('first_name', '')} {g.get('last_name', '')}")
+            print(f"  [{i}] {full_name} ({g.get('email', 'N/A')})")
+    else:
+        print(f"Failed to add guests: {response.text}")
+        # Continue anyway, guest addition might be optional
+
+    # List guests for the booking
+    print_step("List Booking Guests")
+    response = do_request("GET", f"{BASE_URL}/api/booking/bookings/{booking_id}/guests/list/", headers=headers)
+    print(f"Status: {response.status_code}")
+    if response.status_code == 200:
+        guests_data = response.json()
+        guests_list = guests_data.get('guests', guests_data.get('results', []))
+        print(f"✅ Found {len(guests_list)} guest(s) for booking")
+        for i, g in enumerate(guests_list, 1):
+            full_name = g.get('full_name', f"{g.get('first_name', '')} {g.get('last_name', '')}")
+            qr_sent = g.get('qr_code_sent', False)
+            print(f"  [{i}] {full_name} - {g.get('email', 'N/A')} - QR Sent: {'Yes' if qr_sent else 'Pending'}")
+    else:
+        print(f"Failed to list guests: {response.text}")
+
     # 7. Create Order
     print_step("Create Order")
     order_data = {
@@ -331,14 +379,55 @@ def run_test():
     }
     response = do_request("POST", f"{BASE_URL}/api/payment/payments/initiate/", json=payment_data, headers=headers)
     print(f"Status: {response.status_code}")
+    payment_url = None
     if response.status_code == 200:
         payment_info = response.json()
         reference = payment_info.get('reference', 'N/A')
+        payment_url = payment_info.get('payment_url', None)
         print(f"✅ Payment initiated. Reference: {reference}")
+        print(f"   Payment URL: {payment_url}")
+        print(payment_info)
+        
+        # ========================================================
+        # PAUSE: Open the payment_url in browser to complete payment
+        # ========================================================
+        if payment_url:
+            print("\n" + "="*60)
+            print("🔔 MANUAL PAYMENT STEP")
+            print("="*60)
+            print(f"Open this URL in your browser to complete payment:")
+            print(f"\n  {payment_url}\n")
+            print("Waiting 2 minutes for you to complete the payment...")
+            print("="*60 + "\n")
+            
+            # Wait 2 minutes (120 seconds) for manual payment
+            for remaining in range(120, 0, -10):
+                print(f"  ⏳ {remaining} seconds remaining...")
+                time.sleep(10)
+            
+            print("✅ Wait complete. Continuing with verification...\n")
+            
+            # 8a. Verify Payment via Callback API
+            # print_step("Verify Payment (Callback API)")
+            # verify_url = f"{BASE_URL}/api/payment/payments/callback/?reference={reference}"
+            # print(f"Calling: {verify_url}")
+            # response = do_request("GET", verify_url, headers=headers)
+            # print(f"Status: {response.status_code}")
+            # if response.status_code == 200:
+            #     verify_data = response.json()
+            #     print(f"✅ Payment verification result:")
+            #     print(f"   Success: {verify_data.get('success', 'N/A')}")
+            #     print(f"   Message: {verify_data.get('message', 'N/A')}")
+            #     if verify_data.get('payment'):
+            #         print(f"   Payment Status: {verify_data['payment'].get('status', 'N/A')}")
+            #     if verify_data.get('order'):
+            #         print(f"   Order Status: {verify_data['order'].get('status', 'N/A')}")
+            # else:
+            #     print(f"Payment verification response: {response.text}")
     else:
         print(f"Payment initiation failed: {response.text}")
 
-    # 8a. List User Payments (with pagination)
+    # 8b. List User Payments (with pagination)
     print_step("List User Payments (Paginated)")
     response = do_request("GET", f"{BASE_URL}/api/payment/payments/?page=1&page_size=10", headers=headers)
     print(f"Status: {response.status_code}")
@@ -403,16 +492,21 @@ def run_test():
     else:
         print(f"Failed to get preferences: {response.text}")
 
-    # 11. Generate QR Code
-    print_step("Generate QR Code")
-    response = do_request("POST", f"{BASE_URL}/api/qr/orders/{order_id}/qr-code/generate/", headers=headers)
+    # 11. Verify Guest QR Codes (generated automatically by webhook after payment)
+    print_step("Verify Guest QR Codes (Auto-generated)")
+    response = do_request("GET", f"{BASE_URL}/api/booking/bookings/{booking_id}/guests/list/", headers=headers)
     print(f"Status: {response.status_code}")
-    if response.status_code == 400 and "paid" in response.text:
-        print("⚠️  Expected: Order must be paid first")
-    elif response.status_code == 200:
-        print("✅ QR Code generated successfully")
+    if response.status_code == 200:
+        guests_data = response.json()
+        guests_list = guests_data.get('guests', guests_data.get('results', []))
+        print(f"✅ Checking QR codes for {len(guests_list)} guest(s)")
+        for i, g in enumerate(guests_list, 1):
+            qr_sent = g.get('qr_code_sent', False)
+            full_name = g.get('full_name', f"{g.get('first_name', '')} {g.get('last_name', '')}")
+            status_str = "✅ Sent" if qr_sent else "⏳ Pending (webhook may still be processing)"
+            print(f"  [{i}] {full_name} - QR Code: {status_str}")
     else:
-        print(f"Response: {response.text}")
+        print(f"Failed to verify guest QR codes: {response.text}")
 
     # Summary
     print_step("Test Summary")

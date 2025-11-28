@@ -1,0 +1,21 @@
+Booking Reminder - XBooking
+============================
+
+Hello {{ user_name }}!
+
+This is a friendly reminder that your booking is coming up soon.
+
+Booking Details:
+- Space: {{ space_name }}
+- Location: {{ location }}
+- Check-in: {{ check_in }}
+- Check-out: {{ check_out }}
+
+Reminders:
+- Have your QR code ready for check-in
+- Arrive on time
+- Contact support if you need to reschedule
+
+---
+XBooking - Space Booking Platform
+This is an automated email. Please do not reply.

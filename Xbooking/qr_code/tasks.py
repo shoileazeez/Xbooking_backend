@@ -2,6 +2,7 @@
 Celery tasks for QR code generation and notifications
 """
 from celery import shared_task
+from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
@@ -47,6 +48,16 @@ def generate_qr_code_for_order(order_id):
         img.save(img_io, format='PNG')
         img_io.seek(0)
         
+        # Determine expiry based on the latest checkout time from order bookings
+        latest_checkout = None
+        for booking in order.bookings.all():
+            if booking.check_out:
+                if latest_checkout is None or booking.check_out > latest_checkout:
+                    latest_checkout = booking.check_out
+        
+        # Fallback to 24 hours if no checkout time found
+        expires_at = latest_checkout if latest_checkout else (timezone.now() + timedelta(hours=24))
+        
         # Create or update QR code record
         qr_code, created = OrderQRCode.objects.update_or_create(
             order=order,
@@ -54,7 +65,7 @@ def generate_qr_code_for_order(order_id):
                 'verification_code': verification_code,
                 'qr_code_data': qr_data,
                 'status': 'generated',
-                'expires_at': timezone.now() + timedelta(hours=24),  # Valid for 24 hours
+                'expires_at': expires_at,
             }
         )
         
@@ -102,7 +113,7 @@ def send_qr_code_email(order_id, qr_code_id):
         # Prepare email content
         context = {
             'order_number': order.order_number,
-            'user_name': order.user.first_name or order.user.email,
+            'user_name': order.user.full_name or order.user.email,
             'total_amount': order.total_amount,
             'bookings_count': order.bookings.count(),
         }
@@ -115,7 +126,7 @@ def send_qr_code_email(order_id, qr_code_id):
         email = EmailMultiAlternatives(
             subject=f'Your QR Code for Order {order.order_number}',
             body=text_content,
-            from_email='bookings@xbooking.com',
+            from_email=settings.DEFAULT_FROM_EMAIL,
             to=[order.user.email]
         )
         email.attach_alternative(html_content, "text/html")
@@ -175,7 +186,7 @@ def send_order_confirmation_email(order_id):
         # Prepare email content
         context = {
             'order_number': order.order_number,
-            'user_name': order.user.first_name or order.user.email,
+            'user_name': order.user.full_name or order.user.email,
             'total_amount': order.total_amount,
             'bookings': order.bookings.all(),
         }
@@ -188,7 +199,7 @@ def send_order_confirmation_email(order_id):
         email = EmailMultiAlternatives(
             subject=f'Order Confirmation: {order.order_number}',
             body=text_content,
-            from_email='bookings@xbooking.com',
+            from_email=settings.DEFAULT_FROM_EMAIL,
             to=[order.user.email]
         )
         email.attach_alternative(html_content, "text/html")
@@ -236,7 +247,7 @@ def send_payment_confirmation_email(order_id):
         # Prepare email content
         context = {
             'order_number': order.order_number,
-            'user_name': order.user.first_name or order.user.email,
+            'user_name': order.user.full_name or order.user.email,
             'total_amount': order.total_amount,
             'payment_method': payment.payment_method.upper() if payment else 'Unknown',
             'transaction_id': payment.gateway_transaction_id if payment else 'N/A',
@@ -251,7 +262,7 @@ def send_payment_confirmation_email(order_id):
         email = EmailMultiAlternatives(
             subject=f'Payment Confirmed: {order.order_number}',
             body=text_content,
-            from_email='bookings@xbooking.com',
+            from_email=settings.DEFAULT_FROM_EMAIL,
             to=[order.user.email]
         )
         email.attach_alternative(html_content, "text/html")
@@ -285,22 +296,47 @@ def send_payment_confirmation_email(order_id):
 @shared_task
 def expire_old_qr_codes():
     """
-    Mark old QR codes as expired (scheduled task)
+    Mark QR codes as expired based on booking status:
+    - Booking is completed (checked in AND checked out)
+    - OR checkout date/time has passed
     """
     try:
         from qr_code.models import OrderQRCode
-
-        expired_qrs = OrderQRCode.objects.filter(
-            expires_at__lt=timezone.now(),
-            status__in=['generated', 'sent']
-        )
+        from booking.models import Booking
         
-        count = expired_qrs.update(status='expired')
+        now = timezone.now()
+        expired_count = 0
+        
+        # Get all active QR codes (generated or sent)
+        active_qr_codes = OrderQRCode.objects.filter(
+            status__in=['generated', 'sent']
+        ).select_related('order')
+        
+        for qr_code in active_qr_codes:
+            order = qr_code.order
+            should_expire = False
+            
+            # Check all bookings in this order
+            for booking in order.bookings.all():
+                # Expire if booking is completed (checked in AND checked out)
+                if booking.status == 'completed':
+                    should_expire = True
+                    break
+                
+                # Expire if checkout date/time has passed
+                if booking.check_out and booking.check_out < now:
+                    should_expire = True
+                    break
+            
+            if should_expire:
+                qr_code.status = 'expired'
+                qr_code.save()
+                expired_count += 1
         
         return {
             'success': True,
-            'expired_count': count,
-            'message': f'{count} QR codes marked as expired'
+            'expired_count': expired_count,
+            'message': f'{expired_count} QR codes marked as expired'
         }
     except Exception as e:
         return {
@@ -327,7 +363,7 @@ def send_booking_reminder(booking_id):
         
         # Prepare email content
         context = {
-            'user_name': user.first_name or user.email,
+            'user_name': user.full_name or user.email,
             'space_name': booking.space.name,
             'check_in': booking.check_in,
             'check_out': booking.check_out,
@@ -342,7 +378,7 @@ def send_booking_reminder(booking_id):
         email = EmailMultiAlternatives(
             subject=f'Reminder: Your booking at {booking.space.name}',
             body=text_content,
-            from_email='bookings@xbooking.com',
+            from_email=settings.DEFAULT_FROM_EMAIL,
             to=[user.email]
         )
         email.attach_alternative(html_content, "text/html")
@@ -353,6 +389,43 @@ def send_booking_reminder(booking_id):
         return {
             'success': True,
             'message': 'Booking reminder email sent successfully'
+        }
+    except Exception as e:
+        return {
+            'success': False,
+            'error': str(e)
+        }
+
+
+@shared_task
+def send_upcoming_booking_reminders():
+    """
+    Find all confirmed bookings starting in the next hour and send reminders.
+    This is called by Celery Beat every hour.
+    """
+    try:
+        from booking.models import Booking
+        
+        now = timezone.now()
+        one_hour_later = now + timedelta(hours=1)
+        
+        # Find confirmed bookings that start in the next hour
+        upcoming_bookings = Booking.objects.filter(
+            status='confirmed',
+            check_in__gte=now,
+            check_in__lte=one_hour_later
+        )
+        
+        sent_count = 0
+        for booking in upcoming_bookings:
+            # Queue individual reminder
+            send_booking_reminder.delay(str(booking.id))
+            sent_count += 1
+        
+        return {
+            'success': True,
+            'reminders_queued': sent_count,
+            'message': f'Queued {sent_count} booking reminders'
         }
     except Exception as e:
         return {

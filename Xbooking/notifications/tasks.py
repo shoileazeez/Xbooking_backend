@@ -2,12 +2,12 @@
 Celery tasks for notifications
 """
 from celery import shared_task
+from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils import timezone
 from notifications.models import Notification, NotificationPreference, BroadcastNotification, NotificationLog
 from workspace.models import WorkspaceUser
-
 
 @shared_task
 def send_notification(notification_id):
@@ -56,7 +56,7 @@ def _send_email_notification(notification):
         
         # Prepare email content
         context = {
-            'user_name': user.first_name or user.email,
+            'user_name': user.full_name or user.email,
             'title': notification.title,
             'message': notification.message,
             'data': notification.data,
@@ -70,7 +70,7 @@ def _send_email_notification(notification):
         email = EmailMultiAlternatives(
             subject=notification.title,
             body=text_content,
-            from_email='notifications@xbooking.com',
+            from_email=settings.DEFAULT_FROM_EMAIL,
             to=[user.email]
         )
         email.attach_alternative(html_content, "text/html")

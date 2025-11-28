@@ -135,7 +135,7 @@ class AdminListPendingVerificationsView(APIView):
                     'verification_code': qr.verification_code,
                     'order_number': qr.order.order_number,
                     'user_email': qr.order.user.email,
-                    'user_name': qr.order.user.first_name or qr.order.user.email,
+                    'user_name': qr.order.user.full_name or qr.order.user.email,
                     'total_amount': str(qr.order.total_amount),
                     'bookings_count': qr.order.bookings.count(),
                     'scan_count': qr.scan_count,
@@ -408,7 +408,7 @@ class AdminQRCodeDetailsView(APIView):
                 'order_details': {
                     'order_number': order.order_number,
                     'user_email': order.user.email,
-                    'user_name': order.user.first_name or order.user.email,
+                    'user_name': order.user.full_name or order.user.email,
                     'total_amount': str(order.total_amount),
                     'status': order.status,
                     'created_at': order.created_at,

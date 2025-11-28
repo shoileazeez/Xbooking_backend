@@ -222,7 +222,7 @@ def send_withdrawal_confirmation_email(self, withdrawal_id):
         user = withdrawal.requested_by
         
         context = {
-            'user_name': user.first_name or user.email,
+            'user_name': user.full_name or user.email,
             'withdrawal_number': withdrawal.withdrawal_number,
             'amount': withdrawal.amount,
             'currency': withdrawal.currency,
@@ -251,7 +251,7 @@ def send_withdrawal_processing_email(self, withdrawal_id):
         user = withdrawal.requested_by
         
         context = {
-            'user_name': user.first_name or user.email,
+            'user_name': user.full_name or user.email,
             'withdrawal_number': withdrawal.withdrawal_number,
             'amount': withdrawal.amount,
             'currency': withdrawal.currency,
@@ -279,7 +279,7 @@ def send_withdrawal_completed_email(self, withdrawal_id):
         user = withdrawal.requested_by
         
         context = {
-            'user_name': user.first_name or user.email,
+            'user_name': user.full_name or user.email,
             'withdrawal_number': withdrawal.withdrawal_number,
             'amount': withdrawal.amount,
             'currency': withdrawal.currency,

@@ -1,0 +1,20 @@
+Your Booking QR Code - XBooking
+================================
+
+Hello {{ user_name }}!
+
+Your booking has been confirmed. Please find your QR code attached to this email.
+
+Booking Details:
+- Order Number: {{ order_number }}
+- Total Amount: ₦{{ total_amount }}
+- Bookings: {{ bookings_count }} booking(s)
+
+Important:
+- Keep this QR code safe and accessible
+- Show it to staff at check-in
+- QR code is valid for your booking duration only
+
+---
+XBooking - Space Booking Platform
+This is an automated email. Please do not reply.

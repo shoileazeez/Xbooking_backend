@@ -5,7 +5,8 @@ from django.urls import path, include
 from payment.views import (
     CreateOrderView, ListOrdersView, OrderDetailView,
     InitiatePaymentView, PaymentWebhookView, PaymentCallbackView,
-    ListPaymentsView, RequestRefundView, PaymentStatusView
+    ListPaymentsView, RequestRefundView, PaymentStatusView,
+    PaymentCallbackPageView
 )
 
 app_name = 'payment'
@@ -25,8 +26,12 @@ urlpatterns = [
     path('webhook/paystack/', PaymentWebhookView.as_view(), name='paystack_webhook'),
     path('webhook/flutterwave/', PaymentWebhookView.as_view(), name='flutterwave_webhook'),
     
-    # Payment Callback (User Redirect)
+    # Payment Callback API (User Redirect verification)
     path('payments/callback/', PaymentCallbackView.as_view(), name='payment_callback'),
+    
+    # Payment Callback HTML Page (Paystack redirects here)
+    # Use this URL in Paystack dashboard: https://yourdomain.com/api/payment/callback/
+    path('callback/', PaymentCallbackPageView.as_view(), name='payment_callback_page'),
     
     # Refund URLs
     path('refunds/request/', RequestRefundView.as_view(), name='request_refund'),

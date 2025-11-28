@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Confirmed - XBooking</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; }
+        .container { background-color: white; max-width: 600px; margin: 0 auto; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header { background-color: #4CAF50; color: white; padding: 30px; text-align: center; }
+        .header h1 { margin: 0; font-size: 24px; }
+        .success-icon { font-size: 60px; margin-bottom: 10px; }
+        .content { padding: 30px; }
+        .content h2 { color: #333; margin-top: 0; }
+        .info-box { background-color: #f0f8f0; border-left: 4px solid #4CAF50; padding: 15px; margin: 20px 0; }
+        .info-row { margin: 10px 0; }
+        .info-label { font-weight: bold; color: #666; }
+        .booking-item { border-bottom: 1px solid #eee; padding: 15px 0; }
+        .booking-item:last-child { border-bottom: none; }
+        .total { font-size: 20px; font-weight: bold; color: #4CAF50; text-align: right; margin-top: 20px; }
+        .footer { background-color: #333; color: #aaa; padding: 20px; text-align: center; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="success-icon">✅</div>
+            <h1>Payment Confirmed!</h1>
+        </div>
+        <div class="content">
+            <h2>Hello {{ user_name }}!</h2>
+            <p>Great news! Your payment has been successfully processed.</p>
+            
+            <div class="info-box">
+                <div class="info-row">
+                    <span class="info-label">Order Number:</span> {{ order_number }}
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Payment Method:</span> {{ payment_method }}
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Transaction ID:</span> {{ transaction_id }}
+                </div>
+            </div>
+            
+            <h3>Your Confirmed Bookings:</h3>
+            {% for booking in bookings %}
+            <div class="booking-item">
+                <strong>{{ booking.space.name }}</strong><br>
+                📅 Check-in: {{ booking.check_in }}<br>
+                📅 Check-out: {{ booking.check_out }}<br>
+                ✅ Status: Confirmed
+            </div>
+            {% endfor %}
+            
+            <div class="total">
+                Total Paid: ₦{{ total_amount }}
+            </div>
+            
+            <p><strong>What's Next:</strong></p>
+            <ul>
+                <li>Your QR code will be sent in a separate email</li>
+                <li>Show QR code at check-in for quick access</li>
+                <li>Arrive on time for your booking</li>
+            </ul>
+        </div>
+        <div class="footer">
+            <p>XBooking - Space Booking Platform</p>
+            <p>This is an automated email. Please do not reply.</p>
+        </div>
+    </div>
+</body>
+</html>

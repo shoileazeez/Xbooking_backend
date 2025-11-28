@@ -7,6 +7,14 @@ from decimal import Decimal
 from user.models import User
 from workspace.models import Space, Workspace
 import uuid
+import secrets
+import string
+
+
+def generate_verification_code():
+    """Generate a unique verification code for guests"""
+    chars = string.ascii_uppercase + string.digits
+    return 'G-' + ''.join(secrets.choice(chars) for _ in range(10))
 
 
 class Booking(models.Model):
@@ -232,7 +240,7 @@ class Guest(models.Model):
     # QR Code tracking
     qr_code_sent = models.BooleanField(default=False)
     qr_code_sent_at = models.DateTimeField(blank=True, null=True)
-    qr_code_verification_code = models.CharField(max_length=50, unique=True, help_text='Unique verification code for guest QR')
+    qr_code_verification_code = models.CharField(max_length=50, unique=True, default=generate_verification_code, help_text='Unique verification code for guest QR')
     
     # Check-in/out tracking
     checked_in_at = models.DateTimeField(blank=True, null=True)

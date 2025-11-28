@@ -2,6 +2,7 @@
 Celery tasks for Guest Management
 """
 from celery import shared_task
+from django.conf import settings
 from django.utils import timezone
 from booking.models import Booking, Guest
 from notifications.models import Notification
@@ -85,7 +86,7 @@ def send_guest_qr_code_email(self, guest_id, booking_id):
         email = EmailMultiAlternatives(
             subject=f'Your Check-in QR Code - {booking.space.name}',
             body=text_content,
-            from_email='bookings@xbooking.com',
+            from_email=settings.DEFAULT_FROM_EMAIL,
             to=[guest.email]
         )
         email.attach_alternative(html_content, "text/html")
@@ -222,4 +223,56 @@ def send_guest_receipt_after_checkout(guest_id):
         return {'status': 'error', 'message': 'Guest not found'}
     except Exception as exc:
         logger.error(f"Error sending guest receipt: {str(exc)}")
+        return {'status': 'error', 'message': str(exc)}
+
+
+@shared_task
+def generate_guest_qr_codes_for_order(order_id):
+    """
+    Generate and send QR codes for all guests in all bookings of an order.
+    Called after successful payment to send QR codes to all guests.
+    
+    Args:
+        order_id (str): UUID of the order
+        
+    Returns:
+        dict: Summary of QR codes sent
+    """
+    from payment.models import Order
+    
+    try:
+        order = Order.objects.get(id=order_id)
+        
+        logger.info(f"Generating QR codes for all guests in order {order_id}")
+        
+        results = []
+        for booking in order.bookings.all():
+            for guest in booking.guests.all():
+                # Skip if QR code already sent
+                if guest.qr_code_sent:
+                    logger.info(f"QR code already sent to guest {guest.id}")
+                    continue
+                
+                # Queue individual QR code email task
+                send_guest_qr_code_email.delay(str(guest.id), str(booking.id))
+                results.append({
+                    'guest_id': str(guest.id),
+                    'email': guest.email,
+                    'status': 'queued'
+                })
+        
+        logger.info(f"Queued {len(results)} guest QR code emails for order {order_id}")
+        
+        return {
+            'status': 'success',
+            'order_id': str(order_id),
+            'guests_queued': len(results),
+            'results': results
+        }
+    
+    except Order.DoesNotExist:
+        logger.error(f"Order {order_id} not found")
+        return {'status': 'error', 'message': 'Order not found'}
+    except Exception as exc:
+        logger.error(f"Error generating guest QR codes for order: {str(exc)}")
         return {'status': 'error', 'message': str(exc)}

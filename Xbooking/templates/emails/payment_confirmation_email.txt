@@ -1,0 +1,30 @@
+Payment Confirmed! - XBooking
+==============================
+
+Hello {{ user_name }}!
+
+Great news! Your payment has been successfully processed.
+
+Payment Details:
+- Order Number: {{ order_number }}
+- Payment Method: {{ payment_method }}
+- Transaction ID: {{ transaction_id }}
+
+Your Confirmed Bookings:
+{% for booking in bookings %}
+- {{ booking.space.name }}
+  Check-in: {{ booking.check_in }}
+  Check-out: {{ booking.check_out }}
+  Status: Confirmed
+{% endfor %}
+
+Total Paid: ₦{{ total_amount }}
+
+What's Next:
+- Your QR code will be sent in a separate email
+- Show QR code at check-in for quick access
+- Arrive on time for your booking
+
+---
+XBooking - Space Booking Platform
+This is an automated email. Please do not reply.

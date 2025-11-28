@@ -2,6 +2,7 @@
 Payment Webhook Handlers for Paystack and Flutterwave
 """
 import hashlib
+import hmac
 import json
 import logging
 from django.utils import timezone
@@ -22,21 +23,41 @@ class PaystackWebhookHandler:
     
     def verify_signature(self, request_body, signature_header):
         """
-        Verify Paystack webhook signature
+        Verify Paystack webhook signature using HMAC-SHA512
+        
+        Paystack signs the request body with your secret key using HMAC-SHA512.
+        See: https://paystack.com/docs/payments/webhooks/#verify-event-origin
         
         Args:
-            request_body (str): Raw request body
+            request_body (bytes or str): Raw request body
             signature_header (str): X-Paystack-Signature header
             
         Returns:
             bool: True if signature is valid
         """
         try:
-            hash_object = hashlib.sha512(
-                f"{request_body}{self.secret_key}".encode('utf-8')
-            )
-            computed_signature = hash_object.hexdigest()
-            return computed_signature == signature_header
+            if signature_header is None:
+                logger.warning("No signature header provided")
+                return False
+            
+            # Ensure request_body is bytes
+            if isinstance(request_body, str):
+                request_body = request_body.encode('utf-8')
+            
+            # Compute HMAC-SHA512 signature
+            computed_signature = hmac.new(
+                self.secret_key.encode('utf-8'),
+                request_body,
+                hashlib.sha512
+            ).hexdigest()
+            
+            # Compare signatures (use hmac.compare_digest for timing-safe comparison)
+            is_valid = hmac.compare_digest(computed_signature, signature_header)
+            
+            if not is_valid:
+                logger.warning(f"Signature mismatch. Expected: {computed_signature[:20]}..., Got: {signature_header[:20]}...")
+            
+            return is_valid
         except Exception as e:
             logger.error(f"Signature verification error: {str(e)}")
             return False
@@ -363,14 +384,15 @@ class FlutterwaveWebhookHandler:
             return {'success': True, 'message': f'Event {event} ignored'}
 
 
-def handle_webhook(request_data, payment_method, signature_header=None):
+def handle_webhook(request_data, payment_method, signature_header=None, raw_body=None):
     """
     Main webhook handler router
     
     Args:
-        request_data (dict): Webhook payload
+        request_data (dict): Webhook payload (parsed JSON)
         payment_method (str): 'paystack' or 'flutterwave'
         signature_header (str): Signature from header for verification
+        raw_body (bytes): Raw request body for signature verification
         
     Returns:
         dict: Processing result
@@ -379,10 +401,15 @@ def handle_webhook(request_data, payment_method, signature_header=None):
         if payment_method == 'paystack':
             handler = PaystackWebhookHandler()
             
-            # Verify signature if provided
+            # Verify signature if provided (use raw_body for HMAC verification)
             if signature_header:
-                request_body = json.dumps(request_data)
-                if not handler.verify_signature(request_body, signature_header):
+                if raw_body is None:
+                    logger.error("No raw_body provided for Paystack signature verification")
+                    return {
+                        'success': False,
+                        'error': 'Missing raw body for signature verification'
+                    }
+                if not handler.verify_signature(raw_body, signature_header):
                     logger.error("Paystack signature verification failed")
                     return {
                         'success': False,
@@ -398,8 +425,8 @@ def handle_webhook(request_data, payment_method, signature_header=None):
             
             # Verify signature if provided
             if signature_header:
-                request_body = json.dumps(request_data)
-                if not handler.verify_signature(request_body, signature_header):
+                request_body_str = raw_body.decode('utf-8') if raw_body else json.dumps(request_data)
+                if not handler.verify_signature(request_body_str, signature_header):
                     logger.error("Flutterwave signature verification failed")
                     return {
                         'success': False,

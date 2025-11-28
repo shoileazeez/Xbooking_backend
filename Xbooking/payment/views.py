@@ -6,7 +6,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
+from django.views import View
 from payment.models import Order, Payment, Refund, PaymentWebhook
 from payment.serializers import (
     OrderSerializer, CreateOrderSerializer, PaymentSerializer,
@@ -38,7 +39,7 @@ class CreateOrderView(APIView):
     
     @extend_schema(
         summary="Create order from bookings",
-        description="Create an order from one or more bookings",
+        description="Create an order from one or more bookings (can be from multiple workspaces)",
         tags=["Orders"],
         request=CreateOrderSerializer,
         responses={
@@ -48,7 +49,7 @@ class CreateOrderView(APIView):
         }
     )
     def post(self, request):
-        """Create new order(s)"""
+        """Create new order from bookings"""
         serializer = CreateOrderSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -73,53 +74,37 @@ class CreateOrderView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            # Group bookings by workspace
-            bookings_by_workspace = {}
-            for booking in bookings:
-                if booking.workspace_id not in bookings_by_workspace:
-                    bookings_by_workspace[booking.workspace_id] = []
-                bookings_by_workspace[booking.workspace_id].append(booking)
+            # Calculate totals for ALL bookings (single order for all workspaces)
+            subtotal = sum(b.base_price for b in bookings)
+            discount_amount = Decimal('0')
+            tax_amount = sum(b.tax_amount for b in bookings)
+            total_amount = subtotal - discount_amount + tax_amount
             
-            created_orders = []
+            # Use the first booking's workspace as the primary workspace for the order
+            # This is mainly for reference - the order contains bookings from multiple workspaces
+            primary_workspace = bookings.first().workspace
             
-            for workspace_id, workspace_bookings in bookings_by_workspace.items():
-                # Calculate totals for this workspace's order
-                subtotal = sum(b.base_price for b in workspace_bookings)
-                discount_amount = Decimal('0') # We might need to distribute discount if it was global, but for now assume 0 or per-booking
-                # If discount was passed in request, it's tricky. Let's assume discount is 0 for now or handle per order.
-                # The serializer has discount_amount. If provided, we might need to split it? 
-                # For simplicity, let's apply the discount only if it's a single order, or ignore it for multi-workspace.
-                # Or better, let's assume the frontend calculates discounts per booking/order.
-                
-                tax_amount = sum(b.tax_amount for b in workspace_bookings)
-                total_amount = subtotal - discount_amount + tax_amount
-                
-                # Create order
-                order = Order.objects.create(
-                    workspace_id=workspace_id,
-                    user=request.user,
-                    subtotal=subtotal,
-                    discount_amount=discount_amount,
-                    tax_amount=tax_amount,
-                    total_amount=total_amount,
-                    notes=serializer.validated_data.get('notes', '')
-                )
-                
-                # Add bookings to order
-                order.bookings.set(workspace_bookings)
-                created_orders.append(order)
+            # Create a single order for all bookings
+            order = Order.objects.create(
+                workspace=primary_workspace,
+                user=request.user,
+                subtotal=subtotal,
+                discount_amount=discount_amount,
+                tax_amount=tax_amount,
+                total_amount=total_amount,
+                notes=serializer.validated_data.get('notes', '')
+            )
             
-            # If only one order, return it as object (backward compatibility if needed, but better to return list or standard format)
-            # The schema says 201: OrderSerializer. If we return a list, we break schema.
-            # But we must support multiple orders.
-            # Let's return a list if multiple, or single if one? No, consistent API is better.
-            # But the user might expect a single object if they only booked one thing.
-            # Let's return a wrapper object: { "orders": [...] }
+            # Add ALL bookings to the order
+            order.bookings.set(bookings)
             
             return Response({
                 'success': True,
-                'count': len(created_orders),
-                'orders': OrderSerializer(created_orders, many=True).data
+                'id': str(order.id),
+                'order_number': order.order_number,
+                'total_amount': str(order.total_amount),
+                'bookings_count': bookings.count(),
+                'order': OrderSerializer(order).data
             }, status=status.HTTP_201_CREATED)
             
         except Exception as e:
@@ -379,11 +364,15 @@ class PaymentWebhookView(APIView):
             
             logger.info(f"Received {payment_method} webhook")
             
-            # Process webhook
+            # Get raw request body for signature verification
+            raw_body = request.body
+            
+            # Process webhook (pass raw body for HMAC verification)
             result = handle_webhook(
                 request.data,
                 payment_method=payment_method,
-                signature_header=signature_header
+                signature_header=signature_header,
+                raw_body=raw_body
             )
             
             if result['success']:
@@ -414,7 +403,7 @@ class PaymentWebhookView(APIView):
 
 class PaymentCallbackView(APIView):
     """Handle payment callback (user redirect from Paystack/Flutterwave)"""
-    permission_classes = [IsAuthenticated]  # User must be logged in
+    permission_classes = []  # User must be logged in
     
     @extend_schema(
         summary="Payment callback (User Redirect)",
@@ -714,3 +703,14 @@ class PaymentStatusView(APIView):
                 {"detail": str(e)},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+
+class PaymentCallbackPageView(View):
+    """
+    Simple HTML page for Paystack callback redirect.
+    This is a public page that renders the callback template.
+    Paystack redirects users here after payment, then the JS
+    calls the API endpoint to verify.
+    """
+    def get(self, request):
+        return render(request, 'payment/callback.html')

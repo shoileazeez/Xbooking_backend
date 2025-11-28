@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Verification - Xbooking</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        .icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+        }
+        .icon.loading {
+            background: #e3f2fd;
+            animation: pulse 1.5s infinite;
+        }
+        .icon.success {
+            background: #e8f5e9;
+        }
+        .icon.error {
+            background: #ffebee;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e3f2fd;
+            border-top-color: #2196f3;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        h1 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 12px;
+        }
+        .message {
+            color: #666;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+        .details {
+            background: #f5f5f5;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 20px;
+            text-align: left;
+        }
+        .details h3 {
+            font-size: 14px;
+            color: #999;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        .detail-label {
+            color: #666;
+        }
+        .detail-value {
+            color: #333;
+            font-weight: 600;
+        }
+        .btn {
+            display: inline-block;
+            padding: 14px 32px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            margin-top: 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #333;
+        }
+        .error-text {
+            color: #d32f2f;
+            font-size: 14px;
+            margin-top: 12px;
+        }
+        .reference {
+            font-family: monospace;
+            background: #f0f0f0;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        #login-form {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
+        #login-form input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        #login-form input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <!-- Loading State -->
+        <div id="loading-state">
+            <div class="icon loading">
+                <div class="spinner"></div>
+            </div>
+            <h1>Verifying Payment...</h1>
+            <p class="message">Please wait while we confirm your payment with Paystack.</p>
+            <p class="reference" id="ref-display"></p>
+        </div>
+
+        <!-- Login Required State -->
+        <div id="login-state" class="hidden">
+            <div class="icon" style="background: #fff3e0;">⚠️</div>
+            <h1>Login Required</h1>
+            <p class="message">Please login to verify your payment.</p>
+            <form id="login-form">
+                <input type="email" id="email" placeholder="Email" required>
+                <input type="password" id="password" placeholder="Password" required>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Login & Verify</button>
+            </form>
+            <p class="error-text hidden" id="login-error"></p>
+        </div>
+
+        <!-- Success State -->
+        <div id="success-state" class="hidden">
+            <div class="icon success">✅</div>
+            <h1>Payment Successful!</h1>
+            <p class="message">Your payment has been verified and confirmed.</p>
+            <div class="details">
+                <h3>Payment Details</h3>
+                <div class="detail-row">
+                    <span class="detail-label">Reference</span>
+                    <span class="detail-value" id="success-reference">-</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Amount</span>
+                    <span class="detail-value" id="success-amount">-</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Order</span>
+                    <span class="detail-value" id="success-order">-</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Status</span>
+                    <span class="detail-value" style="color: #4caf50;">✓ Paid</span>
+                </div>
+            </div>
+            <a href="/" class="btn btn-primary">Go to Dashboard</a>
+        </div>
+
+        <!-- Error State -->
+        <div id="error-state" class="hidden">
+            <div class="icon error">❌</div>
+            <h1>Payment Failed</h1>
+            <p class="message" id="error-message">Something went wrong with your payment.</p>
+            <p class="error-text" id="error-details"></p>
+            <button onclick="location.reload()" class="btn btn-secondary">Try Again</button>
+            <a href="/" class="btn btn-primary">Go Home</a>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        let accessToken = localStorage.getItem('access_token') || null;
+
+        // Get reference from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const reference = urlParams.get('reference') || urlParams.get('trxref');
+
+        // Display reference
+        document.getElementById('ref-display').textContent = reference ? `Reference: ${reference}` : '';
+
+        function showState(stateId) {
+            ['loading-state', 'login-state', 'success-state', 'error-state'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(stateId).classList.remove('hidden');
+        }
+
+        function showError(message, details = '') {
+            document.getElementById('error-message').textContent = message;
+            document.getElementById('error-details').textContent = details;
+            showState('error-state');
+        }
+
+        function showSuccess(data) {
+            document.getElementById('success-reference').textContent = data.payment?.reference || reference;
+            document.getElementById('success-amount').textContent = '₦' + (data.payment?.amount || '-');
+            document.getElementById('success-order').textContent = data.order?.order_number || '-';
+            showState('success-state');
+        }
+
+        async function verifyPayment() {
+            if (!reference) {
+                showError('No payment reference found', 'Please check the URL or contact support.');
+                return;
+            }
+
+            if (!accessToken) {
+                showState('login-state');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/payment/payments/callback/?reference=${reference}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.status === 401 || response.status === 403) {
+                    // Token expired or invalid
+                    localStorage.removeItem('access_token');
+                    accessToken = null;
+                    showState('login-state');
+                    return;
+                }
+
+                if (response.ok && data.success) {
+                    showSuccess(data);
+                } else {
+                    showError(
+                        data.message || data.error || 'Payment verification failed',
+                        data.details || ''
+                    );
+                }
+            } catch (error) {
+                console.error('Verification error:', error);
+                showError('Network error', 'Please check your connection and try again.');
+            }
+        }
+
+        // Login form handler
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorEl = document.getElementById('login-error');
+
+            try {
+                const response = await fetch(`${API_BASE}/api/user/login/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Handle different token response shapes
+                    if (data.token?.access_token) {
+                        accessToken = data.token.access_token;
+                    } else if (data.access) {
+                        accessToken = data.access;
+                    } else if (data.token) {
+                        accessToken = data.token;
+                    }
+
+                    if (accessToken) {
+                        localStorage.setItem('access_token', accessToken);
+                        showState('loading-state');
+                        verifyPayment();
+                    } else {
+                        errorEl.textContent = 'Login succeeded but no token received';
+                        errorEl.classList.remove('hidden');
+                    }
+                } else {
+                    errorEl.textContent = data.detail || data.error || 'Login failed';
+                    errorEl.classList.remove('hidden');
+                }
+            } catch (error) {
+                errorEl.textContent = 'Network error during login';
+                errorEl.classList.remove('hidden');
+            }
+        });
+
+        // Start verification on page load
+        verifyPayment();
+    </script>
+</body>
+</html>

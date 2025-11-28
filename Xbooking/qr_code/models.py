@@ -5,11 +5,12 @@ from django.db import models
 from django.core.validators import MinValueValidator
 from decimal import Decimal
 from payment.models import Order
+from booking.models import Booking
 import uuid
 
 
 class OrderQRCode(models.Model):
-    """Model for storing generated QR codes for orders"""
+    """Model for storing generated QR codes for orders (DEPRECATED - use BookingQRCode)"""
     
     QR_STATUS_CHOICES = [
         ('pending', 'Pending'),
@@ -85,6 +86,87 @@ class OrderQRCode(models.Model):
     
     def __str__(self):
         return f"QR Code for Order {self.order.order_number}"
+
+
+class BookingQRCode(models.Model):
+    """Model for storing generated QR codes per booking"""
+    
+    QR_STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('generated', 'Generated'),
+        ('sent', 'Sent to User'),
+        ('scanned', 'Scanned'),
+        ('verified', 'Verified'),
+        ('expired', 'Expired'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    booking = models.OneToOneField(Booking, on_delete=models.CASCADE, related_name='qr_code')
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='booking_qr_codes', null=True, blank=True)
+    
+    # QR Code data
+    qr_code_data = models.TextField()  # The encoded QR data
+    qr_code_image = models.ImageField(
+        upload_to='qr_codes/bookings/',
+        blank=True,
+        null=True,
+        help_text="Generated QR code image"
+    )
+    
+    # Verification details
+    verification_code = models.CharField(
+        max_length=50,
+        unique=True,
+        help_text="Unique code for QR verification"
+    )
+    
+    # Status
+    status = models.CharField(
+        max_length=20,
+        choices=QR_STATUS_CHOICES,
+        default='pending'
+    )
+    
+    # Scan tracking
+    scan_count = models.IntegerField(default=0, validators=[MinValueValidator(0)])
+    last_scanned_at = models.DateTimeField(blank=True, null=True)
+    scanned_by_ip = models.CharField(max_length=100, blank=True, null=True)
+    
+    # Verification tracking
+    verified = models.BooleanField(default=False)
+    verified_at = models.DateTimeField(blank=True, null=True)
+    verified_by = models.ForeignKey(
+        'user.User',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='verified_booking_qr_codes'
+    )
+    
+    # Expiry - based on booking checkout time
+    expires_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text="QR code expiry time (usually checkout time)"
+    )
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    sent_at = models.DateTimeField(blank=True, null=True)
+    
+    class Meta:
+        db_table = 'qr_code_booking_qrcode'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['booking']),
+            models.Index(fields=['order']),
+            models.Index(fields=['verification_code']),
+            models.Index(fields=['status']),
+        ]
+    
+    def __str__(self):
+        return f"QR Code for Booking {self.booking.id} - {self.booking.space.name}"
 
 
 class QRCodeScanLog(models.Model):

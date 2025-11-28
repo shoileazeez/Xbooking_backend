@@ -139,23 +139,23 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'user.User'
 
 # Email Configuration
-EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
+# EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
 
 # Mailjet Configuration
-MAILJET_API_KEY = config('MAILJET_API_KEY', default='')
-MAILJET_SECRET_KEY = config('MAILJET_SECRET_KEY', default='')
+# MAILJET_API_KEY = config('MAILJET_API_KEY', default='')
+# MAILJET_SECRET_KEY = config('MAILJET_SECRET_KEY', default='')
 
-# SMTP Configuration (for Mailjet)
-if EMAIL_BACKEND == 'django.core.mail.backends.smtp.EmailBackend':
-    EMAIL_HOST = config('EMAIL_HOST', default='in-v3.mailjet.com')
-    EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
-    EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
-    EMAIL_HOST_USER = MAILJET_API_KEY
-    EMAIL_HOST_PASSWORD = MAILJET_SECRET_KEY
+
+# # SMTP Configuration (for Mailjet)
+# if EMAIL_BACKEND == 'django.core.mail.backends.smtp.EmailBackend':
+#     EMAIL_HOST = config('EMAIL_HOST', default='in-v3.mailjet.com')
+#     EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
+#     EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
+#     EMAIL_HOST_USER = MAILJET_API_KEY
+#     EMAIL_HOST_PASSWORD = MAILJET_SECRET_KEY
 
 # Default From Email
-DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='shoabdulazeez@gmail.com')
-SERVER_EMAIL = DEFAULT_FROM_EMAIL
+# DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='shoabdulazeez@gmail.com')
 
 
 
@@ -282,3 +282,34 @@ FLUTTERWAVE_PUBLIC_KEY = config('FLUTTERWAVE_PUBLIC_KEY', default='')
 # Payment settings
 PAYMENT_CURRENCY = 'NGN'
 PAYMENT_TIMEOUT = 3600  # 1 hour in seconds
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://d991097cf9a5.ngrok-free.app",
+    "https://fb16c5785973.ngrok-free.app",
+    "https://b9f13bfcc7a5.ngrok-free.app",
+    "https://6a63f43d1a91.ngrok-free.app ",
+]
+
+# ============================================================================
+# EMAIL CONFIGURATION
+# ============================================================================
+
+# Gmail SMTP Configuration (commented out)
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'shoabdulazeez@gmail.com'
+# EMAIL_HOST_PASSWORD = 'pnsrthdsnhuxrhgq'
+
+# Mailjet SMTP Configuration
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'in-v3.mailjet.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = config('MAILJET_API_KEY', default='')
+EMAIL_HOST_PASSWORD = config('MAILJET_SECRET_KEY', default='')
+
+# Default From Email
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='shoabdulazeez@gmail.com')
+SERVER_EMAIL = DEFAULT_FROM_EMAIL

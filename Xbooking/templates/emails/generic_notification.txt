@@ -1,0 +1,10 @@
+{{ title }} - XBooking
+=======================
+
+Hello {{ user_name }}!
+
+{{ message }}
+
+---
+XBooking - Space Booking Platform
+This is an automated email. Please do not reply.
