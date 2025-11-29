@@ -1,148 +1,154 @@
-# XBooking VPS/Droplet Deployment Guide
+# XBooking Backend - VPS/Droplet Deployment Guide
 
-## Prerequisites
-- A VPS/Droplet with Ubuntu 20.04+ (DigitalOcean, Linode, Vultr, Hetzner, etc.)
-- Minimum 1GB RAM, 1 CPU (2GB RAM recommended)
-- A domain name (optional but recommended)
-- SSH access to your server
+Complete guide to deploy XBooking Backend on any VPS (DigitalOcean, Vultr, Linode, Hetzner, etc.) with **HTTPS**, **Celery workers**, and **automatic SSL** via Let's Encrypt.
 
 ---
 
-## Quick Deployment (5 minutes)
+## 📋 Prerequisites
 
-### Step 1: SSH into your server
+1. **VPS/Droplet** with Ubuntu 20.04+ (minimum 1GB RAM, 1 CPU)
+2. **Domain name** pointed to your server IP
+3. **SSH access** to your server
+
+---
+
+## 🌐 Step 1: Point Your Domain to Server
+
+Before deploying, configure your domain DNS:
+
+| Type | Name | Value |
+|------|------|-------|
+| A | @ | YOUR_SERVER_IP |
+| A | api | YOUR_SERVER_IP |
+| A | www | YOUR_SERVER_IP |
+
+**Example**: If your domain is `xbooking.com` and server IP is `165.22.100.50`:
+- `xbooking.com` → `165.22.100.50`
+- `api.xbooking.com` → `165.22.100.50`
+
+⏰ **Wait 5-30 minutes** for DNS propagation before proceeding.
+
+---
+
+## 🚀 Step 2: Quick Deployment (5 minutes)
+
+### SSH into your server:
 ```bash
-ssh root@your-server-ip
+ssh root@YOUR_SERVER_IP
 ```
 
-### Step 2: Clone the repository
+### Run these commands:
 ```bash
+# Clone repository
 cd /opt
 git clone https://github.com/shoileazeez/Xbooking_backend.git xbooking
 cd xbooking/Xbooking
-```
 
-### Step 3: Create environment file
-```bash
-cp .env.production.example .env.production
-nano .env.production
-```
-
-Edit the following values:
-```env
-SECRET_KEY=generate-a-strong-secret-key
-ALLOWED_HOSTS=your-domain.com,your-server-ip
-POSTGRES_PASSWORD=your-strong-db-password
-EMAIL_HOST_USER=your-email@gmail.com
-EMAIL_HOST_PASSWORD=your-app-password
-PAYSTACK_SECRET_KEY=your-paystack-key
-# ... other settings
-```
-
-### Step 4: Run deployment script
-```bash
+# Make deploy script executable
 chmod +x deploy.sh
+
+# Run deployment
 ./deploy.sh
 ```
 
-### Step 5: Verify deployment
+### The script will ask for:
+1. **Your domain** (e.g., `api.xbooking.com`)
+2. **Your email** (for SSL certificate notifications)
+
+### First run - Configure environment:
 ```bash
-docker-compose ps
-```
-
-You should see all services running:
-- xbooking_web
-- xbooking_db
-- xbooking_redis
-- xbooking_celery_worker
-- xbooking_celery_beat
-- xbooking_nginx
-
----
-
-## Manual Deployment (Step by Step)
-
-### 1. Update System
-```bash
-apt-get update && apt-get upgrade -y
-```
-
-### 2. Install Docker
-```bash
-curl -fsSL https://get.docker.com -o get-docker.sh
-sh get-docker.sh
-systemctl enable docker
-systemctl start docker
-```
-
-### 3. Install Docker Compose
-```bash
-curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-chmod +x /usr/local/bin/docker-compose
-```
-
-### 4. Clone Repository
-```bash
-mkdir -p /opt/xbooking
-cd /opt/xbooking
-git clone https://github.com/shoileazeez/Xbooking_backend.git .
-cd Xbooking
-```
-
-### 5. Configure Environment
-```bash
-cp .env.production.example .env.production
+# Edit the environment file with your values
 nano .env.production
 ```
 
-### 6. Build and Start
+**Important values to change:**
+```env
+SECRET_KEY=generate-a-random-64-character-string
+POSTGRES_PASSWORD=your-strong-database-password
+EMAIL_HOST_USER=your-email@gmail.com
+EMAIL_HOST_PASSWORD=your-gmail-app-password
+PAYSTACK_SECRET_KEY=sk_live_your_key
+PAYSTACK_PUBLIC_KEY=pk_live_your_key
+```
+
+### Run deployment again:
 ```bash
-docker-compose build
-docker-compose up -d
+./deploy.sh
 ```
 
 ---
 
-## SSL/HTTPS Setup (Free with Let's Encrypt)
+## 📁 What Gets Deployed
 
-### Option 1: Automated Script
-```bash
-chmod +x setup-ssl.sh
-./setup-ssl.sh yourdomain.com your-email@gmail.com
+| Service | Description | Port |
+|---------|-------------|------|
+| **Django + Gunicorn** | Main web application | 8000 (internal) |
+| **PostgreSQL** | Database | 5432 (internal) |
+| **Redis** | Celery message broker | 6379 (internal) |
+| **Celery Worker** | Background task processing | - |
+| **Celery Beat** | Scheduled tasks | - |
+| **Nginx** | Reverse proxy + SSL | 80, 443 |
+| **Certbot** | SSL certificate renewal | - |
+
+---
+
+## 🔗 API Endpoints After Deployment
+
+| Endpoint | URL |
+|----------|-----|
+| **API Base** | `https://yourdomain.com/api/` |
+| **Admin Panel** | `https://yourdomain.com/admin/` |
+| **Paystack Webhook** | `https://yourdomain.com/api/payment/webhooks/paystack/` |
+| **Flutterwave Webhook** | `https://yourdomain.com/api/payment/webhooks/flutterwave/` |
+
+---
+
+## 💳 Configure Payment Webhooks
+
+### Paystack Dashboard:
+1. Go to **Settings** → **API Keys & Webhooks**
+2. Set Webhook URL: `https://yourdomain.com/api/payment/webhooks/paystack/`
+3. Copy your **Secret Key** to `.env.production`
+
+### Flutterwave Dashboard:
+1. Go to **Settings** → **Webhooks**
+2. Set Webhook URL: `https://yourdomain.com/api/payment/webhooks/flutterwave/`
+3. Copy your **Secret Key** to `.env.production`
+
+---
+
+## 🖥️ Frontend Integration
+
+### Update your frontend environment:
+```env
+NEXT_PUBLIC_API_URL=https://yourdomain.com/api
+# or for React/Vue
+VITE_API_URL=https://yourdomain.com/api
 ```
 
-### Option 2: Manual Setup
-```bash
-# 1. Update nginx config with your domain
-sed -i 's/yourdomain.com/your-actual-domain.com/g' nginx/conf.d/default.conf
+### Example API calls:
+```javascript
+// Login
+const response = await fetch('https://yourdomain.com/api/auth/login/', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ email, password })
+});
 
-# 2. Restart nginx
-docker-compose restart nginx
-
-# 3. Get SSL certificate
-docker-compose run --rm certbot certonly \
-    --webroot \
-    --webroot-path=/var/www/certbot \
-    --email your-email@gmail.com \
-    --agree-tos \
-    --no-eff-email \
-    -d your-actual-domain.com \
-    -d www.your-actual-domain.com
-
-# 4. Enable HTTPS in nginx (edit nginx/conf.d/default.conf)
-nano nginx/conf.d/default.conf
-# Uncomment the HTTPS server block and update domain names
-
-# 5. Restart nginx
-docker-compose restart nginx
+// Get spaces
+const spaces = await fetch('https://yourdomain.com/api/spaces/', {
+  headers: { 'Authorization': `Bearer ${token}` }
+});
 ```
 
 ---
 
-## Useful Commands
+## 📋 Useful Commands
 
-### View Logs
+### View logs:
 ```bash
+cd /opt/xbooking/Xbooking
+
 # All services
 docker-compose logs -f
 
@@ -153,7 +159,7 @@ docker-compose logs -f celery_beat
 docker-compose logs -f nginx
 ```
 
-### Restart Services
+### Restart services:
 ```bash
 # All services
 docker-compose restart
@@ -163,51 +169,71 @@ docker-compose restart web
 docker-compose restart celery_worker
 ```
 
-### Stop Services
+### Stop/Start services:
 ```bash
-docker-compose down
+docker-compose down    # Stop all
+docker-compose up -d   # Start all
 ```
 
-### Update Application
-```bash
-cd /opt/xbooking/Xbooking
-git pull origin main
-docker-compose build
-docker-compose up -d
-```
-
-### Access Django Shell
+### Access Django shell:
 ```bash
 docker-compose exec web python manage.py shell
 ```
 
-### Create Superuser
+### Create superuser:
 ```bash
 docker-compose exec web python manage.py createsuperuser
 ```
 
-### Run Migrations
+### Run migrations:
 ```bash
 docker-compose exec web python manage.py migrate
 ```
 
-### View Database
+### Check service status:
 ```bash
-docker-compose exec db psql -U xbooking_user -d xbooking
+docker-compose ps
 ```
 
 ---
 
-## Firewall Setup
+## 🔄 Updating the Application
+
+```bash
+cd /opt/xbooking/Xbooking
+
+# Pull latest changes
+git pull origin main
+
+# Rebuild and restart
+docker-compose build
+docker-compose up -d
+
+# Run migrations if needed
+docker-compose exec web python manage.py migrate
+```
+
+---
+
+## 🔒 SSL Certificate Renewal
+
+SSL certificates auto-renew via the Certbot container. To manually renew:
+
+```bash
+docker-compose run --rm certbot renew
+docker-compose restart nginx
+```
+
+---
+
+## 🛡️ Firewall Setup
 
 ```bash
 # Install UFW
 apt-get install -y ufw
 
-# Allow SSH
+# Allow SSH, HTTP, HTTPS
 ufw allow 22
-
-# Allow HTTP and HTTPS
 ufw allow 80
 ufw allow 443
 
@@ -220,140 +246,124 @@ ufw status
 
 ---
 
-## Monitoring
+## 💾 Database Backup
 
-### Check Resource Usage
+### Create backup:
 ```bash
-docker stats
-```
-
-### Check Disk Space
-```bash
-df -h
-```
-
-### Clean Up Docker Resources
-```bash
-# Remove unused images
-docker image prune -a
-
-# Remove unused volumes
-docker volume prune
-
-# Remove all unused resources
-docker system prune -a
-```
-
----
-
-## Troubleshooting
-
-### Web service not starting
-```bash
-docker-compose logs web
-```
-
-### Database connection issues
-```bash
-# Check if database is running
-docker-compose ps db
-
-# Check database logs
-docker-compose logs db
-```
-
-### Celery not processing tasks
-```bash
-# Check worker logs
-docker-compose logs celery_worker
-
-# Check Redis connection
-docker-compose exec redis redis-cli ping
-```
-
-### Nginx 502 Bad Gateway
-```bash
-# Check if web service is running
-docker-compose ps web
-
-# Restart services
-docker-compose restart
-```
-
----
-
-## Backup
-
-### Database Backup
-```bash
-# Create backup
+cd /opt/xbooking/Xbooking
 docker-compose exec db pg_dump -U xbooking_user xbooking > backup_$(date +%Y%m%d).sql
+```
 
-# Restore backup
+### Restore backup:
+```bash
 docker-compose exec -T db psql -U xbooking_user xbooking < backup_20231128.sql
 ```
 
-### Full Backup Script
+---
+
+## 🔍 Troubleshooting
+
+### Check if all services are running:
 ```bash
-#!/bin/bash
-BACKUP_DIR="/opt/backups"
-DATE=$(date +%Y%m%d_%H%M%S)
-mkdir -p $BACKUP_DIR
+docker-compose ps
+```
 
-# Database backup
-docker-compose exec -T db pg_dump -U xbooking_user xbooking > $BACKUP_DIR/db_$DATE.sql
+All services should show `Up` status.
 
-# Media files backup
-tar -czf $BACKUP_DIR/media_$DATE.tar.gz /var/lib/docker/volumes/*media*
+### Web service not starting:
+```bash
+docker-compose logs web
+```
+- Check for missing environment variables
+- Verify database connection
 
-echo "Backup completed: $BACKUP_DIR"
+### SSL certificate issues:
+```bash
+docker-compose logs certbot
+```
+- Ensure DNS is properly configured
+- Check if domain points to server IP
+
+### Celery not processing tasks:
+```bash
+docker-compose logs celery_worker
+```
+- Check Redis connection
+- Verify CELERY_BROKER_URL in .env.production
+
+### Database connection refused:
+```bash
+docker-compose logs db
+```
+- Wait for database to be healthy
+- Check POSTGRES_PASSWORD matches
+
+---
+
+## 📊 Architecture Diagram
+
+```
+                     Internet
+                        │
+                        ▼
+              ┌─────────────────┐
+              │     Nginx       │ ← Port 80/443 (SSL)
+              │  (Reverse Proxy)│
+              └────────┬────────┘
+                       │
+              ┌────────▼────────┐
+              │     Django      │ ← Port 8000
+              │   (Gunicorn)    │
+              └────────┬────────┘
+                       │
+    ┌──────────────────┼──────────────────┐
+    │                  │                  │
+    ▼                  ▼                  ▼
+┌─────────┐      ┌──────────┐      ┌───────────┐
+│PostgreSQL│      │  Redis   │      │  Celery   │
+│(Database)│      │ (Broker) │      │(Worker +  │
+│          │      │          │      │   Beat)   │
+└─────────┘      └──────────┘      └───────────┘
 ```
 
 ---
 
-## Cost Comparison (Monthly)
+## 💰 VPS Cost Comparison
 
 | Provider | Plan | RAM | CPU | Storage | Price |
 |----------|------|-----|-----|---------|-------|
-| DigitalOcean | Basic Droplet | 1GB | 1 | 25GB | $6/mo |
-| Vultr | Cloud Compute | 1GB | 1 | 25GB | $5/mo |
-| Linode | Nanode | 1GB | 1 | 25GB | $5/mo |
-| Hetzner | CX11 | 2GB | 1 | 20GB | €3.29/mo |
-| Oracle Cloud | Always Free | 1GB | 1 | 50GB | FREE |
+| **Hetzner** | CX11 | 2GB | 1 | 20GB | €3.29/mo |
+| **Vultr** | Cloud | 1GB | 1 | 25GB | $5/mo |
+| **Linode** | Nanode | 1GB | 1 | 25GB | $5/mo |
+| **DigitalOcean** | Basic | 1GB | 1 | 25GB | $6/mo |
 
-**Recommended**: Start with 1GB RAM, upgrade to 2GB if needed for better Celery performance.
-
----
-
-## Architecture
-
-```
-                    ┌─────────────┐
-                    │   Nginx     │ ← Port 80/443
-                    │  (Reverse   │
-                    │   Proxy)    │
-                    └──────┬──────┘
-                           │
-                    ┌──────▼──────┐
-                    │   Django    │ ← Port 8000
-                    │  (Gunicorn) │
-                    └──────┬──────┘
-                           │
-          ┌────────────────┼────────────────┐
-          │                │                │
-   ┌──────▼──────┐  ┌──────▼──────┐  ┌──────▼──────┐
-   │  PostgreSQL │  │    Redis    │  │   Celery    │
-   │  (Database) │  │  (Broker)   │  │  (Worker +  │
-   │             │  │             │  │    Beat)    │
-   └─────────────┘  └─────────────┘  └─────────────┘
-```
+**Recommendation**: Start with 1GB RAM, upgrade to 2GB for better Celery performance.
 
 ---
 
-## Support
+## ✅ Deployment Checklist
 
-If you encounter any issues:
-1. Check the logs: `docker-compose logs -f`
-2. Verify all services are running: `docker-compose ps`
-3. Ensure environment variables are set correctly
-4. Check firewall settings
+- [ ] DNS configured (domain points to server IP)
+- [ ] SSH access to server
+- [ ] `.env.production` configured with real values
+- [ ] `SECRET_KEY` is a strong random string
+- [ ] `POSTGRES_PASSWORD` is strong
+- [ ] Email credentials configured
+- [ ] Payment gateway keys configured
+- [ ] Webhook URLs set in Paystack/Flutterwave dashboards
+- [ ] Frontend API URL updated
+- [ ] Firewall enabled (ports 22, 80, 443)
+- [ ] Superuser created for admin panel
+- [ ] Test API endpoints working
+- [ ] Test payment flow working
+
+---
+
+## 🆘 Support
+
+If you encounter issues:
+1. Check logs: `docker-compose logs -f`
+2. Verify all services running: `docker-compose ps`
+3. Ensure environment variables are correct
+4. Check DNS propagation: `dig yourdomain.com`
+
