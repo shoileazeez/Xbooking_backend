@@ -1,194 +1,46 @@
 """
-Admin views for QR code verification and management
+Admin views for QR code verification and check-in/check-out management
 """
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
-from qr_code.models import OrderQRCode, QRCodeScanLog
-from qr_code.serializers import OrderQRCodeSerializer, QRCodeScanLogSerializer, VerifyQRCodeSerializer
-from qr_code.admin_serializers import AdminVerifyQRCodeSerializer, AdminRejectQRCodeSerializer, AdminResendQRCodeSerializer
-from payment.models import Order
+from qr_code.models import BookingQRCode, CheckIn
+from .serializers import BookingQRCodeSerializer, CheckInSerializer
 from booking.models import Booking
 from workspace.permissions import check_workspace_member
 from drf_spectacular.utils import extend_schema
 from django.utils import timezone
-from django.db.models import Count
+from django.db.models import Count, Q
+from datetime import timedelta
 
 
-class AdminQRCodeDashboardView(APIView):
-    """Admin dashboard for QR code verification"""
+class AdminCheckInView(APIView):
+    """Admin check-in a guest using QR code"""
     permission_classes = [IsAuthenticated]
-    serializer_class = OrderQRCodeSerializer
     
     @extend_schema(
-        summary="QR code verification dashboard",
-        description="Get QR code statistics and pending verifications",
-        tags=["Admin QR Verification"],
+        summary="Check-in guest via QR code",
+        description="Admin scans QR code to check-in a guest. Send verification_code and booking_id.",
+        tags=["Admin Check-in/Check-out"],
+        request={"type": "object", "properties": {
+            "verification_code": {"type": "string", "description": "Verification code from QR code (BKG-XXXXX)"},
+            "booking_id": {"type": "string", "description": "Booking UUID"},
+            "notes": {"type": "string", "description": "Optional check-in notes"}
+        }},
         responses={
             200: {"type": "object", "properties": {
-                "pending_verifications": {"type": "integer"},
-                "verified_today": {"type": "integer"},
-                "total_scanned": {"type": "integer"},
-                "expired_codes": {"type": "integer"},
-                "recent_scans": {"type": "array"}
+                "message": {"type": "string"},
+                "check_in": {"type": "object"},
+                "booking": {"type": "object"}
             }},
-            403: {"type": "object", "properties": {"detail": {"type": "string"}}}
-        }
-    )
-    def get(self, request, workspace_id):
-        """Get QR code dashboard"""
-        # Only staff/manager/admin can access
-        if not check_workspace_member(request.user, workspace_id, ['staff', 'manager', 'admin']):
-            return Response(
-                {"detail": "You don't have permission to access this workspace"},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        
-        try:
-            # Get statistics
-            pending = OrderQRCode.objects.filter(
-                order__workspace_id=workspace_id,
-                status='scanned',
-                verified=False
-            ).count()
-            
-            verified_today = OrderQRCode.objects.filter(
-                order__workspace_id=workspace_id,
-                verified=True,
-                verified_at__date=timezone.now().date()
-            ).count()
-            
-            total_scanned = QRCodeScanLog.objects.filter(
-                qr_code__order__workspace_id=workspace_id
-            ).count()
-            
-            expired = OrderQRCode.objects.filter(
-                order__workspace_id=workspace_id,
-                status='expired'
-            ).count()
-            
-            # Get recent scans
-            recent_scans = QRCodeScanLog.objects.filter(
-                qr_code__order__workspace_id=workspace_id
-            ).select_related('scanned_by', 'qr_code__order').order_by('-scanned_at')[:10]
-            
-            recent_scans_data = []
-            for scan in recent_scans:
-                recent_scans_data.append({
-                    'verification_code': scan.qr_code.verification_code,
-                    'order_number': scan.qr_code.order.order_number,
-                    'scanned_by': scan.scanned_by.email,
-                    'scan_result': scan.scan_result,
-                    'scanned_at': scan.scanned_at
-                })
-            
-            return Response({
-                'pending_verifications': pending,
-                'verified_today': verified_today,
-                'total_scanned': total_scanned,
-                'expired_codes': expired,
-                'recent_scans': recent_scans_data
-            }, status=status.HTTP_200_OK)
-        except Exception as e:
-            return Response(
-                {"detail": str(e)},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-
-class AdminListPendingVerificationsView(APIView):
-    """List pending QR code verifications"""
-    permission_classes = [IsAuthenticated]
-    serializer_class = OrderQRCodeSerializer
-    
-    @extend_schema(
-        summary="List pending verifications",
-        description="Get all pending QR codes waiting for verification",
-        tags=["Admin QR Verification"],
-        responses={
-            200: {"type": "array", "items": {"type": "object"}},
-            403: {"type": "object", "properties": {"detail": {"type": "string"}}}
-        }
-    )
-    def get(self, request, workspace_id):
-        """List pending verifications"""
-        # Only staff/manager/admin can access
-        if not check_workspace_member(request.user, workspace_id, ['staff', 'manager', 'admin']):
-            return Response(
-                {"detail": "You don't have permission to access this workspace"},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        
-        try:
-            # Get pending QR codes (scanned but not verified)
-            pending_qrs = OrderQRCode.objects.filter(
-                order__workspace_id=workspace_id,
-                status='scanned',
-                verified=False
-            ).select_related('order', 'order__user').order_by('-last_scanned_at')
-            
-            pending_data = []
-            for qr in pending_qrs:
-                pending_data.append({
-                    'id': str(qr.id),
-                    'verification_code': qr.verification_code,
-                    'order_number': qr.order.order_number,
-                    'user_email': qr.order.user.email,
-                    'user_name': qr.order.user.full_name or qr.order.user.email,
-                    'total_amount': str(qr.order.total_amount),
-                    'bookings_count': qr.order.bookings.count(),
-                    'scan_count': qr.scan_count,
-                    'last_scanned_at': qr.last_scanned_at,
-                    'scanned_by_ip': qr.scanned_by_ip,
-                    'expires_at': qr.expires_at,
-                    'time_remaining': self._get_time_remaining(qr.expires_at)
-                })
-            
-            return Response(pending_data, status=status.HTTP_200_OK)
-        except Exception as e:
-            return Response(
-                {"detail": str(e)},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-    
-    def _get_time_remaining(self, expires_at):
-        """Calculate time remaining for expiry"""
-        if not expires_at:
-            return None
-        
-        remaining = expires_at - timezone.now()
-        if remaining.total_seconds() <= 0:
-            return "Expired"
-        
-        hours = int(remaining.total_seconds() // 3600)
-        minutes = int((remaining.total_seconds() % 3600) // 60)
-        
-        if hours > 0:
-            return f"{hours}h {minutes}m"
-        return f"{minutes}m"
-
-
-class AdminVerifyQRCodeView(APIView):
-    """Admin verify QR code and complete check-in"""
-    permission_classes = [IsAuthenticated]
-    serializer_class = OrderQRCodeSerializer
-    
-    @extend_schema(
-        summary="Verify QR code (Admin)",
-        description="Admin verifies QR code and completes check-in",
-        tags=["Admin QR Verification"],
-        request=AdminVerifyQRCodeSerializer,
-        responses={
-            200: {"type": "object", "properties": {"qr_code": {"type": "object"}, "bookings_updated": {"type": "integer"}, "message": {"type": "string"}}},
             400: {"type": "object", "properties": {"detail": {"type": "string"}}},
             403: {"type": "object", "properties": {"detail": {"type": "string"}}},
             404: {"type": "object", "properties": {"detail": {"type": "string"}}}
         }
     )
     def post(self, request, workspace_id):
-        """Verify QR code"""
-        # Only staff/manager/admin can verify
+        """Check-in guest using verification_code and booking_id"""
         if not check_workspace_member(request.user, workspace_id, ['staff', 'manager', 'admin']):
             return Response(
                 {"detail": "You don't have permission to verify QR codes"},
@@ -196,60 +48,98 @@ class AdminVerifyQRCodeView(APIView):
             )
         
         try:
-            qr_code_id = request.data.get('qr_code_id')
+            verification_code = request.data.get('verification_code')
+            booking_id = request.data.get('booking_id')
             notes = request.data.get('notes', '')
             
-            if not qr_code_id:
+            if not verification_code or not booking_id:
                 return Response(
-                    {"detail": "qr_code_id is required"},
+                    {"detail": "verification_code and booking_id are required"},
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            # Get QR code
-            qr_code = OrderQRCode.objects.get(
-                id=qr_code_id,
-                order__workspace_id=workspace_id
+            # Get BookingQRCode using verification_code and booking_id for validation
+            qr_code = BookingQRCode.objects.select_related('booking').get(
+                verification_code=verification_code,
+                booking_id=booking_id,
+                booking__workspace_id=workspace_id
             )
             
-            # Check if already verified
-            if qr_code.verified:
+            booking = qr_code.booking
+            
+            # Check if already checked in
+            if booking.is_checked_in:
                 return Response(
                     {
-                        "detail": "QR code already verified",
-                        "verified_at": qr_code.verified_at,
-                        "verified_by": qr_code.verified_by.email if qr_code.verified_by else None
+                        "detail": "Guest is already checked in",
+                        "checked_in_at": booking.check_in
                     },
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            # Check if expired
-            if qr_code.expires_at and timezone.now() > qr_code.expires_at:
-                qr_code.status = 'expired'
-                qr_code.save()
-                
+            # Validate check-in time (can only check-in at or after scheduled check-in time)
+            now = timezone.now()
+            if now < booking.check_in:
+                time_diff = booking.check_in - now
+                minutes = int(time_diff.total_seconds() / 60)
                 return Response(
-                    {"detail": "QR code has expired"},
+                    {
+                        "detail": f"Check-in not available yet. Available in {minutes} minutes.",
+                        "check_in_time": booking.check_in
+                    },
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            # Verify QR code
-            qr_code.verified = True
-            qr_code.verified_at = timezone.now()
-            qr_code.verified_by = request.user
+            # Check if booking is within valid time window (not expired)
+            if now > booking.check_out:
+                return Response(
+                    {
+                        "detail": "Booking period has expired",
+                        "check_out_time": booking.check_out
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Create CheckIn record
+            check_in_obj = CheckIn.objects.create(
+                booking=booking,
+                qr_code=qr_code,
+                check_in_time=now,
+                verified_by=request.user,
+                notes=notes
+            )
+            
+            # Update Booking status
+            booking.is_checked_in = True
+            booking.status = 'in_progress'
+            booking.save()
+            
+            # Update QR code status and counters
+            qr_code.total_check_ins += 1
+            qr_code.scan_count += 1
+            qr_code.last_scanned_at = now
+            qr_code.scanned_by_ip = self._get_client_ip(request)
             qr_code.status = 'verified'
             qr_code.save()
             
-            # Update all bookings to in_progress
-            order = qr_code.order
-            bookings = order.bookings.filter(status='confirmed')
-            updated_count = bookings.update(status='in_progress')
-            
             return Response({
-                'qr_code': OrderQRCodeSerializer(qr_code, context={'request': request}).data,
-                'bookings_updated': updated_count,
-                'message': f'QR code verified successfully. {updated_count} booking(s) marked as in-progress.'
+                'message': 'Guest checked in successfully',
+                'check_in': CheckInSerializer(check_in_obj).data,
+                'booking': {
+                    'id': str(booking.id),
+                    'space': booking.space.name,
+                    'check_in': booking.check_in,
+                    'check_out': booking.check_out,
+                    'status': booking.status
+                },
+                'qr_code_stats': {
+                    'scan_count': qr_code.scan_count,
+                    'total_check_ins': qr_code.total_check_ins,
+                    'max_check_ins': qr_code.max_check_ins or qr_code.calculate_max_check_ins()
+                }
             }, status=status.HTTP_200_OK)
-        except OrderQRCode.DoesNotExist:
+            
+        except BookingQRCode.DoesNotExist:
             return Response(
                 {"detail": "QR code not found"},
                 status=status.HTTP_404_NOT_FOUND
@@ -259,76 +149,132 @@ class AdminVerifyQRCodeView(APIView):
                 {"detail": str(e)},
                 status=status.HTTP_400_BAD_REQUEST
             )
+    
+    def _get_client_ip(self, request):
+        """Get client IP from request"""
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = request.META.get('REMOTE_ADDR')
+        return ip
 
 
-class AdminRejectQRCodeView(APIView):
-    """Admin reject QR code verification"""
+class AdminCheckOutView(APIView):
+    """Admin check-out a guest using QR code"""
     permission_classes = [IsAuthenticated]
-    serializer_class = OrderQRCodeSerializer
     
     @extend_schema(
-        summary="Reject QR code",
-        description="Admin rejects QR code and marks as invalid",
-        tags=["Admin QR Verification"],
-        request=AdminRejectQRCodeSerializer,
+        summary="Check-out guest via QR code",
+        description="Admin scans QR code to check-out a guest. Send verification_code and booking_id.",
+        tags=["Admin Check-in/Check-out"],
+        request={"type": "object", "properties": {
+            "verification_code": {"type": "string", "description": "Verification code from QR code (BKG-XXXXX)"},
+            "booking_id": {"type": "string", "description": "Booking UUID"},
+            "notes": {"type": "string", "description": "Optional check-out notes"}
+        }},
         responses={
-            200: {"type": "object", "properties": {"qr_code": {"type": "object"}, "message": {"type": "string"}, "reason": {"type": "string"}}},
+            200: {"type": "object", "properties": {
+                "message": {"type": "string"},
+                "check_in": {"type": "object"},
+                "booking": {"type": "object"},
+                "duration": {"type": "string"}
+            }},
             400: {"type": "object", "properties": {"detail": {"type": "string"}}},
             403: {"type": "object", "properties": {"detail": {"type": "string"}}},
             404: {"type": "object", "properties": {"detail": {"type": "string"}}}
         }
     )
     def post(self, request, workspace_id):
-        """Reject QR code"""
-        # Only staff/manager/admin can reject
+        """Check-out guest using verification_code and booking_id"""
         if not check_workspace_member(request.user, workspace_id, ['staff', 'manager', 'admin']):
             return Response(
-                {"detail": "You don't have permission to reject QR codes"},
+                {"detail": "You don't have permission to verify QR codes"},
                 status=status.HTTP_403_FORBIDDEN
             )
         
         try:
-            qr_code_id = request.data.get('qr_code_id')
-            reason = request.data.get('reason', 'No reason provided')
+            verification_code = request.data.get('verification_code')
+            booking_id = request.data.get('booking_id')
+            notes = request.data.get('notes', '')
             
-            if not qr_code_id:
+            if not verification_code or not booking_id:
                 return Response(
-                    {"detail": "qr_code_id is required"},
+                    {"detail": "verification_code and booking_id are required"},
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            # Get QR code
-            qr_code = OrderQRCode.objects.get(
-                id=qr_code_id,
-                order__workspace_id=workspace_id
+            # Get BookingQRCode using verification_code and booking_id for validation
+            qr_code = BookingQRCode.objects.select_related('booking').get(
+                verification_code=verification_code,
+                booking_id=booking_id,
+                booking__workspace_id=workspace_id
             )
             
-            # Mark as invalid (revert to sent)
-            qr_code.status = 'sent'
+            booking = qr_code.booking
+            
+            # Get or create CheckIn record
+            check_in_obj = CheckIn.objects.filter(
+                booking=booking,
+                qr_code=qr_code,
+                check_out_time__isnull=True  # Not yet checked out
+            ).first()
+            
+            if not check_in_obj:
+                # Create new CheckIn if doesn't exist
+                check_in_obj = CheckIn.objects.create(
+                    booking=booking,
+                    qr_code=qr_code,
+                    check_in_time=timezone.now(),
+                    check_out_time=timezone.now(),
+                    verified_by=request.user,
+                    notes=notes
+                )
+            else:
+                # Update existing CheckIn with checkout time
+                check_in_obj.check_out_time = timezone.now()
+                check_in_obj.notes = notes
+                check_in_obj.save()
+            
+            # Update Booking status
+            booking.is_checked_out = True
+            booking.status = 'completed'
+            booking.save()
+            
+            # For monthly bookings, don't mark QR as used yet
+            if booking.booking_type != 'monthly':
+                qr_code.used = True
+            
+            # Update QR code counters
+            qr_code.scan_count += 1
+            qr_code.last_scanned_at = timezone.now()
+            qr_code.scanned_by_ip = self._get_client_ip(request)
+            qr_code.status = 'verified'
             qr_code.save()
             
-            # Log rejection notification
-            from notifications.models import Notification
-            Notification.objects.create(
-                user=qr_code.order.user,
-                notification_type='qr_code_generated',
-                channel='email',
-                title='QR Code Verification Failed',
-                message=f'QR code for order {qr_code.order.order_number} was rejected: {reason}',
-                is_sent=True,
-                sent_at=timezone.now(),
-                data={
-                    'qr_code_id': str(qr_code.id),
-                    'reason': reason
-                }
-            )
+            # Calculate duration
+            duration = check_in_obj.check_out_time - check_in_obj.check_in_time
+            duration_str = f"{int(duration.total_seconds() // 3600)}h {int((duration.total_seconds() % 3600) // 60)}m"
             
             return Response({
-                'qr_code': OrderQRCodeSerializer(qr_code, context={'request': request}).data,
-                'message': 'QR code rejected and reverted to sent status. User notified.',
-                'reason': reason
+                'message': 'Guest checked out successfully',
+                'check_in': CheckInSerializer(check_in_obj).data,
+                'booking': {
+                    'id': str(booking.id),
+                    'space': booking.space.name,
+                    'check_in': booking.check_in,
+                    'check_out': booking.check_out,
+                    'status': booking.status
+                },
+                'duration': duration_str,
+                'qr_code_stats': {
+                    'scan_count': qr_code.scan_count,
+                    'total_check_ins': qr_code.total_check_ins,
+                    'max_check_ins': qr_code.max_check_ins or qr_code.calculate_max_check_ins()
+                }
             }, status=status.HTTP_200_OK)
-        except OrderQRCode.DoesNotExist:
+            
+        except BookingQRCode.DoesNotExist:
             return Response(
                 {"detail": "QR code not found"},
                 status=status.HTTP_404_NOT_FOUND
@@ -338,31 +284,32 @@ class AdminRejectQRCodeView(APIView):
                 {"detail": str(e)},
                 status=status.HTTP_400_BAD_REQUEST
             )
+    
+    def _get_client_ip(self, request):
+        """Get client IP from request"""
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = request.META.get('REMOTE_ADDR')
+        return ip
 
 
-class AdminQRCodeDetailsView(APIView):
-    """Get detailed QR code information"""
+class AdminCheckInListView(APIView):
+    """List check-ins for a workspace"""
     permission_classes = [IsAuthenticated]
-    serializer_class = OrderQRCodeSerializer
     
     @extend_schema(
-        summary="Get QR code details",
-        description="Get detailed information about a QR code including scan history",
-        tags=["Admin QR Verification"],
+        summary="List check-ins",
+        description="Get all check-ins for workspace",
+        tags=["Admin Check-in/Check-out"],
         responses={
-            200: {"type": "object", "properties": {
-                "qr_code": {"type": "object"},
-                "scan_history": {"type": "array"},
-                "order_details": {"type": "object"},
-                "bookings": {"type": "array"}
-            }},
-            403: {"type": "object", "properties": {"detail": {"type": "string"}}},
-            404: {"type": "object", "properties": {"detail": {"type": "string"}}}
+            200: {"type": "array", "items": {"type": "object"}},
+            403: {"type": "object", "properties": {"detail": {"type": "string"}}}
         }
     )
-    def get(self, request, workspace_id, qr_code_id):
-        """Get QR code details"""
-        # Only staff/manager/admin can access
+    def get(self, request, workspace_id):
+        """List check-ins"""
         if not check_workspace_member(request.user, workspace_id, ['staff', 'manager', 'admin']):
             return Response(
                 {"detail": "You don't have permission to access this workspace"},
@@ -370,57 +317,34 @@ class AdminQRCodeDetailsView(APIView):
             )
         
         try:
-            qr_code = OrderQRCode.objects.get(
-                id=qr_code_id,
-                order__workspace_id=workspace_id
-            )
+            # Get today's check-ins
+            today = timezone.now().date()
+            check_ins = CheckIn.objects.filter(
+                booking__workspace_id=workspace_id,
+                check_in_time__date=today
+            ).select_related('booking', 'booking__space', 'verified_by').order_by('-check_in_time')
             
-            # Get scan history
-            scans = QRCodeScanLog.objects.filter(qr_code=qr_code).select_related('scanned_by').order_by('-scanned_at')
-            
-            scan_history = []
-            for scan in scans:
-                scan_history.append({
-                    'scanned_at': scan.scanned_at,
-                    'scanned_by': scan.scanned_by.email,
-                    'scan_device_ip': scan.scan_device_ip,
-                    'scan_result': scan.scan_result
-                })
-            
-            # Get order details
-            order = qr_code.order
-            
-            # Get bookings
-            bookings_data = []
-            for booking in order.bookings.all():
-                bookings_data.append({
-                    'id': str(booking.id),
-                    'space_name': booking.space.name,
-                    'check_in': booking.check_in,
-                    'check_out': booking.check_out,
-                    'status': booking.status,
-                    'total_price': str(booking.total_price)
+            data = []
+            for check_in in check_ins:
+                booking = check_in.booking
+                data.append({
+                    'id': str(check_in.id),
+                    'booking_id': str(booking.id),
+                    'space': booking.space.name,
+                    'guest_name': booking.user.full_name or booking.user.email,
+                    'check_in_time': check_in.check_in_time,
+                    'check_out_time': check_in.check_out_time,
+                    'status': 'checked_out' if check_in.check_out_time else 'checked_in',
+                    'verified_by': check_in.verified_by.email,
+                    'notes': check_in.notes
                 })
             
             return Response({
-                'qr_code': OrderQRCodeSerializer(qr_code, context={'request': request}).data,
-                'scan_history': scan_history,
-                'order_details': {
-                    'order_number': order.order_number,
-                    'user_email': order.user.email,
-                    'user_name': order.user.full_name or order.user.email,
-                    'total_amount': str(order.total_amount),
-                    'status': order.status,
-                    'created_at': order.created_at,
-                    'paid_at': order.paid_at
-                },
-                'bookings': bookings_data
+                'date': today.isoformat(),
+                'total_check_ins': len(data),
+                'check_ins': data
             }, status=status.HTTP_200_OK)
-        except OrderQRCode.DoesNotExist:
-            return Response(
-                {"detail": "QR code not found"},
-                status=status.HTTP_404_NOT_FOUND
-            )
+            
         except Exception as e:
             return Response(
                 {"detail": str(e)},
@@ -428,30 +352,27 @@ class AdminQRCodeDetailsView(APIView):
             )
 
 
-class AdminVerificationStatsView(APIView):
-    """Get verification statistics"""
+class AdminQRCodeDashboardView(APIView):
+    """Admin dashboard for QR code verification"""
     permission_classes = [IsAuthenticated]
-    serializer_class = OrderQRCodeSerializer
     
     @extend_schema(
-        summary="Get verification statistics",
-        description="Get QR code verification statistics",
-        tags=["Admin QR Verification"],
+        summary="QR code verification dashboard",
+        description="Get QR code statistics and pending check-ins",
+        tags=["Admin Check-in/Check-out"],
         responses={
             200: {"type": "object", "properties": {
-                "total_qr_codes": {"type": "integer"},
-                "verified": {"type": "integer"},
-                "pending": {"type": "integer"},
-                "expired": {"type": "integer"},
-                "by_status": {"type": "object"},
-                "today_stats": {"type": "object"}
+                "pending_check_ins": {"type": "integer"},
+                "checked_in_today": {"type": "integer"},
+                "checked_out_today": {"type": "integer"},
+                "active_bookings": {"type": "integer"},
+                "recent_check_ins": {"type": "array"}
             }},
             403: {"type": "object", "properties": {"detail": {"type": "string"}}}
         }
     )
     def get(self, request, workspace_id):
-        """Get verification statistics"""
-        # Only staff/manager/admin can access
+        """Get QR code dashboard"""
         if not check_workspace_member(request.user, workspace_id, ['staff', 'manager', 'admin']):
             return Response(
                 {"detail": "You don't have permission to access this workspace"},
@@ -459,91 +380,57 @@ class AdminVerificationStatsView(APIView):
             )
         
         try:
-            qr_codes = OrderQRCode.objects.filter(order__workspace_id=workspace_id)
-            
-            # Overall stats
-            total = qr_codes.count()
-            verified = qr_codes.filter(verified=True).count()
-            pending = qr_codes.filter(status='scanned', verified=False).count()
-            expired = qr_codes.filter(status='expired').count()
-            
-            # By status
-            by_status = qr_codes.values('status').annotate(count=Count('id'))
-            status_dict = {item['status']: item['count'] for item in by_status}
-            
-            # Today's stats
             today = timezone.now().date()
-            today_generated = qr_codes.filter(created_at__date=today).count()
-            today_verified = qr_codes.filter(verified_at__date=today).count()
-            today_scans = QRCodeScanLog.objects.filter(
-                qr_code__order__workspace_id=workspace_id,
-                scanned_at__date=today
+            now = timezone.now()
+            
+            # Get statistics
+            pending_check_ins = Booking.objects.filter(
+                workspace_id=workspace_id,
+                is_checked_in=False,
+                check_in__lte=now,
+                check_out__gte=now
             ).count()
             
-            return Response({
-                'total_qr_codes': total,
-                'verified': verified,
-                'pending': pending,
-                'expired': expired,
-                'by_status': status_dict,
-                'today_stats': {
-                    'generated': today_generated,
-                    'verified': today_verified,
-                    'scans': today_scans,
-                    'verification_rate': f"{(today_verified/today_generated*100) if today_generated > 0 else 0:.1f}%"
-                }
-            }, status=status.HTTP_200_OK)
-        except Exception as e:
-            return Response(
-                {"detail": str(e)},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-
-class AdminResendQRCodeView(APIView):
-    """Resend QR code to user"""
-    permission_classes = [IsAuthenticated]
-    serializer_class = OrderQRCodeSerializer
-    
-    @extend_schema(
-        summary="Resend QR code",
-        description="Resend QR code email to user",
-        tags=["Admin QR Verification"],
-        responses={
-            200: {"type": "object", "properties": {
-                "message": {"type": "string"}
-            }},
-            403: {"type": "object", "properties": {"detail": {"type": "string"}}},
-            404: {"type": "object", "properties": {"detail": {"type": "string"}}}
-        }
-    )
-    def post(self, request, workspace_id, qr_code_id):
-        """Resend QR code"""
-        # Only staff/manager/admin can resend
-        if not check_workspace_member(request.user, workspace_id, ['staff', 'manager', 'admin']):
-            return Response(
-                {"detail": "You don't have permission to resend QR codes"},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        
-        try:
-            qr_code = OrderQRCode.objects.get(
-                id=qr_code_id,
-                order__workspace_id=workspace_id
-            )
+            checked_in_today = CheckIn.objects.filter(
+                booking__workspace_id=workspace_id,
+                check_in_time__date=today
+            ).count()
             
-            # Trigger email send
-            from qr_code.tasks import send_qr_code_email
-            send_qr_code_email.delay(str(qr_code.order.id), str(qr_code.id))
+            checked_out_today = CheckIn.objects.filter(
+                booking__workspace_id=workspace_id,
+                check_out_time__date=today,
+                check_out_time__isnull=False
+            ).count()
+            
+            active_bookings = Booking.objects.filter(
+                workspace_id=workspace_id,
+                status='in_progress'
+            ).count()
+            
+            # Get recent check-ins
+            recent_check_ins = CheckIn.objects.filter(
+                booking__workspace_id=workspace_id
+            ).select_related('booking', 'booking__space', 'verified_by').order_by('-check_in_time')[:10]
+            
+            recent_data = []
+            for check_in in recent_check_ins:
+                booking = check_in.booking
+                recent_data.append({
+                    'booking_id': str(booking.id),
+                    'space': booking.space.name,
+                    'guest': booking.user.email,
+                    'check_in_time': check_in.check_in_time,
+                    'status': 'checked_out' if check_in.check_out_time else 'checked_in'
+                })
             
             return Response({
-                'message': f'QR code will be resent to {qr_code.order.user.email}'
+                'pending_check_ins': pending_check_ins,
+                'checked_in_today': checked_in_today,
+                'checked_out_today': checked_out_today,
+                'active_bookings': active_bookings,
+                'recent_check_ins': recent_data
             }, status=status.HTTP_200_OK)
-        except OrderQRCode.DoesNotExist:
-            return Response(
-                {"detail": "QR code not found"},
-                status=status.HTTP_404_NOT_FOUND
-            )
+            
         except Exception as e:
             return Response(
                 {"detail": str(e)},

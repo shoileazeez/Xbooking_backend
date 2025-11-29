@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.db.models import Sum
 from datetime import timedelta
-from booking.models import Booking, Cart, CartItem, BookingReview, BookingAvailability
+from booking.models import Booking, Cart, CartItem, BookingReview
 
 
 class CartItemInline(admin.TabularInline):
@@ -379,80 +379,3 @@ class BookingReviewAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.select_related('booking', 'space', 'user')
-
-
-@admin.register(BookingAvailability)
-class BookingAvailabilityAdmin(admin.ModelAdmin):
-    list_display = ['availability_id_display', 'space', 'availability_status', 'availability_period', 'updated_at']
-    list_filter = ['is_available', 'updated_at', 'space']
-    search_fields = ['space__name', 'space__workspace__name']
-    readonly_fields = ['id', 'updated_at', 'availability_info']
-    
-    fieldsets = (
-        ('Space Information', {
-            'fields': ('id', 'space')
-        }),
-        ('Availability', {
-            'fields': ('is_available', 'available_from', 'available_until', 'availability_info')
-        }),
-        ('Timestamps', {
-            'fields': ('updated_at',),
-            'classes': ('collapse',)
-        }),
-    )
-    
-    ordering = ['-updated_at']
-    actions = ['mark_available', 'mark_unavailable']
-    
-    def availability_id_display(self, obj):
-        return str(obj.id)[:8]
-    availability_id_display.short_description = 'ID'
-    
-    def space_display(self, obj):
-        return f"{obj.space.workspace.name} - {obj.space.name}"
-    space_display.short_description = 'Space'
-    
-    def availability_status(self, obj):
-        status_text = '✓ Available' if obj.is_available else '✗ Unavailable'
-        bg_color = '#4CAF50' if obj.is_available else '#F44336'
-        return format_html(
-            '<span style="background-color: {}; color: white; padding: 3px 8px; border-radius: 3px; font-weight: bold;">{}</span>',
-            bg_color,
-            status_text
-        )
-    availability_status.short_description = 'Status'
-    
-    def availability_period(self, obj):
-        if obj.available_from and obj.available_until:
-            return f"{obj.available_from.strftime('%m/%d %H:%M')} - {obj.available_until.strftime('%m/%d %H:%M')}"
-        return 'Not specified'
-    availability_period.short_description = 'Period'
-    
-    def availability_info(self, obj):
-        return format_html(
-            '<div style="line-height: 1.8;">'
-            '<strong>Space:</strong> {}<br/>'
-            '<strong>Available:</strong> {}<br/>'
-            '<strong>From:</strong> {}<br/>'
-            '<strong>Until:</strong> {}'
-            '</div>',
-            obj.space.name,
-            'Yes' if obj.is_available else 'No',
-            obj.available_from.strftime('%Y-%m-%d %H:%M') if obj.available_from else 'N/A',
-            obj.available_until.strftime('%Y-%m-%d %H:%M') if obj.available_until else 'N/A'
-        )
-    availability_info.short_description = 'Availability Information'
-    
-    def mark_available(self, request, queryset):
-        updated = queryset.update(is_available=True)
-        self.message_user(request, f'{updated} space(s) marked as available.')
-    mark_available.short_description = 'Mark selected as Available'
-    
-    def mark_unavailable(self, request, queryset):
-        updated = queryset.update(is_available=False)
-        self.message_user(request, f'{updated} space(s) marked as unavailable.')
-    mark_unavailable.short_description = 'Mark selected as Unavailable'
-    
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        return qs.select_related('space', 'space__workspace')

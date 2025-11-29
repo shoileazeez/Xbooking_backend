@@ -112,13 +112,9 @@ class Space(models.Model):
     monthly_rate = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, validators=[MinValueValidator(Decimal('0'))])
     rules = models.TextField(blank=True, null=True, help_text='Usage rules and guidelines for the space')
     cancellation_policy = models.TextField(blank=True, null=True, help_text='Cancellation policy and refund rules')
-    operational_hours = models.JSONField(default=dict, blank=True, help_text='Operating hours for each day of the week')
-    availability_schedule = models.JSONField(default=dict, blank=True, help_text='Custom availability schedule')
     image_url = models.URLField(blank=True, null=True)
     amenities = models.JSONField(default=list, blank=True)  # List of amenities
     is_available = models.BooleanField(default=True)
-    # Time interval in minutes for slot generation (e.g., 60 for 1 hour slots)
-    time_interval_minutes = models.IntegerField(default=60, help_text='Slot interval in minutes')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -129,3 +125,137 @@ class Space(models.Model):
 
     def __str__(self):
         return f"{self.branch.name} - {self.name}"
+
+
+class SpaceCalendar(models.Model):
+    """Model to manage space availability calendar"""
+    
+    BOOKING_TYPE_CHOICES = [
+        ('hourly', 'Hourly'),
+        ('daily', 'Daily'),
+        ('monthly', 'Monthly'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    space = models.OneToOneField(Space, on_delete=models.CASCADE, related_name='calendar')
+    
+    # Availability configuration
+    time_interval_minutes = models.IntegerField(
+        default=60,
+        help_text='Time slot interval in minutes (e.g., 60 for hourly slots)'
+    )
+    
+    # Operating hours per day (JSON format: {"0": {"start": "09:00", "end": "18:00"}, ...})
+    operating_hours = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text='Operating hours by day (0=Sunday, 6=Saturday)'
+    )
+    
+    # Booking types available
+    hourly_enabled = models.BooleanField(default=True)
+    daily_enabled = models.BooleanField(default=True)
+    monthly_enabled = models.BooleanField(default=True)
+    
+    # Pricing per booking type
+    hourly_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal('0'),
+        validators=[MinValueValidator(Decimal('0'))]
+    )
+    daily_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal('0'),
+        validators=[MinValueValidator(Decimal('0'))]
+    )
+    monthly_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal('0'),
+        validators=[MinValueValidator(Decimal('0'))]
+    )
+    
+    # Advance booking requirements (in days)
+    min_advance_booking_days = models.IntegerField(
+        default=0,
+        help_text='Minimum days in advance to book'
+    )
+    max_advance_booking_days = models.IntegerField(
+        default=365,
+        help_text='Maximum days in advance to book'
+    )
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'workspace_space_calendar'
+    
+    def __str__(self):
+        return f"Calendar for {self.space.name}"
+
+
+class SpaceCalendarSlot(models.Model):
+    """Model to track individual calendar slots and their availability"""
+    
+    STATUS_CHOICES = [
+        ('available', 'Available'),
+        ('booked', 'Booked'),
+        ('blocked', 'Blocked'),
+        ('maintenance', 'Maintenance'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    calendar = models.ForeignKey(
+        SpaceCalendar,
+        on_delete=models.CASCADE,
+        related_name='slots'
+    )
+    
+    # Slot timing
+    date = models.DateField(help_text='Date of the slot')
+    start_time = models.TimeField(help_text='Start time of the slot')
+    end_time = models.TimeField(help_text='End time of the slot')
+    booking_type = models.CharField(
+        max_length=20,
+        choices=[('hourly', 'Hourly'), ('daily', 'Daily'), ('monthly', 'Monthly')],
+        help_text='Type of booking for this slot'
+    )
+    
+    # Availability
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='available'
+    )
+    
+    # Booking reference
+    booking = models.ForeignKey(
+        'booking.Booking',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='calendar_slots'
+    )
+    
+    # Notes
+    notes = models.TextField(blank=True, null=True, help_text='Reason for blocking/maintenance')
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'workspace_space_calendar_slot'
+        ordering = ['date', 'start_time']
+        unique_together = ('calendar', 'date', 'start_time', 'booking_type')
+        indexes = [
+            models.Index(fields=['calendar', 'date', 'status']),
+            models.Index(fields=['booking']),
+        ]
+    
+    def __str__(self):
+        return f"{self.calendar.space.name} - {self.date} {self.start_time}-{self.end_time} ({self.status})"

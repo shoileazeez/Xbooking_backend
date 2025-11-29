@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.throttling import ScopedRateThrottle
-from qr_code.models import OrderQRCode
+from qr_code.models import OrderQRCode, BookingQRCode
 from qr_code.serializers import OrderQRCodeSerializer, VerifyQRCodeSerializer
 from qr_code.tasks import generate_qr_code_for_order
 from payment.models import Order
@@ -100,6 +100,51 @@ class GetOrderQRCodeView(APIView):
         except Order.DoesNotExist:
             return Response(
                 {"detail": "Order not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {"detail": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class GetBookingQRCodeView(APIView):
+    """Get QR code for a booking"""
+    permission_classes = [IsAuthenticated]
+    serializer_class = None  # Will use BookingQRCodeSerializer
+    
+    @extend_schema(
+        summary="Get booking QR code",
+        description="Get QR code details for a booking",
+        tags=["QR Codes - Bookings"],
+        responses={
+            200: {"type": "object"},
+            403: {"type": "object", "properties": {"detail": {"type": "string"}}},
+            404: {"type": "object", "properties": {"detail": {"type": "string"}}}
+        }
+    )
+    def get(self, request, booking_id):
+        """Get booking QR code"""
+        from qr_code.serializers import BookingQRCodeSerializer
+        
+        try:
+            # Get the booking - user can only access their own bookings
+            booking = Booking.objects.get(id=booking_id, user=request.user)
+            workspace = booking.space.workspace
+            
+            try:
+                qr_code = booking.qr_code
+                serializer = BookingQRCodeSerializer(qr_code, context={'request': request})
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            except BookingQRCode.DoesNotExist:
+                return Response(
+                    {"detail": "QR code not generated yet for this booking"},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+        except Booking.DoesNotExist:
+            return Response(
+                {"detail": "Booking not found"},
                 status=status.HTTP_404_NOT_FOUND
             )
         except Exception as e:

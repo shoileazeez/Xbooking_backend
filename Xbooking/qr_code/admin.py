@@ -2,7 +2,7 @@
 QR Code Admin Configuration
 """
 from django.contrib import admin
-from qr_code.models import OrderQRCode, QRCodeScanLog
+from qr_code.models import OrderQRCode, BookingQRCode, CheckIn, BookingQRCodeLog
 
 
 @admin.register(OrderQRCode)
@@ -34,14 +34,64 @@ class OrderQRCodeAdmin(admin.ModelAdmin):
     )
 
 
-@admin.register(QRCodeScanLog)
-class QRCodeScanLogAdmin(admin.ModelAdmin):
-    """Admin for QRCodeScanLog model"""
-    list_display = ['verification_code', 'scanned_by', 'scan_result', 'scanned_at']
-    list_filter = ['scan_result', 'scanned_at']
-    search_fields = ['qr_code__verification_code', 'scanned_by__email']
-    readonly_fields = ['id', 'scanned_at']
+@admin.register(BookingQRCode)
+class BookingQRCodeAdmin(admin.ModelAdmin):
+    """Admin for BookingQRCode model"""
+    list_display = ['verification_code', 'booking', 'status', 'used', 'total_check_ins', 'max_check_ins', 'created_at']
+    list_filter = ['status', 'used', 'created_at']
+    search_fields = ['verification_code', 'booking__id']
+    readonly_fields = ['id', 'verification_code', 'total_check_ins', 'created_at', 'sent_at']
     
-    def verification_code(self, obj):
-        return obj.qr_code.verification_code
-    verification_code.short_description = 'QR Code'
+    fieldsets = (
+        ('QR Code Info', {
+            'fields': ('id', 'booking', 'verification_code', 'qr_code_image')
+        }),
+        ('Status', {
+            'fields': ('status', 'used')
+        }),
+        ('Check-in Tracking', {
+            'fields': ('total_check_ins', 'max_check_ins')
+        }),
+        ('Scan Info', {
+            'fields': ('scan_count', 'last_scanned_at', 'scanned_by_ip')
+        }),
+        ('Expiry', {
+            'fields': ('expires_at',)
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'sent_at')
+        })
+    )
+
+
+@admin.register(CheckIn)
+class CheckInAdmin(admin.ModelAdmin):
+    """Admin for CheckIn model"""
+    list_display = ['booking', 'check_in_time', 'check_out_time', 'verified_by', 'created_at']
+    list_filter = ['created_at', 'verified_by']
+    search_fields = ['booking__id', 'verified_by__email']
+    readonly_fields = ['id', 'created_at']
+    
+    fieldsets = (
+        ('Check-in Info', {
+            'fields': ('id', 'booking', 'qr_code')
+        }),
+        ('Times', {
+            'fields': ('check_in_time', 'check_out_time', 'duration')
+        }),
+        ('Verification', {
+            'fields': ('verified_by', 'notes')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at',)
+        })
+    )
+
+
+@admin.register(BookingQRCodeLog)
+class BookingQRCodeLogAdmin(admin.ModelAdmin):
+    """Admin for BookingQRCodeLog model"""
+    list_display = ['qr_code', 'scan_result', 'scanned_by']
+    list_filter = ['scan_result', 'scanned_by']
+    search_fields = ['qr_code__verification_code']
+    readonly_fields = ['id']

@@ -137,129 +137,118 @@ class SpaceCalendarView(APIView):
 
         from datetime import datetime, date, time, timedelta
         import calendar as _calendar
+        from workspace.models import SpaceCalendar, SpaceCalendarSlot
 
         def parse_date(s):
             return datetime.fromisoformat(s).date()
 
-        def time_from_str(tstr):
-            h, m = map(int, tstr.split(':'))
-            return time(hour=h, minute=m)
-
-        # helpers to find overlapping bookings/reservations
-        def slot_available(start_dt, end_dt):
-            # check bookings overlap
-            if Booking.objects.filter(space=space, check_in__lt=end_dt, check_out__gt=start_dt).exists():
-                return False
-            # check active reservations
-            if Reservation.objects.filter(space=space, status__in=['pending','held'], start__lt=end_dt, end__gt=start_dt).exists():
-                return False
-            return True
-
         if mode == 'hourly':
             date_str = request.query_params.get('date')
             if not date_str:
-                return Response({'success': False, 'message': 'date parameter required for hourly mode'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {'success': False, 'message': 'date parameter required for hourly mode'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             query_date = parse_date(date_str)
 
-            weekday = query_date.strftime('%A').lower()
-            ops = space.operational_hours.get(weekday) or {}
-            open_time = ops.get('open')
-            close_time = ops.get('close')
-            if not open_time or not close_time:
-                return Response({'mode': 'hourly', 'date': date_str, 'slots': []})
+            # Get SpaceCalendarSlots for this date
+            slots_data = SpaceCalendarSlot.objects.filter(
+                space_calendar__space=space,
+                date=query_date
+            ).values(
+                'id', 'start_time', 'end_time', 'status', 'booking_type'
+            ).order_by('start_time')
 
-            start_t = time_from_str(open_time)
-            end_t = time_from_str(close_time)
+            if not slots_data.exists():
+                return Response(
+                    {'mode': 'hourly', 'date': date_str, 'slots': []},
+                    status=status.HTTP_200_OK
+                )
 
-            # build slots
             slots = []
-            interval = space.time_interval_minutes or 60
-            from datetime import datetime as _dt
-            start_dt = _dt.combine(query_date, start_t)
-            end_dt = _dt.combine(query_date, end_t)
-            cur = start_dt
-            while cur < end_dt:
-                slot_end = cur + timedelta(minutes=interval)
-                available = slot_available(cur, slot_end)
-                slots.append({'start': cur.time().strftime('%H:%M'), 'end': slot_end.time().strftime('%H:%M'), 'available': available})
-                cur = slot_end
+            for slot in slots_data:
+                slots.append({
+                    'id': str(slot['id']),
+                    'start': slot['start_time'].strftime('%H:%M'),
+                    'end': slot['end_time'].strftime('%H:%M'),
+                    'available': slot['status'] == 'available',
+                    'status': slot['status'],
+                    'booking_type': slot['booking_type']
+                })
 
-            return Response({'mode': 'hourly', 'date': date_str, 'slots': slots}, status=status.HTTP_200_OK)
+            return Response(
+                {'mode': 'hourly', 'date': date_str, 'slots': slots},
+                status=status.HTTP_200_OK
+            )
 
         if mode == 'daily':
             month_str = request.query_params.get('month')
             if not month_str:
-                return Response({'success': False, 'message': 'month parameter required for daily mode (YYYY-MM)'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {'success': False, 'message': 'month parameter required for daily mode (YYYY-MM)'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             year, month = map(int, month_str.split('-'))
             _, num_days = _calendar.monthrange(year, month)
-            days = []
-            for d in range(1, num_days+1):
-                day_date = date(year, month, d)
-                # check if any slot available that day
-                weekday = day_date.strftime('%A').lower()
-                ops = space.operational_hours.get(weekday) or {}
-                open_time = ops.get('open')
-                close_time = ops.get('close')
-                if not open_time or not close_time:
-                    days.append({'date': day_date.isoformat(), 'available': False})
-                    continue
-                # build one slot and test — if any slot available mark day available
-                start_t = time_from_str(open_time)
-                end_t = time_from_str(close_time)
-                interval = space.time_interval_minutes or 60
-                from datetime import datetime as _dt
-                start_dt = _dt.combine(day_date, start_t)
-                end_dt = _dt.combine(day_date, end_t)
-                cur = start_dt
-                available_any = False
-                while cur < end_dt:
-                    slot_end = cur + timedelta(minutes=interval)
-                    if slot_available(cur, slot_end):
-                        available_any = True
-                        break
-                    cur = slot_end
-                days.append({'date': day_date.isoformat(), 'available': available_any})
 
-            return Response({'mode': 'daily', 'month': month_str, 'days': days}, status=status.HTTP_200_OK)
+            days = []
+            for d in range(1, num_days + 1):
+                day_date = date(year, month, d)
+
+                # Check if any slot is available for this day
+                available_slots = SpaceCalendarSlot.objects.filter(
+                    space_calendar__space=space,
+                    date=day_date,
+                    status='available'
+                ).exists()
+
+                days.append({
+                    'date': day_date.isoformat(),
+                    'available': available_slots
+                })
+
+            return Response(
+                {'mode': 'daily', 'month': month_str, 'days': days},
+                status=status.HTTP_200_OK
+            )
 
         if mode == 'monthly':
             year_str = request.query_params.get('year')
             if not year_str:
-                return Response({'success': False, 'message': 'year parameter required for monthly mode (YYYY)'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {'success': False, 'message': 'year parameter required for monthly mode (YYYY)'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             year = int(year_str)
             months = []
+
             for m in range(1, 13):
-                # for each month check if any day available
+                # Check if any slot is available for this month
+                month_start = date(year, m, 1)
                 _, num_days = _calendar.monthrange(year, m)
-                available_any = False
-                for d in range(1, num_days+1):
-                    day_date = date(year, m, d)
-                    weekday = day_date.strftime('%A').lower()
-                    ops = space.operational_hours.get(weekday) or {}
-                    open_time = ops.get('open')
-                    close_time = ops.get('close')
-                    if not open_time or not close_time:
-                        continue
-                    start_t = time_from_str(open_time)
-                    end_t = time_from_str(close_time)
-                    interval = space.time_interval_minutes or 60
-                    from datetime import datetime as _dt
-                    start_dt = _dt.combine(day_date, start_t)
-                    end_dt = _dt.combine(day_date, end_t)
-                    cur = start_dt
-                    while cur < end_dt:
-                        slot_end = cur + timedelta(minutes=interval)
-                        if slot_available(cur, slot_end):
-                            available_any = True
-                            break
-                        cur = slot_end
-                    if available_any:
-                        break
-                months.append({'month': f"{year}-{m:02d}", 'available': available_any})
+                month_end = date(year, m, num_days)
 
-            return Response({'mode': 'monthly', 'year': year_str, 'months': months}, status=status.HTTP_200_OK)
+                available_slots = SpaceCalendarSlot.objects.filter(
+                    space_calendar__space=space,
+                    date__gte=month_start,
+                    date__lte=month_end,
+                    status='available'
+                ).exists()
 
-        return Response({'success': False, 'message': 'Invalid mode'}, status=status.HTTP_400_BAD_REQUEST)
+                months.append({
+                    'month': f"{year}-{m:02d}",
+                    'available': available_slots
+                })
+
+            return Response(
+                {'mode': 'monthly', 'year': year_str, 'months': months},
+                status=status.HTTP_200_OK
+            )
+
+        return Response(
+            {'success': False, 'message': 'Invalid mode'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
     @extend_schema(
         request=SpaceSerializer,

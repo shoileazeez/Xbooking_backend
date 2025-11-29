@@ -62,15 +62,25 @@ class AddToCartView(APIView):
             try:
                 space = Space.objects.get(id=serializer.validated_data['space_id'])
 
-                # Check if space is available
-                if not space.is_available:
-                    return Response({
-                        'success': False,
-                        'message': 'This space is not available'
-                    }, status=status.HTTP_400_BAD_REQUEST)
-
                 check_in = serializer.validated_data['check_in']
                 check_out = serializer.validated_data['check_out']
+                booking_date = serializer.validated_data.get('booking_date', check_in.date())
+
+                # Check SpaceCalendarSlot availability
+                from workspace.models import SpaceCalendarSlot
+                slots = SpaceCalendarSlot.objects.filter(
+                    calendar__space=space,
+                    date=booking_date,
+                    start_time__lt=check_out.time(),
+                    end_time__gt=check_in.time(),
+                    status='available'
+                )
+                
+                if not slots.exists():
+                    return Response({
+                        'success': False,
+                        'message': 'Selected time slot is not available on this date'
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
                 # Check for overlapping bookings
                 if Booking.objects.filter(space=space, check_in__lt=check_out, check_out__gt=check_in).exists():
@@ -104,6 +114,7 @@ class AddToCartView(APIView):
                         check_in=check_in,
                         check_out=check_out,
                         defaults={
+                            'booking_date': booking_date,
                             'number_of_guests': serializer.validated_data.get('number_of_guests', 1),
                             'price': price,
                             'special_requests': serializer.validated_data.get('special_requests', ''),
@@ -258,16 +269,31 @@ class CreateBookingView(APIView):
 
             workspace = space.branch.workspace
 
-            if not space.is_available:
-                return Response({'success': False, 'message': 'This space is not available'}, status=status.HTTP_400_BAD_REQUEST)
-
             # Validate check-in/check-out presence and ordering
             check_in = serializer.validated_data.get('check_in')
             check_out = serializer.validated_data.get('check_out')
+            booking_date = serializer.validated_data.get('booking_date', check_in.date())
+            
             if not check_in or not check_out:
                 return Response({'success': False, 'message': 'check_in and check_out are required'}, status=status.HTTP_400_BAD_REQUEST)
             if check_out <= check_in:
                 return Response({'success': False, 'message': 'check_out must be after check_in'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Validate calendar slot availability
+            from workspace.models import SpaceCalendarSlot
+            slots = SpaceCalendarSlot.objects.filter(
+                calendar__space=space,
+                date=booking_date,
+                start_time__lt=check_out.time(),
+                end_time__gt=check_in.time(),
+                status='available'
+            )
+            
+            if not slots.exists():
+                return Response({
+                    'success': False,
+                    'message': 'Selected time slot is not available on this date'
+                }, status=status.HTTP_400_BAD_REQUEST)
 
             # Calculate price (hours) safely
             try:
@@ -296,6 +322,7 @@ class CreateBookingView(APIView):
                         booking_type=serializer.validated_data.get('booking_type', 'daily'),
                         check_in=check_in,
                         check_out=check_out,
+                        booking_date=booking_date,
                         number_of_guests=serializer.validated_data.get('number_of_guests', 1),
                         base_price=base_price,
                         tax_amount=Decimal('0'),

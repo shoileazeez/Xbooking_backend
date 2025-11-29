@@ -166,7 +166,7 @@ class SpaceSerializer(serializers.ModelSerializer):
             'id', 'branch', 'branch_name', 'workspace_name', 'name', 'description',
             'space_type', 'capacity', 'price_per_hour', 'daily_rate', 'monthly_rate',
             'image_url', 'amenities', 'rules', 'cancellation_policy', 
-            'operational_hours', 'availability_schedule', 'is_available', 
+            'is_available', 
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
@@ -184,7 +184,7 @@ class SpaceDetailSerializer(serializers.ModelSerializer):
             'id', 'branch', 'workspace_name', 'workspace_id', 'name', 'description',
             'space_type', 'capacity', 'price_per_hour', 'daily_rate', 'monthly_rate',
             'image_url', 'amenities', 'rules', 'cancellation_policy', 
-            'operational_hours', 'availability_schedule', 'is_available', 
+            'is_available', 
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']

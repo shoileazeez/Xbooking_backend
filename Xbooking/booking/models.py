@@ -9,12 +9,21 @@ from workspace.models import Space, Workspace
 import uuid
 import secrets
 import string
-
+from django.utils import timezone
+from datetime import time
 
 def generate_verification_code():
     """Generate a unique verification code for guests"""
     chars = string.ascii_uppercase + string.digits
     return 'G-' + ''.join(secrets.choice(chars) for _ in range(10))
+
+def default_start_time():
+    """Default start time for bookings"""
+    return time(9, 0)  # 9:00 AM
+
+def default_end_time():
+    """Default end time for bookings"""
+    return time(17, 0)  # 5:00 PM
 
 
 class Booking(models.Model):
@@ -41,9 +50,21 @@ class Booking(models.Model):
     
     # Booking details
     booking_type = models.CharField(max_length=20, choices=BOOKING_TYPE_CHOICES, default='daily')
-    check_in = models.DateTimeField()
-    check_out = models.DateTimeField()
+    
+    # Booking date and time (from calendar)
+    booking_date = models.DateField(help_text='Date of the booking', default=timezone.now)
+    start_time = models.TimeField(help_text='Start time of the booking', default=default_start_time)
+    end_time = models.TimeField(help_text='End time of the booking', default=default_end_time)
+    
+    # Full datetime fields (computed from date + time)
+    check_in = models.DateTimeField(help_text='Check-in datetime')
+    check_out = models.DateTimeField(help_text='Check-out datetime')
+    
     number_of_guests = models.IntegerField(validators=[MinValueValidator(1)], default=1)
+    
+    # Check-in/out tracking
+    is_checked_in = models.BooleanField(default=False, help_text='Whether user has checked in')
+    is_checked_out = models.BooleanField(default=False, help_text='Whether user has checked out')
     
     # Pricing
     base_price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0'))])
@@ -70,10 +91,35 @@ class Booking(models.Model):
             models.Index(fields=['workspace', 'status']),
             models.Index(fields=['user', 'status']),
             models.Index(fields=['check_in', 'check_out']),
+            models.Index(fields=['booking_date']),
         ]
     
     def __str__(self):
         return f"Booking {self.id} - {self.space.name} by {self.user.email}"
+    
+    @property
+    def days_used(self):
+        """Calculate days used for monthly bookings"""
+        if self.booking_type != 'monthly':
+            return None
+        if not self.is_checked_in:
+            return 0
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        end_date = timezone.now().date() if not self.is_checked_out else self.check_out.date()
+        start_date = self.check_in.date()
+        return (end_date - start_date).days + 1
+    
+    @property
+    def days_remaining(self):
+        """Calculate days remaining for monthly bookings"""
+        if self.booking_type != 'monthly':
+            return None
+        from datetime import timedelta
+        total_days = (self.check_out.date() - self.check_in.date()).days + 1
+        used = self.days_used or 0
+        return total_days - used
 
 
 class Reservation(models.Model):
@@ -151,7 +197,17 @@ class CartItem(models.Model):
     # Optional reservation hold for this cart item
     reservation = models.ForeignKey('Reservation', on_delete=models.SET_NULL, null=True, blank=True, related_name='cart_items')
     
-    # Booking details
+    # Booking details with calendar info
+    booking_date = models.DateField(help_text='Date of the booking', default=timezone.now)
+    start_time = models.TimeField(help_text='Start time of the booking', default=default_start_time)
+    end_time = models.TimeField(help_text='End time of the booking', default=default_end_time)
+    booking_type = models.CharField(
+        max_length=20,
+        choices=[('hourly', 'Hourly'), ('daily', 'Daily'), ('monthly', 'Monthly')],
+        default='daily'
+    )
+    
+    # Full datetime fields
     check_in = models.DateTimeField()
     check_out = models.DateTimeField()
     number_of_guests = models.IntegerField(validators=[MinValueValidator(1)], default=1)
@@ -169,10 +225,10 @@ class CartItem(models.Model):
     
     class Meta:
         db_table = 'booking_cart_item'
-        unique_together = ('cart', 'space', 'check_in', 'check_out')
+        unique_together = ('cart', 'space', 'booking_date', 'start_time', 'end_time', 'booking_type')
     
     def __str__(self):
-        return f"CartItem - {self.space.name}"
+        return f"CartItem - {self.space.name} on {self.booking_date}"
 
 
 class BookingReview(models.Model):
@@ -194,24 +250,6 @@ class BookingReview(models.Model):
     
     def __str__(self):
         return f"Review for {self.space.name} - {self.rating}★"
-
-
-class BookingAvailability(models.Model):
-    """Model to track space availability for faster queries"""
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    space = models.OneToOneField(Space, on_delete=models.CASCADE, related_name='availability')
-    
-    available_from = models.DateTimeField()
-    available_until = models.DateTimeField()
-    is_available = models.BooleanField(default=True)
-    
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        db_table = 'booking_availability'
-    
-    def __str__(self):
-        return f"Availability - {self.space.name}"
 
 
 class Guest(models.Model):

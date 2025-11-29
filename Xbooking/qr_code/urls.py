@@ -3,12 +3,11 @@ QR Code and Notification URLs
 """
 from django.urls import path
 from qr_code.views import (
-    GenerateOrderQRCodeView, GetOrderQRCodeView
+    GenerateOrderQRCodeView, GetOrderQRCodeView, GetBookingQRCodeView
 )
 from qr_code.admin_views import (
-    AdminQRCodeDashboardView, AdminListPendingVerificationsView,
-    AdminVerifyQRCodeView, AdminRejectQRCodeView, AdminQRCodeDetailsView,
-    AdminVerificationStatsView, AdminResendQRCodeView
+    AdminCheckInView, AdminCheckOutView, AdminCheckInListView,
+    AdminQRCodeDashboardView
 )
 
 app_name = 'qr_code'
@@ -20,19 +19,17 @@ urlpatterns = [
     path('orders/<uuid:order_id>/qr-code/', 
          GetOrderQRCodeView.as_view(), name='get_qr_code'),
     
-    # Admin QR Code URLs (Verify & Manage)
-    path('workspaces/<uuid:workspace_id>/admin/qr-code/dashboard/', 
-         AdminQRCodeDashboardView.as_view(), name='admin_qr_dashboard'),
-    path('workspaces/<uuid:workspace_id>/admin/qr-code/pending/', 
-         AdminListPendingVerificationsView.as_view(), name='admin_pending_verifications'),
-    path('workspaces/<uuid:workspace_id>/admin/qr-code/verify/', 
-         AdminVerifyQRCodeView.as_view(), name='admin_verify_qr_code'),
-    path('workspaces/<uuid:workspace_id>/admin/qr-code/reject/', 
-         AdminRejectQRCodeView.as_view(), name='admin_reject_qr_code'),
-    path('workspaces/<uuid:workspace_id>/admin/qr-code/<uuid:qr_code_id>/details/', 
-         AdminQRCodeDetailsView.as_view(), name='admin_qr_code_details'),
-    path('workspaces/<uuid:workspace_id>/admin/qr-code/stats/', 
-         AdminVerificationStatsView.as_view(), name='admin_qr_stats'),
-    path('workspaces/<uuid:workspace_id>/admin/qr-code/<uuid:qr_code_id>/resend/', 
-         AdminResendQRCodeView.as_view(), name='admin_resend_qr_code'),
+    # Booking QR Code URLs
+    path('bookings/<uuid:booking_id>/qr-code/', 
+         GetBookingQRCodeView.as_view(), name='get_booking_qr_code'),
+    
+    # Admin Check-In/Check-Out URLs (NEW)
+    path('workspaces/<uuid:workspace_id>/admin/check-in/', 
+         AdminCheckInView.as_view(), name='admin_check_in'),
+    path('workspaces/<uuid:workspace_id>/admin/check-out/', 
+         AdminCheckOutView.as_view(), name='admin_check_out'),
+    path('workspaces/<uuid:workspace_id>/admin/check-ins/', 
+         AdminCheckInListView.as_view(), name='admin_check_in_list'),
+    path('workspaces/<uuid:workspace_id>/admin/check-in-dashboard/', 
+         AdminQRCodeDashboardView.as_view(), name='admin_check_in_dashboard'),
 ]

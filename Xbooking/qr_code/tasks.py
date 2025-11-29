@@ -294,58 +294,6 @@ def send_payment_confirmation_email(order_id):
 
 
 @shared_task
-def expire_old_qr_codes():
-    """
-    Mark QR codes as expired based on booking status:
-    - Booking is completed (checked in AND checked out)
-    - OR checkout date/time has passed
-    """
-    try:
-        from qr_code.models import OrderQRCode
-        from booking.models import Booking
-        
-        now = timezone.now()
-        expired_count = 0
-        
-        # Get all active QR codes (generated or sent)
-        active_qr_codes = OrderQRCode.objects.filter(
-            status__in=['generated', 'sent']
-        ).select_related('order')
-        
-        for qr_code in active_qr_codes:
-            order = qr_code.order
-            should_expire = False
-            
-            # Check all bookings in this order
-            for booking in order.bookings.all():
-                # Expire if booking is completed (checked in AND checked out)
-                if booking.status == 'completed':
-                    should_expire = True
-                    break
-                
-                # Expire if checkout date/time has passed
-                if booking.check_out and booking.check_out < now:
-                    should_expire = True
-                    break
-            
-            if should_expire:
-                qr_code.status = 'expired'
-                qr_code.save()
-                expired_count += 1
-        
-        return {
-            'success': True,
-            'expired_count': expired_count,
-            'message': f'{expired_count} QR codes marked as expired'
-        }
-    except Exception as e:
-        return {
-            'success': False,
-            'error': str(e)
-        }
-
-
-@shared_task
 def send_booking_reminder(booking_id):
     """
     Send booking reminder email before check-in

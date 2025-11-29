@@ -60,5 +60,5 @@ class SpacePublicDetailSerializer(serializers.ModelSerializer):
             'capacity', 'price_per_hour', 'daily_rate',
             'monthly_rate', 'image_url', 'amenities',
             'branch', 'avg_rating', 'total_reviews',
-            'rules', 'cancellation_policy', 'operational_hours'
+            'rules', 'cancellation_policy'
         ]

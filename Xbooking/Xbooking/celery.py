@@ -21,12 +21,7 @@ app.autodiscover_tasks(['booking'], related_name='guest_tasks')
 
 # Celery Beat Schedule - for periodic tasks
 app.conf.beat_schedule = {
-    # Expire old QR codes every hour
-    'expire-old-qr-codes': {
-        'task': 'qr_code.tasks.expire_old_qr_codes',
-        'schedule': crontab(minute=0),  # Every hour
-    },
-    # Expire old booking QR codes every hour
+    # Expire booking QR codes every hour (when checkout time is passed)
     'expire-booking-qr-codes': {
         'task': 'qr_code.tasks.expire_booking_qr_codes',
         'schedule': crontab(minute=0),  # Every hour

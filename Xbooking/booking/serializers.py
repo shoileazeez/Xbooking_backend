@@ -56,15 +56,32 @@ class BookingSerializer(serializers.ModelSerializer):
     """Serializer for bookings"""
     space_name = serializers.CharField(source='space.name', read_only=True)
     user_email = serializers.CharField(source='user.email', read_only=True)
+    days_used = serializers.SerializerMethodField()
+    days_remaining = serializers.SerializerMethodField()
     
     class Meta:
         model = Booking
         fields = ['id', 'workspace', 'space', 'space_name', 'user', 'user_email', 
                   'booking_type', 'check_in', 'check_out', 'number_of_guests',
                   'base_price', 'discount_amount', 'tax_amount', 'total_price',
-                  'status', 'special_requests', 'created_at', 'confirmed_at', 'cancelled_at']
+                  'status', 'special_requests', 'days_used', 'days_remaining',
+                  'created_at', 'confirmed_at', 'cancelled_at']
         read_only_fields = ['id', 'workspace', 'user', 'base_price', 'discount_amount', 
                            'tax_amount', 'total_price', 'created_at', 'confirmed_at', 'cancelled_at']
+    
+    @extend_schema_field(serializers.IntegerField(allow_null=True))
+    def get_days_used(self, obj):
+        """Return days used for monthly bookings"""
+        if obj.booking_type == 'monthly':
+            return obj.days_used
+        return None
+    
+    @extend_schema_field(serializers.IntegerField(allow_null=True))
+    def get_days_remaining(self, obj):
+        """Return days remaining for monthly bookings"""
+        if obj.booking_type == 'monthly':
+            return obj.days_remaining
+        return None
 
 
 class CreateBookingSerializer(serializers.Serializer):
@@ -98,13 +115,17 @@ class BookingDetailSerializer(serializers.ModelSerializer):
     """Detailed serializer for booking"""
     space_details = SpaceSimpleSerializer(source='space', read_only=True)
     user_details = serializers.SerializerMethodField()
+    days_used = serializers.SerializerMethodField()
+    days_remaining = serializers.SerializerMethodField()
+    qr_code_stats = serializers.SerializerMethodField()
     
     class Meta:
         model = Booking
         fields = ['id', 'workspace', 'space_details', 'user_details', 'booking_type',
                   'check_in', 'check_out', 'number_of_guests', 'base_price', 
                   'discount_amount', 'tax_amount', 'total_price', 'status',
-                  'special_requests', 'created_at', 'confirmed_at', 'cancelled_at']
+                  'special_requests', 'days_used', 'days_remaining', 'qr_code_stats',
+                  'created_at', 'confirmed_at', 'cancelled_at']
         read_only_fields = fields
     
     @extend_schema_field(serializers.DictField())
@@ -115,6 +136,36 @@ class BookingDetailSerializer(serializers.ModelSerializer):
             'full_name': obj.user.full_name,
             'avatar_url': obj.user.avatar_url
         }
+    
+    @extend_schema_field(serializers.IntegerField(allow_null=True))
+    def get_days_used(self, obj):
+        """Return days used for monthly bookings"""
+        if obj.booking_type == 'monthly':
+            return obj.days_used
+        return None
+    
+    @extend_schema_field(serializers.IntegerField(allow_null=True))
+    def get_days_remaining(self, obj):
+        """Return days remaining for monthly bookings"""
+        if obj.booking_type == 'monthly':
+            return obj.days_remaining
+        return None
+    
+    @extend_schema_field(serializers.DictField(allow_null=True))
+    def get_qr_code_stats(self, obj):
+        """Return QR code statistics if QR code exists"""
+        if hasattr(obj, 'qr_code') and obj.qr_code:
+            qr_code = obj.qr_code
+            return {
+                'qr_code_id': str(qr_code.id),
+                'status': qr_code.status,
+                'scan_count': qr_code.scan_count,
+                'total_check_ins': qr_code.total_check_ins,
+                'max_check_ins': qr_code.max_check_ins or qr_code.calculate_max_check_ins(),
+                'expires_at': qr_code.expires_at,
+                'sent_at': qr_code.sent_at
+            }
+        return None
 
 
 class CancelBookingSerializer(serializers.Serializer):
