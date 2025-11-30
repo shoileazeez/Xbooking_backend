@@ -152,21 +152,30 @@ class SpaceCalendarView(APIView):
             query_date = parse_date(date_str)
 
             # Get SpaceCalendarSlots for this date
-            slots_data = SpaceCalendarSlot.objects.filter(
-                space_calendar__space=space,
-                date=query_date
-            ).values(
-                'id', 'start_time', 'end_time', 'status', 'booking_type'
-            ).order_by('start_time')
+            # Prefer explicit hourly slots for the date. If none exist, fall back to any available slot
+            # This ensures the frontend sees booking_type='hourly' when appropriate.
+            slots_qs = SpaceCalendarSlot.objects.filter(
+                calendar__space=space,
+                date=query_date,
+                booking_type='hourly'
+            ).values('id', 'start_time', 'end_time', 'status', 'booking_type').order_by('start_time')
 
-            if not slots_data.exists():
+            if not slots_qs.exists():
+                # fallback to any slot for the date
+                slots_qs = SpaceCalendarSlot.objects.filter(
+                    calendar__space=space,
+                    date=query_date
+                ).values('id', 'start_time', 'end_time', 'status', 'booking_type').order_by('start_time')
+
+            if not slots_qs.exists():
                 return Response(
                     {'mode': 'hourly', 'date': date_str, 'slots': []},
                     status=status.HTTP_200_OK
                 )
 
             slots = []
-            for slot in slots_data:
+            for slot in slots_qs:
+                # format times and return booking_type per slot
                 slots.append({
                     'id': str(slot['id']),
                     'start': slot['start_time'].strftime('%H:%M'),
@@ -195,16 +204,29 @@ class SpaceCalendarView(APIView):
             for d in range(1, num_days + 1):
                 day_date = date(year, month, d)
 
-                # Check if any slot is available for this day
-                available_slots = SpaceCalendarSlot.objects.filter(
-                    space_calendar__space=space,
+                # Find availability for the day. Prefer a slot that matches the 'daily' booking type
+                # so the frontend sees "daily" when a daily booking is available. Fallback to any
+                # available slot if no daily slot exists.
+                available_slot = SpaceCalendarSlot.objects.filter(
+                    calendar__space=space,
                     date=day_date,
-                    status='available'
-                ).exists()
+                    status='available',
+                    booking_type='daily'
+                ).values('id', 'booking_type').first()
+
+                if not available_slot:
+                    # fallback to any available slot (hourly or monthly)
+                    available_slot = SpaceCalendarSlot.objects.filter(
+                        calendar__space=space,
+                        date=day_date,
+                        status='available'
+                    ).values('id', 'booking_type').first()
 
                 days.append({
+                    'id': str(available_slot['id']) if available_slot else None,
                     'date': day_date.isoformat(),
-                    'available': available_slots
+                    'available': available_slot is not None,
+                    'booking_type': available_slot['booking_type'] if available_slot else None,
                 })
 
             return Response(
@@ -228,16 +250,41 @@ class SpaceCalendarView(APIView):
                 _, num_days = _calendar.monthrange(year, m)
                 month_end = date(year, m, num_days)
 
-                available_slots = SpaceCalendarSlot.objects.filter(
-                    space_calendar__space=space,
+                # For monthly overview prefer monthly booking_type slots. Fall back to daily or hourly
+                # if no monthly slots are available in the month range. This avoids showing 'daily'
+                # for a month when a true monthly slot exists.
+                available_slot = SpaceCalendarSlot.objects.filter(
+                    calendar__space=space,
                     date__gte=month_start,
                     date__lte=month_end,
-                    status='available'
-                ).exists()
+                    status='available',
+                    booking_type='monthly'
+                ).values('id', 'booking_type', 'status').first()
+
+                if not available_slot:
+                    # try daily
+                    available_slot = SpaceCalendarSlot.objects.filter(
+                        calendar__space=space,
+                        date__gte=month_start,
+                        date__lte=month_end,
+                        status='available',
+                        booking_type='daily'
+                    ).values('id', 'booking_type', 'status').first()
+
+                if not available_slot:
+                    # fallback to any available slot
+                    available_slot = SpaceCalendarSlot.objects.filter(
+                        calendar__space=space,
+                        date__gte=month_start,
+                        date__lte=month_end,
+                        status='available'
+                    ).values('id', 'booking_type', 'status').first()
 
                 months.append({
+                    'id': str(available_slot['id']) if available_slot else None,
                     'month': f"{year}-{m:02d}",
-                    'available': available_slots
+                    'available': available_slot['status'] == "available" if available_slot else False,
+                    'booking_type': available_slot['booking_type'] if available_slot else None,
                 })
 
             return Response(

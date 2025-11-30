@@ -288,6 +288,7 @@ CSRF_TRUSTED_ORIGINS = [
     "https://fb16c5785973.ngrok-free.app",
     "https://b9f13bfcc7a5.ngrok-free.app",
     "https://6a63f43d1a91.ngrok-free.app ",
+    "https://3e9d98bfbd96.ngrok-free.app",
 ]
 
 # ============================================================================

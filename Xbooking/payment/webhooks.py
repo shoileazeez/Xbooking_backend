@@ -140,6 +140,30 @@ class PaystackWebhookHandler:
                 booking.status = 'confirmed'
                 booking.confirmed_at = timezone.now()
                 booking.save()
+                # Mark matching calendar slot(s) as booked and attach booking reference
+                try:
+                    from workspace.models import SpaceCalendarSlot
+
+                    slots_qs = SpaceCalendarSlot.objects.filter(
+                        calendar__space=booking.space,
+                        date=booking.booking_date,
+                        start_time=booking.start_time,
+                        end_time=booking.end_time
+                    )
+                    for slot in slots_qs:
+                        # Only mark the slot if it isn't already assigned to another booking
+                        # If the slot is free or already points to this booking, mark as booked
+                        try:
+                            if slot.booking is None or slot.booking_id == booking.id:
+                                slot.status = 'booked'
+                                slot.booking = booking
+                                slot.save()
+                        except Exception:
+                            # Non-fatal: skip problematic slot
+                            continue
+                except Exception:
+                    # Non-fatal: if slot model or matching slot not found, continue
+                    pass
             
             # Trigger background tasks
             from qr_code.tasks import (
@@ -352,6 +376,30 @@ class FlutterwaveWebhookHandler:
                 booking.status = 'confirmed'
                 booking.confirmed_at = timezone.now()
                 booking.save()
+                # Mark matching calendar slot(s) as booked and attach booking reference
+                try:
+                    from workspace.models import SpaceCalendarSlot
+
+                    slots_qs = SpaceCalendarSlot.objects.filter(
+                        calendar__space=booking.space,
+                        date=booking.booking_date,
+                        start_time=booking.start_time,
+                        end_time=booking.end_time
+                    )
+                    for slot in slots_qs:
+                        # Only mark the slot if it isn't already assigned to another booking
+                        # If the slot is free or already points to this booking, mark as booked
+                        try:
+                            if slot.booking is None or slot.booking_id == booking.id:
+                                slot.status = 'booked'
+                                slot.booking = booking
+                                slot.save()
+                        except Exception:
+                            # Non-fatal: skip problematic slot
+                            continue
+                except Exception:
+                    # Non-fatal: if slot model or matching slot not found, continue
+                    pass
             
             # Trigger background tasks
             from qr_code.tasks import (

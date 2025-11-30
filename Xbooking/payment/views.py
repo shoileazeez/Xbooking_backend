@@ -508,6 +508,60 @@ class PaymentCallbackView(APIView):
                         order.save()
                         
                         logger.info(f"Payment {payment.id} verified and updated via callback")
+                        # Ensure bookings are confirmed and calendar slots are marked (in case webhook was missed)
+                        try:
+                            for booking in order.bookings.all():
+                                # Only update booking if it isn't already confirmed
+                                if booking.status != 'confirmed':
+                                    booking.status = 'confirmed'
+                                    booking.confirmed_at = timezone.now()
+                                    booking.save()
+
+                                # Mark matching calendar slot(s) as booked and attach booking reference
+                                try:
+                                    from workspace.models import SpaceCalendarSlot
+
+                                    slots_qs = SpaceCalendarSlot.objects.filter(
+                                        calendar__space=booking.space,
+                                        date=booking.booking_date,
+                                        start_time=booking.start_time,
+                                        end_time=booking.end_time
+                                    )
+                                    for slot in slots_qs:
+                                        # Only mark slots that are free or already assigned to this booking
+                                        try:
+                                            if slot.booking is None or slot.booking_id == booking.id:
+                                                # Avoid unnecessary writes if already marked
+                                                if slot.status != 'booked' or slot.booking_id != booking.id:
+                                                    slot.status = 'booked'
+                                                    slot.booking = booking
+                                                    slot.save()
+                                        except Exception:
+                                            continue
+                                except Exception:
+                                    # Non-fatal: if slot model or matching slot not found, continue
+                                    pass
+
+                        except Exception:
+                            # Non-fatal: continue even if bookings/slots update fails
+                            pass
+
+                        # Trigger background tasks (same as webhook)
+                        try:
+                            from qr_code.tasks import (
+                                generate_qr_code_for_order,
+                                send_payment_confirmation_email,
+                                generate_booking_qr_codes_for_order
+                            )
+                            from booking.guest_tasks import generate_guest_qr_codes_for_order
+
+                            send_payment_confirmation_email.delay(str(order.id))
+                            generate_qr_code_for_order.delay(str(order.id))
+                            generate_booking_qr_codes_for_order.delay(str(order.id))
+                            generate_guest_qr_codes_for_order.delay(str(order.id))
+                        except Exception:
+                            # Non-fatal: tasks failed to queue
+                            pass
                 
                 return Response(
                     {

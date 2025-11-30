@@ -131,7 +131,7 @@ class GetBookingQRCodeView(APIView):
         try:
             # Get the booking - user can only access their own bookings
             booking = Booking.objects.get(id=booking_id, user=request.user)
-            workspace = booking.space.workspace
+            workspace = booking.workspace
             
             try:
                 qr_code = booking.qr_code

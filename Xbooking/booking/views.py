@@ -23,6 +23,7 @@ from booking.models import Reservation
 from django.db import transaction
 from django.utils import timezone
 from datetime import timedelta
+from datetime import datetime as _dt
 
 
 class CartView(APIView):
@@ -61,28 +62,55 @@ class AddToCartView(APIView):
         if serializer.is_valid():
             try:
                 space = Space.objects.get(id=serializer.validated_data['space_id'])
+                # Determine datetimes either from slot_id or booking_date + start/end
+                slot_id = serializer.validated_data.get('slot_id')
+                booking_date = serializer.validated_data.get('booking_date')
+                start_time = serializer.validated_data.get('start_time')
+                end_time = serializer.validated_data.get('end_time')
+                booking_type = serializer.validated_data.get('booking_type', 'hourly')
 
-                check_in = serializer.validated_data['check_in']
-                check_out = serializer.validated_data['check_out']
-                booking_date = serializer.validated_data.get('booking_date', check_in.date())
-
-                # Check SpaceCalendarSlot availability
                 from workspace.models import SpaceCalendarSlot
-                slots = SpaceCalendarSlot.objects.filter(
-                    calendar__space=space,
-                    date=booking_date,
-                    start_time__lt=check_out.time(),
-                    end_time__gt=check_in.time(),
-                    status='available'
-                )
-                
-                if not slots.exists():
-                    return Response({
-                        'success': False,
-                        'message': 'Selected time slot is not available on this date'
-                    }, status=status.HTTP_400_BAD_REQUEST)
 
-                # Check for overlapping bookings
+                if slot_id:
+                    try:
+                        slot = SpaceCalendarSlot.objects.select_related('calendar__space').get(id=slot_id)
+                    except SpaceCalendarSlot.DoesNotExist:
+                        return Response({'success': False, 'message': 'Slot not found'}, status=status.HTTP_404_NOT_FOUND)
+
+                    # slot must belong to this space
+                    if slot.calendar.space_id != space.id:
+                        return Response({'success': False, 'message': 'Slot does not belong to selected space'}, status=status.HTTP_400_BAD_REQUEST)
+
+                    if slot.status != 'available':
+                        return Response({'success': False, 'message': 'Selected slot is not available'}, status=status.HTTP_400_BAD_REQUEST)
+
+                    booking_date = slot.date
+                    start_time = slot.start_time
+                    end_time = slot.end_time
+                    booking_type = slot.booking_type or booking_type
+
+                    check_in = _dt.combine(booking_date, start_time)
+                    check_out = _dt.combine(booking_date, end_time)
+                else:
+                    # use provided date + times
+                    if not (booking_date and start_time and end_time):
+                        return Response({'success': False, 'message': 'Missing booking_date/start_time/end_time or slot_id'}, status=status.HTTP_400_BAD_REQUEST)
+
+                    check_in = _dt.combine(booking_date, start_time)
+                    check_out = _dt.combine(booking_date, end_time)
+
+                    # ensure there exists an available slot covering this period
+                    slots = SpaceCalendarSlot.objects.filter(
+                        calendar__space=space,
+                        date=booking_date,
+                        start_time__lte=start_time,
+                        end_time__gte=end_time,
+                        status='available'
+                    )
+                    if not slots.exists():
+                        return Response({'success': False, 'message': 'Selected time slot is not available on this date'}, status=status.HTTP_400_BAD_REQUEST)
+
+                # Check for overlapping bookings (scheduled)
                 if Booking.objects.filter(space=space, check_in__lt=check_out, check_out__gt=check_in).exists():
                     return Response({'success': False, 'message': 'Selected slot is already booked'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -107,7 +135,6 @@ class AddToCartView(APIView):
                         status='held',
                         expires_at=timezone.now() + timedelta(minutes=15)
                     )
-
                     cart_item, created = CartItem.objects.update_or_create(
                         cart=cart,
                         space=space,
@@ -115,6 +142,9 @@ class AddToCartView(APIView):
                         check_out=check_out,
                         defaults={
                             'booking_date': booking_date,
+                            'start_time': start_time,
+                            'end_time': end_time,
+                            'booking_type': booking_type,
                             'number_of_guests': serializer.validated_data.get('number_of_guests', 1),
                             'price': price,
                             'special_requests': serializer.validated_data.get('special_requests', ''),
@@ -269,33 +299,57 @@ class CreateBookingView(APIView):
 
             workspace = space.branch.workspace
 
-            # Validate check-in/check-out presence and ordering
-            check_in = serializer.validated_data.get('check_in')
-            check_out = serializer.validated_data.get('check_out')
-            booking_date = serializer.validated_data.get('booking_date', check_in.date())
-            
-            if not check_in or not check_out:
-                return Response({'success': False, 'message': 'check_in and check_out are required'}, status=status.HTTP_400_BAD_REQUEST)
+            # Determine datetimes either from slot_id or booking_date + start/end
+            slot_id = serializer.validated_data.get('slot_id')
+            booking_date = serializer.validated_data.get('booking_date')
+            start_time = serializer.validated_data.get('start_time')
+            end_time = serializer.validated_data.get('end_time')
+            booking_type = serializer.validated_data.get('booking_type', 'daily')
+
+            from workspace.models import SpaceCalendarSlot
+
+            if slot_id:
+                try:
+                    slot = SpaceCalendarSlot.objects.select_related('calendar__space').get(id=slot_id)
+                except SpaceCalendarSlot.DoesNotExist:
+                    return Response({'success': False, 'message': 'Slot not found'}, status=status.HTTP_404_NOT_FOUND)
+
+                if slot.calendar.space_id != space.id:
+                    return Response({'success': False, 'message': 'Slot does not belong to selected space'}, status=status.HTTP_400_BAD_REQUEST)
+
+                if slot.status != 'available':
+                    return Response({'success': False, 'message': 'Selected slot is not available'}, status=status.HTTP_400_BAD_REQUEST)
+
+                booking_date = slot.date
+                start_time = slot.start_time
+                end_time = slot.end_time
+                booking_type = slot.booking_type or booking_type
+
+                check_in = _dt.combine(booking_date, start_time)
+                check_out = _dt.combine(booking_date, end_time)
+            else:
+                # must provide date + start/end
+                if not (booking_date and start_time and end_time):
+                    return Response({'success': False, 'message': 'Missing booking_date/start_time/end_time or slot_id'}, status=status.HTTP_400_BAD_REQUEST)
+
+                check_in = _dt.combine(booking_date, start_time)
+                check_out = _dt.combine(booking_date, end_time)
+
+                # verify there's an available slot that covers this period
+                if not SpaceCalendarSlot.objects.filter(
+                    calendar__space=space,
+                    date=booking_date,
+                    start_time__lte=start_time,
+                    end_time__gte=end_time,
+                    status='available'
+                ).exists():
+                    return Response({'success': False, 'message': 'Selected time slot is not available on this date'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # basic ordering validation
             if check_out <= check_in:
                 return Response({'success': False, 'message': 'check_out must be after check_in'}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Validate calendar slot availability
-            from workspace.models import SpaceCalendarSlot
-            slots = SpaceCalendarSlot.objects.filter(
-                calendar__space=space,
-                date=booking_date,
-                start_time__lt=check_out.time(),
-                end_time__gt=check_in.time(),
-                status='available'
-            )
-            
-            if not slots.exists():
-                return Response({
-                    'success': False,
-                    'message': 'Selected time slot is not available on this date'
-                }, status=status.HTTP_400_BAD_REQUEST)
-
-            # Calculate price (hours) safely
+            # Calculate price (hours)
             try:
                 hours = (check_out - check_in).total_seconds() / 3600
                 if hours <= 0:
@@ -312,17 +366,17 @@ class CreateBookingView(APIView):
             if Reservation.objects.filter(space=space, status__in=['pending', 'held'], start__lt=check_out, end__gt=check_in).exists():
                 return Response({'success': False, 'message': 'Selected slot is temporarily held by another user'}, status=status.HTTP_409_CONFLICT)
 
-            # Create booking inside a transaction for safety
+            # Create booking inside a transaction for safety. Do not set actual check_in/check_out used for arrivals; store booking_date/start_time/end_time instead.
             try:
                 with transaction.atomic():
                     booking = Booking.objects.create(
                         workspace=workspace,
                         space=space,
                         user=request.user,
-                        booking_type=serializer.validated_data.get('booking_type', 'daily'),
-                        check_in=check_in,
-                        check_out=check_out,
+                        booking_type=booking_type,
                         booking_date=booking_date,
+                        start_time=start_time,
+                        end_time=end_time,
                         number_of_guests=serializer.validated_data.get('number_of_guests', 1),
                         base_price=base_price,
                         tax_amount=Decimal('0'),

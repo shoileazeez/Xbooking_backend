@@ -241,6 +241,23 @@ class AdminCheckOutView(APIView):
             booking.status = 'completed'
             booking.save()
             
+            from workspace.models import SpaceCalendarSlot
+            # Mark any calendar slot(s) that were assigned to this booking back to available
+            try:
+                # Only release slots that are currently booked by this booking
+                slots_qs = SpaceCalendarSlot.objects.filter(booking=booking)
+                for slot in slots_qs:
+                    try:
+                        if slot.booking_id == booking.id and slot.status == 'booked':
+                            slot.status = 'available'
+                            slot.booking = None
+                            slot.save()
+                    except Exception:
+                        continue
+            except Exception:
+                # Non-fatal: if the slot model or records are not present, continue
+                pass
+
             # For monthly bookings, don't mark QR as used yet
             if booking.booking_type != 'monthly':
                 qr_code.used = True

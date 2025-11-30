@@ -1,5 +1,6 @@
 from django.contrib import admin
 from workspace.models import Workspace, Branch, WorkspaceUser, Space
+from workspace.models import SpaceCalendar, SpaceCalendarSlot
 from django.utils.html import format_html
 
 
@@ -147,7 +148,7 @@ class SpaceAdmin(admin.ModelAdmin):
             'fields': ('id', 'branch', 'name', 'description', 'space_type', 'is_available')
         }),
         ('Capacity & Pricing', {
-            'fields': ('capacity', 'hourly_rate', 'daily_rate', 'monthly_rate')
+            'fields': ('capacity', 'price_per_hour', 'daily_rate', 'monthly_rate')
         }),
         ('Media & Amenities', {
             'fields': ('image_url', 'amenities')
@@ -157,3 +158,21 @@ class SpaceAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+
+
+@admin.register(SpaceCalendar)
+class SpaceCalendarAdmin(admin.ModelAdmin):
+    """Admin interface for SpaceCalendar"""
+    list_display = ['space', 'time_interval_minutes', 'hourly_enabled', 'daily_enabled', 'monthly_enabled', 'created_at']
+    list_filter = ['hourly_enabled', 'daily_enabled', 'monthly_enabled']
+    search_fields = ['space__name']
+    readonly_fields = ['id', 'created_at', 'updated_at']
+
+
+@admin.register(SpaceCalendarSlot)
+class SpaceCalendarSlotAdmin(admin.ModelAdmin):
+    """Admin interface for SpaceCalendarSlot"""
+    list_display = ['calendar', 'date', 'start_time', 'end_time', 'booking_type', 'status', 'booking']
+    list_filter = ['status', 'booking_type', 'date']
+    search_fields = ['calendar__space__name', 'booking__id']
+    readonly_fields = ['id', 'created_at', 'updated_at']

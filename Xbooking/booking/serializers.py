@@ -41,14 +41,31 @@ class CartSerializer(serializers.ModelSerializer):
 class AddToCartSerializer(serializers.Serializer):
     """Serializer for adding items to cart"""
     space_id = serializers.CharField(required=True)
-    check_in = serializers.DateTimeField(required=True)
-    check_out = serializers.DateTimeField(required=True)
+    # Accept either a slot_id OR explicit booking_date + start_time/end_time
+    slot_id = serializers.CharField(required=False, allow_blank=True)
+    booking_date = serializers.DateField(required=False)
+    start_time = serializers.TimeField(required=False)
+    end_time = serializers.TimeField(required=False)
+    booking_type = serializers.ChoiceField(choices=['hourly', 'daily', 'monthly'], default='hourly')
     number_of_guests = serializers.IntegerField(min_value=1, default=1)
     special_requests = serializers.CharField(required=False, allow_blank=True)
     
     def validate(self, data):
-        if data['check_in'] >= data['check_out']:
-            raise serializers.ValidationError("Check-out must be after check-in")
+        # Validate either slot_id provided OR explicit date+times
+        slot = data.get('slot_id')
+        booking_date = data.get('booking_date')
+        start_time = data.get('start_time')
+        end_time = data.get('end_time')
+
+        if slot:
+            return data
+
+        if not (booking_date and start_time and end_time):
+            raise serializers.ValidationError("Provide either slot_id or booking_date + start_time + end_time")
+
+        from datetime import datetime
+        if datetime.combine(booking_date, start_time) >= datetime.combine(booking_date, end_time):
+            raise serializers.ValidationError("End time must be after start time")
         return data
 
 
@@ -87,15 +104,31 @@ class BookingSerializer(serializers.ModelSerializer):
 class CreateBookingSerializer(serializers.Serializer):
     """Serializer for creating bookings from cart or direct"""
     space_id = serializers.CharField(required=True)
-    check_in = serializers.DateTimeField(required=True)
-    check_out = serializers.DateTimeField(required=True)
+    slot_id = serializers.CharField(required=False, allow_blank=True)
+    booking_date = serializers.DateField(required=False)
+    start_time = serializers.TimeField(required=False)
+    end_time = serializers.TimeField(required=False)
     booking_type = serializers.ChoiceField(choices=['hourly', 'daily', 'monthly'], default='daily')
     number_of_guests = serializers.IntegerField(min_value=1, default=1)
     special_requests = serializers.CharField(required=False, allow_blank=True)
     
     def validate(self, data):
-        if data['check_in'] >= data['check_out']:
-            raise serializers.ValidationError("Check-out must be after check-in")
+        # Validate either slot_id provided OR explicit date+times
+        slot = data.get('slot_id')
+        booking_date = data.get('booking_date')
+        start_time = data.get('start_time')
+        end_time = data.get('end_time')
+
+        if slot:
+            return data
+
+        if not (booking_date and start_time and end_time):
+            raise serializers.ValidationError("Provide either slot_id or booking_date + start_time + end_time")
+
+        from datetime import datetime
+        if datetime.combine(booking_date, start_time) >= datetime.combine(booking_date, end_time):
+            raise serializers.ValidationError("End time must be after start time")
+        return data
         return data
 
 
