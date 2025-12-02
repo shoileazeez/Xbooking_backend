@@ -377,6 +377,8 @@ class CreateBookingView(APIView):
                         booking_date=booking_date,
                         start_time=start_time,
                         end_time=end_time,
+                        check_in=check_in,
+                        check_out=check_out,
                         number_of_guests=serializer.validated_data.get('number_of_guests', 1),
                         base_price=base_price,
                         tax_amount=Decimal('0'),
