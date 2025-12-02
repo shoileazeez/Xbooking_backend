@@ -14,7 +14,7 @@ class OrderAdmin(admin.ModelAdmin):
     readonly_fields = ['id', 'order_number', 'created_at', 'updated_at', 'paid_at', 'completed_at']
     fieldsets = (
         ('Order Info', {
-            'fields': ('id', 'order_number', 'workspace', 'user')
+            'fields': ('id', 'order_number', 'workspace', 'user', 'bookings')
         }),
         ('Pricing', {
             'fields': ('subtotal', 'discount_amount', 'tax_amount', 'total_amount')
