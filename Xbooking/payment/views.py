@@ -36,10 +36,10 @@ from payment.gateways import PaystackGateway, FlutterwaveGateway
 class CreateOrderView(APIView):
     """Create order from bookings"""
     permission_classes = [IsAuthenticated]
-    
+
     @extend_schema(
         summary="Create order from bookings",
-        description="Create an order from one or more bookings (can be from multiple workspaces)",
+        description="Create an order from one or more bookings. Automatically clears old unpaid orders.",
         tags=["Orders"],
         request=CreateOrderSerializer,
         responses={
@@ -49,69 +49,84 @@ class CreateOrderView(APIView):
         }
     )
     def post(self, request):
-        """Create new order from bookings"""
         serializer = CreateOrderSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
-        try:
-            booking_ids = serializer.validated_data['booking_ids']
-            bookings = Booking.objects.filter(
-                id__in=booking_ids,
-                user=request.user,
-                status__in=['pending', 'confirmed']
-            )
-            
-            if not bookings.exists():
-                return Response(
-                    {"detail": "No valid bookings found"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            if bookings.count() != len(booking_ids):
-                return Response(
-                    {"detail": "Some bookings not found or invalid"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            # Calculate totals for ALL bookings (single order for all workspaces)
-            subtotal = sum(b.base_price for b in bookings)
-            discount_amount = Decimal('0')
-            tax_amount = sum(b.tax_amount for b in bookings)
-            total_amount = subtotal - discount_amount + tax_amount
-            
-            # Use the first booking's workspace as the primary workspace for the order
-            # This is mainly for reference - the order contains bookings from multiple workspaces
-            primary_workspace = bookings.first().workspace
-            
-            # Create a single order for all bookings
-            order = Order.objects.create(
-                workspace=primary_workspace,
-                user=request.user,
-                subtotal=subtotal,
-                discount_amount=discount_amount,
-                tax_amount=tax_amount,
-                total_amount=total_amount,
-                notes=serializer.validated_data.get('notes', '')
-            )
-            
-            # Add ALL bookings to the order
-            order.bookings.set(bookings)
-            
-            return Response({
-                'success': True,
-                'id': str(order.id),
-                'order_number': order.order_number,
-                'total_amount': str(order.total_amount),
-                'bookings_count': bookings.count(),
-                'order': OrderSerializer(order).data
-            }, status=status.HTTP_201_CREATED)
-            
-        except Exception as e:
+
+        booking_ids = serializer.validated_data['booking_ids']
+
+        # 1️⃣ Get all bookings (allow ANY except confirmed)
+        bookings = Booking.objects.filter(
+            id__in=booking_ids,
+            user=request.user
+        ).exclude(status="confirmed")  # Confirmed = paid → cannot reorder
+
+        # If mismatch → some bookings are paid or not found
+        if bookings.count() != len(booking_ids):
             return Response(
-                {"detail": str(e)},
+                {"detail": "Some bookings are already paid or invalid"},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+        # 2️⃣ Clean up old UNPAID orders containing these bookings
+        for booking in bookings:
+            if booking.order:
+                old_order = booking.order
+
+                # remove booking from order
+                old_order.bookings.remove(booking)
+
+                # if no bookings left → delete order
+                if old_order.bookings.count() == 0:
+                    old_order.delete()
+                else:
+                    # recalculate remaining totals
+                    subtotal = sum(b.base_price for b in old_order.bookings.all())
+                    tax_amount = sum(b.tax_amount for b in old_order.bookings.all())
+                    discount_amount = Decimal("0")
+
+                    old_order.subtotal = subtotal
+                    old_order.tax_amount = tax_amount
+                    old_order.discount_amount = discount_amount
+                    old_order.total_amount = subtotal - discount_amount + tax_amount
+                    old_order.save()
+
+                # detach booking from the old order
+                booking.order = None
+                booking.save()
+
+        # 3️⃣ Now calculate totals for NEW order
+        subtotal = sum(b.base_price for b in bookings)
+        tax_amount = sum(b.tax_amount for b in bookings)
+        discount_amount = Decimal("0")
+        total_amount = subtotal - discount_amount + tax_amount
+
+        # The first booking decides the primary workspace
+        primary_workspace = bookings.first().workspace
+
+        # 4️⃣ Create the new order
+        order = Order.objects.create(
+            workspace=primary_workspace,
+            user=request.user,
+            subtotal=subtotal,
+            discount_amount=discount_amount,
+            tax_amount=tax_amount,
+            total_amount=total_amount,
+            notes=serializer.validated_data.get('notes', '')
+        )
+
+        # 5️⃣ Attach bookings to the new order
+        order.bookings.set(bookings)
+
+        return Response({
+            'success': True,
+            'id': str(order.id),
+            'order_number': order.order_number,
+            'total_amount': str(order.total_amount),
+            'bookings_count': bookings.count(),
+            'order': OrderSerializer(order).data
+        }, status=status.HTTP_201_CREATED)
+
 
 
 class ListOrdersView(APIView):
