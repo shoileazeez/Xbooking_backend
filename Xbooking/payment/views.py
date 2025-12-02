@@ -34,98 +34,68 @@ from payment.gateways import PaystackGateway, FlutterwaveGateway
 
 
 class CreateOrderView(APIView):
-    """Create order from bookings"""
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(
-        summary="Create order from bookings",
-        description="Create an order from one or more bookings. Automatically clears old unpaid orders.",
-        tags=["Orders"],
-        request=CreateOrderSerializer,
-        responses={
-            201: OrderSerializer,
-            400: {"type": "object", "properties": {"detail": {"type": "string"}}},
-            403: {"type": "object", "properties": {"detail": {"type": "string"}}}
-        }
-    )
     def post(self, request):
         serializer = CreateOrderSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
 
         booking_ids = serializer.validated_data['booking_ids']
-
-        # 1️⃣ Get all bookings (allow ANY except confirmed)
         bookings = Booking.objects.filter(
             id__in=booking_ids,
-            user=request.user
-        ).exclude(status="confirmed")  # Confirmed = paid → cannot reorder
+            user=request.user,
+            status__in=["pending"]   # ONLY pending bookings can be used
+        )
 
-        # If mismatch → some bookings are paid or not found
+        # Validate bookings
         if bookings.count() != len(booking_ids):
             return Response(
-                {"detail": "Some bookings are already paid or invalid"},
+                {"detail": "Some bookings not found or not allowed"},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # 2️⃣ Clean up old UNPAID orders containing these bookings
-        for booking in bookings:
-            if booking.order:
-                old_order = booking.order
+        # 🧹 Remove bookings from old orders
+        old_orders = Order.objects.filter(
+            bookings__in=bookings,
+            status="pending"  # only unpaid/pending orders
+        ).distinct()
 
-                # remove booking from order
-                old_order.bookings.remove(booking)
+        for old_order in old_orders:
+            # remove only those we are using now
+            old_order.bookings.remove(*bookings)
 
-                # if no bookings left → delete order
-                if old_order.bookings.count() == 0:
-                    old_order.delete()
-                else:
-                    # recalculate remaining totals
-                    subtotal = sum(b.base_price for b in old_order.bookings.all())
-                    tax_amount = sum(b.tax_amount for b in old_order.bookings.all())
-                    discount_amount = Decimal("0")
+            # delete order if empty
+            if old_order.bookings.count() == 0:
+                old_order.delete()
 
-                    old_order.subtotal = subtotal
-                    old_order.tax_amount = tax_amount
-                    old_order.discount_amount = discount_amount
-                    old_order.total_amount = subtotal - discount_amount + tax_amount
-                    old_order.save()
-
-                # detach booking from the old order
-                booking.order = None
-                booking.save()
-
-        # 3️⃣ Now calculate totals for NEW order
+        # Calculate totals
         subtotal = sum(b.base_price for b in bookings)
-        tax_amount = sum(b.tax_amount for b in bookings)
-        discount_amount = Decimal("0")
-        total_amount = subtotal - discount_amount + tax_amount
+        discount = Decimal('0')
+        tax = sum(b.tax_amount for b in bookings)
+        total = subtotal - discount + tax
 
-        # The first booking decides the primary workspace
+        # Create new order
         primary_workspace = bookings.first().workspace
 
-        # 4️⃣ Create the new order
         order = Order.objects.create(
             workspace=primary_workspace,
             user=request.user,
             subtotal=subtotal,
-            discount_amount=discount_amount,
-            tax_amount=tax_amount,
-            total_amount=total_amount,
-            notes=serializer.validated_data.get('notes', '')
+            discount_amount=discount,
+            tax_amount=tax,
+            total_amount=total,
+            notes=serializer.validated_data.get("notes", "")
         )
 
-        # 5️⃣ Attach bookings to the new order
+        # Add bookings to the new order
         order.bookings.set(bookings)
 
         return Response({
-            'success': True,
-            'id': str(order.id),
-            'order_number': order.order_number,
-            'total_amount': str(order.total_amount),
-            'bookings_count': bookings.count(),
-            'order': OrderSerializer(order).data
+            "success": True,
+            "order_id": str(order.id),
+            "order": OrderSerializer(order).data
         }, status=status.HTTP_201_CREATED)
+
 
 
 
