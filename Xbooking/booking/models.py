@@ -84,6 +84,10 @@ class Booking(models.Model):
     confirmed_at = models.DateTimeField(blank=True, null=True)
     cancelled_at = models.DateTimeField(blank=True, null=True)
     
+    # Email reminder tracking
+    reminder_sent = models.BooleanField(default=False, help_text='Whether check-in reminder email was sent')
+    reminder_sent_at = models.DateTimeField(blank=True, null=True)
+    
     class Meta:
         db_table = 'booking_booking'
         ordering = ['-created_at']
@@ -279,6 +283,12 @@ class Guest(models.Model):
     qr_code_sent = models.BooleanField(default=False)
     qr_code_sent_at = models.DateTimeField(blank=True, null=True)
     qr_code_verification_code = models.CharField(max_length=50, unique=True, default=generate_verification_code, help_text='Unique verification code for guest QR')
+    
+    # Email tracking
+    reminder_sent = models.BooleanField(default=False, help_text='Whether check-in reminder email was sent')
+    reminder_sent_at = models.DateTimeField(blank=True, null=True)
+    receipt_sent = models.BooleanField(default=False, help_text='Whether checkout receipt email was sent')
+    receipt_sent_at = models.DateTimeField(blank=True, null=True)
     
     # Check-in/out tracking
     checked_in_at = models.DateTimeField(blank=True, null=True)

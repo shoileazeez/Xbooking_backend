@@ -3,9 +3,9 @@ Email utilities for XBooking user authentication system.
 Handles sending various types of emails including password reset, verification, etc.
 """
 
-from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.conf import settings
+from Xbooking.mailjet_utils import send_mailjet_email
 import logging
 
 # Set up logging
@@ -60,20 +60,24 @@ class EmailService:
             # Email configuration
             subject = 'XBooking - Password Reset Verification Code'
             from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@xbooking.com')
-            recipient_list = [user.email]
             
-            # Send email
-            send_mail(
+            # Send email via Mailjet API
+            result = send_mailjet_email(
                 subject=subject,
-                message=plain_message,
+                to_email=user.email,
+                to_name=user.full_name,
+                html_content=html_message,
+                text_content=plain_message,
                 from_email=from_email,
-                recipient_list=recipient_list,
-                html_message=html_message,
-                fail_silently=False,
+                from_name='XBooking'
             )
             
-            logger.info(f"Password reset email sent successfully to {user.email}")
-            return True
+            if result.get('success'):
+                logger.info(f"Password reset email sent successfully to {user.email}")
+                return True
+            else:
+                logger.error(f"Failed to send password reset email to {user.email}: {result.get('error')}")
+                return False
             
         except Exception as e:
             logger.error(f"Failed to send password reset email to {user.email}: {str(e)}")
@@ -105,20 +109,24 @@ class EmailService:
             # Email configuration
             subject = 'XBooking - Password Changed Successfully'
             from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@xbooking.com')
-            recipient_list = [user.email]
             
-            # Send email
-            send_mail(
+            # Send email via Mailjet API
+            result = send_mailjet_email(
                 subject=subject,
-                message=plain_message,
+                to_email=user.email,
+                to_name=user.full_name,
+                html_content=html_message,
+                text_content=plain_message,
                 from_email=from_email,
-                recipient_list=recipient_list,
-                html_message=html_message,
-                fail_silently=False,
+                from_name='XBooking'
             )
             
-            logger.info(f"Password change confirmation email sent to {user.email}")
-            return True
+            if result.get('success'):
+                logger.info(f"Password change confirmation email sent to {user.email}")
+                return True
+            else:
+                logger.error(f"Failed to send password change confirmation email to {user.email}: {result.get('error')}")
+                return False
             
         except Exception as e:
             logger.error(f"Failed to send password change confirmation email to {user.email}: {str(e)}")

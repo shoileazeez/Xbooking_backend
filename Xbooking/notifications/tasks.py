@@ -3,11 +3,11 @@ Celery tasks for notifications
 """
 from celery import shared_task
 from django.conf import settings
-from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils import timezone
 from notifications.models import Notification, NotificationPreference, BroadcastNotification, NotificationLog
 from workspace.models import WorkspaceUser
+from Xbooking.mailjet_utils import send_mailjet_email
 
 @shared_task
 def send_notification(notification_id):
@@ -66,17 +66,17 @@ def _send_email_notification(notification):
         html_content = render_to_string('emails/generic_notification.html', context)
         text_content = render_to_string('emails/generic_notification.txt', context)
         
-        # Create email
-        email = EmailMultiAlternatives(
+        # Send email via Mailjet API
+        result = send_mailjet_email(
             subject=notification.title,
-            body=text_content,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            to=[user.email]
+            to_email=user.email,
+            to_name=user.full_name or user.email,
+            html_content=html_content,
+            text_content=text_content
         )
-        email.attach_alternative(html_content, "text/html")
         
-        # Send
-        email.send()
+        if not result.get('success'):
+            raise Exception(f"Failed to send email: {result.get('error')}")
         
         # Update notification status
         notification.is_sent = True

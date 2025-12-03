@@ -20,7 +20,7 @@ import json
 import time
 from datetime import datetime, timedelta
 
-BASE_URL = "https://3e9d98bfbd96.ngrok-free.app"
+BASE_URL = "Backend/xbooking.dev"
 EMAIL = "promptforge.customservice@gmail.com"  # Use existing user
 PASSWORD = "TestPassword123!"
 

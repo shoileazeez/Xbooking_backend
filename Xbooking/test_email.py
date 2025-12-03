@@ -1,7 +1,7 @@
 """
 Email Configuration Test Script
 Run with: python test_email.py
-Tests if the email backend (Mailjet) is properly configured and working.
+Tests if the email backend (Mailjet REST API) is properly configured and working.
 """
 import os
 import sys
@@ -11,8 +11,8 @@ import django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Xbooking.settings')
 django.setup()
 
-from django.core.mail import send_mail, EmailMultiAlternatives
 from django.conf import settings
+from Xbooking.mailjet_utils import send_mailjet_email
 
 
 def print_step(step):
@@ -27,13 +27,17 @@ def test_email_config():
     print_step("Email Configuration Check")
     
     # Print current email settings (hide sensitive info)
-    print(f"EMAIL_BACKEND: {settings.EMAIL_BACKEND}")
-    print(f"EMAIL_HOST: {settings.EMAIL_HOST}")
-    print(f"EMAIL_PORT: {settings.EMAIL_PORT}")
-    print(f"EMAIL_USE_TLS: {settings.EMAIL_USE_TLS}")
-    print(f"EMAIL_USE_SSL: {getattr(settings, 'EMAIL_USE_SSL', False)}")
-    print(f"EMAIL_HOST_USER: {settings.EMAIL_HOST_USER[:10]}..." if settings.EMAIL_HOST_USER else "EMAIL_HOST_USER: Not set")
+    mailjet_api_key = getattr(settings, 'MAILJET_API_KEY', None)
+    mailjet_secret_key = getattr(settings, 'MAILJET_SECRET_KEY', None)
+    
+    print(f"MAILJET_API_KEY: {mailjet_api_key[:10]}..." if mailjet_api_key else "MAILJET_API_KEY: Not set")
+    print(f"MAILJET_SECRET_KEY: {'*' * 20}" if mailjet_secret_key else "MAILJET_SECRET_KEY: Not set")
     print(f"DEFAULT_FROM_EMAIL: {settings.DEFAULT_FROM_EMAIL}")
+    
+    if not mailjet_api_key or not mailjet_secret_key:
+        print("\n❌ ERROR: Mailjet API credentials not configured!")
+        print("Please set MAILJET_API_KEY and MAILJET_SECRET_KEY in your .env file")
+        return False
     
     print_step("Send Test Email (Simple)")
     
@@ -46,18 +50,18 @@ def test_email_config():
     
     try:
         # Simple text email
-        result = send_mail(
+        result = send_mailjet_email(
             subject='XBooking Email Test - Simple',
-            message='This is a simple test email from XBooking to verify your email configuration is working correctly.\n\nIf you received this, your email setup is working!',
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[test_recipient],
-            fail_silently=False,
+            to_email=test_recipient,
+            to_name=test_recipient,
+            text_content='This is a simple test email from XBooking to verify your Mailjet REST API configuration is working correctly.\n\nIf you received this, your email setup is working!'
         )
         
-        if result:
+        if result.get('success'):
             print(f"✅ Simple email sent successfully to {test_recipient}")
         else:
-            print(f"⚠️ send_mail returned 0 - email may not have been sent")
+            print(f"❌ Failed to send simple email: {result.get('error')}")
+            return False
             
     except Exception as e:
         print(f"❌ Failed to send simple email: {str(e)}")
@@ -85,10 +89,10 @@ def test_email_config():
                 </div>
                 <div class="content">
                     <h2>HTML Email Test Successful!</h2>
-                    <p>This is an <strong>HTML test email</strong> from XBooking.</p>
+                    <p>This is an <strong>HTML test email</strong> from XBooking using Mailjet REST API.</p>
                     <p>If you can see this formatted message, your email configuration is working correctly with HTML support.</p>
                     <ul>
-                        <li>✅ SMTP Connection: Working</li>
+                        <li>✅ Mailjet API Connection: Working</li>
                         <li>✅ Authentication: Valid</li>
                         <li>✅ HTML Rendering: Supported</li>
                     </ul>
@@ -101,28 +105,28 @@ def test_email_config():
         </html>
         """
         
-        text_content = "XBooking Email Test - HTML\n\nThis is a test email. If you see this, HTML rendering may not be supported by your email client."
+        text_content = "XBooking Email Test - HTML\n\nThis is a test email using Mailjet REST API. If you see this, HTML rendering may not be supported by your email client."
         
-        email = EmailMultiAlternatives(
+        result = send_mailjet_email(
             subject='XBooking Email Test - HTML',
-            body=text_content,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            to=[test_recipient]
+            to_email=test_recipient,
+            to_name=test_recipient,
+            html_content=html_content,
+            text_content=text_content
         )
-        email.attach_alternative(html_content, "text/html")
-        result = email.send()
         
-        if result:
+        if result.get('success'):
             print(f"✅ HTML email sent successfully to {test_recipient}")
         else:
-            print(f"⚠️ EmailMultiAlternatives.send() returned 0 - email may not have been sent")
+            print(f"❌ Failed to send HTML email: {result.get('error')}")
+            return False
             
     except Exception as e:
         print(f"❌ Failed to send HTML email: {str(e)}")
         return False
     
     print_step("Test Summary")
-    print(f"✅ Email configuration appears to be working!")
+    print(f"✅ Mailjet REST API configuration appears to be working!")
     print(f"✅ Check {test_recipient} inbox (and spam folder) for test emails")
     print(f"\n🎉 Email test completed successfully!")
     

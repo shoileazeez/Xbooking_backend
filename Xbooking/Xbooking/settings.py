@@ -215,12 +215,12 @@ SPECTACULAR_SETTINGS = {
     'SERVE_INCLUDE_SCHEMA': False,
     'SERVERS': [
         {'url': 'http://localhost:8000', 'description': 'Development Server'},
-        {'url': 'https://api.xbooking.com', 'description': 'Production Server'},
+        {'url': 'https://backend.xbooking.dev', 'description': 'Production Server'},
         {'url': 'https://xbooking-backend.onrender.com', 'description': 'Render Deployment'},
     ],
     'CONTACT': {
         'name': 'Xbooking Support',
-        'email': 'support@xbooking.com',
+        'email': 'support@xbooking.dev',
     },
 
     # 👇 This is what makes the "Authorize" button work
@@ -289,28 +289,20 @@ CSRF_TRUSTED_ORIGINS = [
     "https://b9f13bfcc7a5.ngrok-free.app",
     "https://6a63f43d1a91.ngrok-free.app ",
     "https://3e9d98bfbd96.ngrok-free.app",
+    "https://backend.xbooking.dev",
 ]
 
 # ============================================================================
-# EMAIL CONFIGURATION
+# EMAIL CONFIGURATION (MAILJET REST API)
 # ============================================================================
 
-# Gmail SMTP Configuration (commented out)
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = 'smtp.gmail.com'
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = 'shoabdulazeez@gmail.com'
-# EMAIL_HOST_PASSWORD = 'pnsrthdsnhuxrhgq'
-
-# Mailjet SMTP Configuration
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'in-v3.mailjet.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = config('MAILJET_API_KEY', default='')
-EMAIL_HOST_PASSWORD = config('MAILJET_SECRET_KEY', default='')
+# Mailjet REST API Configuration
+MAILJET_API_KEY = config('MAILJET_API_KEY', default='')
+MAILJET_SECRET_KEY = config('MAILJET_SECRET_KEY', default='')
 
 # Default From Email
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='shoabdulazeez@gmail.com')
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
+
+# Note: We use Mailjet REST API instead of SMTP for better deliverability on VPS
+# All email sending is handled through Xbooking.mailjet_utils.MailjetEmailService

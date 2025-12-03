@@ -24,12 +24,22 @@ app.conf.beat_schedule = {
     # Expire booking QR codes every hour (when checkout time is passed)
     'expire-booking-qr-codes': {
         'task': 'qr_code.tasks.expire_booking_qr_codes',
-        'schedule': crontab(minute=0),  # Every hour
+        'schedule': crontab(minute='*/10'),  # Every 10 minutes
     },
     # Send booking reminders 1 hour before check-in (checks every hour)
     'send-booking-reminders': {
         'task': 'qr_code.tasks.send_upcoming_booking_reminders',
-        'schedule': crontab(minute=0),  # Every hour
+        'schedule': crontab(minute='*/15'),  # Every 15 minutes
+    },
+    # Check and send guest check-in reminders (1 hour before check-in)
+    'send-guest-checkin-reminders': {
+        'task': 'booking.guest_tasks.check_and_send_guest_reminders',
+        'schedule': crontab(minute='*/15'),  # Every 15 minutes
+    },
+    # Check and send checkout receipts to guests who have checked out
+    'send-guest-checkout-receipts': {
+        'task': 'booking.guest_tasks.check_and_send_checkout_receipts',
+        'schedule': crontab(minute='*/30'),  # Every 30 minutes
     },
 }
 

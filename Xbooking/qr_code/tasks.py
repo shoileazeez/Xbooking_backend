@@ -4,14 +4,15 @@ Celery tasks for QR code generation and notifications
 from celery import shared_task
 from django.conf import settings
 from django.core.files.base import ContentFile
-from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils import timezone
 from notifications.models import Notification, NotificationPreference
 from payment.models import Order
+from Xbooking.mailjet_utils import send_mailjet_email
 import qrcode
 import io
 import uuid
+import base64
 from datetime import timedelta
 
 
@@ -122,21 +123,35 @@ def send_qr_code_email(order_id, qr_code_id):
         html_content = render_to_string('emails/qr_code_email.html', context)
         text_content = render_to_string('emails/qr_code_email.txt', context)
         
-        # Create email
-        email = EmailMultiAlternatives(
-            subject=f'Your QR Code for Order {order.order_number}',
-            body=text_content,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            to=[order.user.email]
-        )
-        email.attach_alternative(html_content, "text/html")
-        
-        # Attach QR code image
+        # Prepare QR code image attachment (base64 encoded)
+        attachments = []
         if qr_code.qr_code_image:
-            email.attach_file(qr_code.qr_code_image.path)
+            with open(qr_code.qr_code_image.path, 'rb') as img_file:
+                img_data = img_file.read()
+                img_base64 = base64.b64encode(img_data).decode('utf-8')
+                attachments.append({
+                    'ContentType': 'image/png',
+                    'Filename': f'qr_{order.order_number}.png',
+                    'Base64Content': img_base64
+                })
         
-        # Send email
-        email.send()
+        # Send email via Mailjet API
+        result = send_mailjet_email(
+            subject=f'Your QR Code for Order {order.order_number}',
+            to_email=order.user.email,
+            to_name=order.user.full_name or order.user.email,
+            html_content=html_content,
+            text_content=text_content,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            from_name='XBooking',
+            attachments=attachments if attachments else None
+        )
+        
+        if not result.get('success'):
+            return {
+                'success': False,
+                'error': result.get('error', 'Failed to send email')
+            }
         
         # Update QR code status
         qr_code.status = 'sent'
@@ -195,17 +210,22 @@ def send_order_confirmation_email(order_id):
         html_content = render_to_string('emails/order_confirmation_email.html', context)
         text_content = render_to_string('emails/order_confirmation_email.txt', context)
         
-        # Create email
-        email = EmailMultiAlternatives(
+        # Send email via Mailjet API
+        result = send_mailjet_email(
             subject=f'Order Confirmation: {order.order_number}',
-            body=text_content,
+            to_email=order.user.email,
+            to_name=order.user.full_name or order.user.email,
+            html_content=html_content,
+            text_content=text_content,
             from_email=settings.DEFAULT_FROM_EMAIL,
-            to=[order.user.email]
+            from_name='XBooking'
         )
-        email.attach_alternative(html_content, "text/html")
         
-        # Send email
-        email.send()
+        if not result.get('success'):
+            return {
+                'success': False,
+                'error': result.get('error', 'Failed to send email')
+            }
         
         # Log notification
         Notification.objects.create(
@@ -258,17 +278,22 @@ def send_payment_confirmation_email(order_id):
         html_content = render_to_string('emails/payment_confirmation_email.html', context)
         text_content = render_to_string('emails/payment_confirmation_email.txt', context)
         
-        # Create email
-        email = EmailMultiAlternatives(
+        # Send email via Mailjet API
+        result = send_mailjet_email(
             subject=f'Payment Confirmed: {order.order_number}',
-            body=text_content,
+            to_email=order.user.email,
+            to_name=order.user.full_name or order.user.email,
+            html_content=html_content,
+            text_content=text_content,
             from_email=settings.DEFAULT_FROM_EMAIL,
-            to=[order.user.email]
+            from_name='XBooking'
         )
-        email.attach_alternative(html_content, "text/html")
         
-        # Send email
-        email.send()
+        if not result.get('success'):
+            return {
+                'success': False,
+                'error': result.get('error', 'Failed to send email')
+            }
         
         # Log notification
         Notification.objects.create(
@@ -322,17 +347,27 @@ def send_booking_reminder(booking_id):
         html_content = render_to_string('emails/booking_reminder_email.html', context)
         text_content = render_to_string('emails/booking_reminder_email.txt', context)
         
-        # Create email
-        email = EmailMultiAlternatives(
+        # Send email via Mailjet API
+        result = send_mailjet_email(
             subject=f'Reminder: Your booking at {booking.space.name}',
-            body=text_content,
+            to_email=user.email,
+            to_name=user.full_name or user.email,
+            html_content=html_content,
+            text_content=text_content,
             from_email=settings.DEFAULT_FROM_EMAIL,
-            to=[user.email]
+            from_name='XBooking'
         )
-        email.attach_alternative(html_content, "text/html")
         
-        # Send email
-        email.send()
+        if not result.get('success'):
+            return {
+                'success': False,
+                'error': result.get('error', 'Failed to send email')
+            }
+        
+        # Mark reminder as sent
+        booking.reminder_sent = True
+        booking.reminder_sent_at = timezone.now()
+        booking.save(update_fields=['reminder_sent', 'reminder_sent_at'])
         
         return {
             'success': True,
@@ -357,11 +392,12 @@ def send_upcoming_booking_reminders():
         now = timezone.now()
         one_hour_later = now + timedelta(hours=1)
         
-        # Find confirmed bookings that start in the next hour
+        # Find confirmed bookings that start in the next hour and haven't received reminder
         upcoming_bookings = Booking.objects.filter(
             status='confirmed',
             check_in__gte=now,
-            check_in__lte=one_hour_later
+            check_in__lte=one_hour_later,
+            reminder_sent=False  # Only send to bookings that haven't received reminder
         )
         
         sent_count = 0
@@ -573,26 +609,36 @@ Thank you for choosing XBooking!
         
         # Create email
         subject = f'Your Booking QR Code{"s" if booking_qr_codes.count() > 1 else ""} - Order {order.order_number}'
-        email = EmailMultiAlternatives(
-            subject=subject,
-            body=text_content,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            to=[user.email]
-        )
-        email.attach_alternative(html_content, "text/html")
         
-        # Attach all QR code images
+        # Prepare attachments - convert all QR code images to base64
+        attachments = []
         for qr in booking_qr_codes:
             if qr.qr_code_image:
                 try:
                     filename = f"QR_{qr.booking.space.name.replace(' ', '_')}_{qr.verification_code}.png"
-                    email.attach_file(qr.qr_code_image.path)
+                    with open(qr.qr_code_image.path, 'rb') as img_file:
+                        img_base64 = base64.b64encode(img_file.read()).decode('utf-8')
+                        attachments.append({
+                            'ContentType': 'image/png',
+                            'Filename': filename,
+                            'Base64Content': img_base64
+                        })
                 except Exception as e:
-                    # If file not accessible, try reading from storage
+                    # If file not accessible, skip this attachment
                     pass
         
-        # Send email
-        email.send()
+        # Send email via Mailjet API
+        result = send_mailjet_email(
+            subject=subject,
+            to_email=user.email,
+            to_name=user.full_name or user.email,
+            html_content=html_content,
+            text_content=text_content,
+            attachments=attachments if attachments else None
+        )
+        
+        if not result.get('success'):
+            raise Exception(f"Failed to send email: {result.get('error')}")
         
         # Update QR code statuses
         booking_qr_codes.update(status='sent', sent_at=timezone.now())
