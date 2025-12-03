@@ -18,20 +18,26 @@ class OrderSerializer(serializers.ModelSerializer):
         write_only=True,
         source='bookings'
     )
+    all_booking_ids = serializers.SerializerMethodField(read_only=True)
     
     class Meta:
         model = Order
         fields = [
-            'id', 'order_number', 'workspace', 'user', 'bookings', 'booking_ids',
+            'id', 'order_number', 'workspace', 'user', 'bookings', 'booking_ids', 'all_booking_ids',
             'subtotal', 'discount_amount', 'tax_amount', 'total_amount',
             'status', 'payment_method', 'payment_reference', 'notes',
             'created_at', 'updated_at', 'paid_at', 'completed_at'
         ]
         read_only_fields = [
-            'id', 'order_number', 'workspace', 'user', 'bookings',
+            'id', 'order_number', 'workspace', 'user', 'bookings', 'all_booking_ids',
             'subtotal', 'discount_amount', 'tax_amount', 'total_amount',
             'created_at', 'updated_at', 'paid_at', 'completed_at'
         ]
+    
+    @extend_schema_field(serializers.ListField(child=serializers.CharField()))
+    def get_all_booking_ids(self, obj):
+        """Get list of all booking IDs in this order"""
+        return [str(booking.id) for booking in obj.bookings.all()]
 
 
 class CreateOrderSerializer(serializers.Serializer):
@@ -133,12 +139,13 @@ class PaymentWebhookSerializer(serializers.ModelSerializer):
 class OrderListSerializer(serializers.ModelSerializer):
     """Serializer for listing orders"""
     booking_count = serializers.SerializerMethodField()
+    booking_ids = serializers.SerializerMethodField()
     user_email = serializers.CharField(source='user.email', read_only=True)
     
     class Meta:
         model = Order
         fields = [
-            'id', 'order_number', 'user_email', 'booking_count',
+            'id', 'order_number', 'user_email', 'booking_count', 'booking_ids',
             'total_amount', 'status', 'payment_method', 'created_at', 'paid_at'
         ]
         read_only_fields = fields
@@ -147,6 +154,11 @@ class OrderListSerializer(serializers.ModelSerializer):
     def get_booking_count(self, obj):
         """Get count of bookings in order"""
         return obj.bookings.count()
+    
+    @extend_schema_field(serializers.ListField(child=serializers.CharField()))
+    def get_booking_ids(self, obj):
+        """Get list of all booking IDs in this order"""
+        return [str(booking.id) for booking in obj.bookings.all()]
 
 
 class PaymentListSerializer(serializers.ModelSerializer):
