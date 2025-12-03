@@ -45,6 +45,8 @@ services:
     volumes:
       - static_volume:/app/staticfiles
       - media_volume:/app/media
+    ports:
+       - "8000:8000"  # Map external port 8000 to internal port 8000  
     expose:
       - "8000"   # IMPORTANT: expose only internal port
     env_file:
