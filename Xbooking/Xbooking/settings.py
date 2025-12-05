@@ -283,6 +283,16 @@ FLUTTERWAVE_PUBLIC_KEY = config('FLUTTERWAVE_PUBLIC_KEY', default='')
 PAYMENT_CURRENCY = 'NGN'
 PAYMENT_TIMEOUT = 3600  # 1 hour in seconds
 
+# ============================================================================
+# APPWRITE CLOUD STORAGE CONFIGURATION
+# ============================================================================
+
+# Appwrite Cloud Storage (for QR codes, images, documents, etc.)
+APPWRITE_ENDPOINT = config('APPWRITE_ENDPOINT', default='https://cloud.appwrite.io/v1')
+APPWRITE_PROJECT_ID = config('APPWRITE_PROJECT_ID', default='')
+APPWRITE_API_KEY = config('APPWRITE_API_KEY', default='')
+APPWRITE_BUCKET_ID = config('APPWRITE_BUCKET_ID', default='')
+
 CSRF_TRUSTED_ORIGINS = [
     "https://d991097cf9a5.ngrok-free.app",
     "https://fb16c5785973.ngrok-free.app",
