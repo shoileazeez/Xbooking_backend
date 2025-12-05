@@ -6,31 +6,65 @@ from qr_code.models import OrderQRCode, BookingQRCode, CheckIn, BookingQRCodeLog
 from drf_spectacular.utils import extend_schema_field
 
 
+class FileUploadSerializer(serializers.Serializer):
+    """Serializer for file upload endpoint"""
+    file = serializers.FileField(required=True)
+    file_type = serializers.CharField(
+        required=False,
+        help_text='Type of file: image, document, etc. (optional)'
+    )
+    
+    def validate_file(self, file):
+        """Validate uploaded file"""
+        from django.conf import settings
+        
+        # Check file size
+        max_size = settings.MAX_FILE_SIZE_MB * 1024 * 1024  # Convert MB to bytes
+        if file.size > max_size:
+            raise serializers.ValidationError(
+                f'File size exceeds maximum allowed size of {settings.MAX_FILE_SIZE_MB}MB'
+            )
+        
+        # Check file extension
+        filename_parts = file.name.rsplit('.', 1)
+        if len(filename_parts) < 2:
+            raise serializers.ValidationError('File must have a valid extension')
+        
+        file_ext = filename_parts[1].lower()
+        if file_ext not in settings.ALLOWED_FILE_TYPES:
+            allowed = ', '.join(settings.ALLOWED_FILE_TYPES)
+            raise serializers.ValidationError(
+                f'File type .{file_ext} is not allowed. Allowed types: {allowed}'
+            )
+        
+        return file
+
+
+class FileUploadResponseSerializer(serializers.Serializer):
+    """Serializer for file upload response"""
+    success = serializers.BooleanField()
+    file_id = serializers.CharField()
+    file_url = serializers.URLField()
+    filename = serializers.CharField()
+    size = serializers.IntegerField()
+    message = serializers.CharField(required=False)
+
+
 class OrderQRCodeSerializer(serializers.ModelSerializer):
     """Serializer for QR code"""
-    qr_code_url = serializers.SerializerMethodField()
+    qr_code_url = serializers.CharField(source='qr_code_image_url', read_only=True)
     
     class Meta:
         model = OrderQRCode
         fields = [
-            'id', 'order', 'verification_code', 'qr_code_url', 'qr_code_image',
+            'id', 'order', 'verification_code', 'qr_code_url',
             'status', 'scan_count', 'verified', 'verified_at', 'expires_at',
             'created_at', 'sent_at'
         ]
         read_only_fields = [
-            'id', 'order', 'verification_code', 'qr_code_url', 'qr_code_image',
+            'id', 'order', 'verification_code', 'qr_code_url',
             'status', 'scan_count', 'verified', 'verified_at', 'created_at', 'sent_at'
         ]
-    
-    @extend_schema_field(serializers.CharField())
-    def get_qr_code_url(self, obj):
-        """Get full URL for QR code image"""
-        if obj.qr_code_image:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.qr_code_image.url)
-            return obj.qr_code_image.url
-        return None
 
 
 class BookingQRCodeLogSerializer(serializers.ModelSerializer):
@@ -56,30 +90,20 @@ class BookingQRCodeSerializer(serializers.ModelSerializer):
     booking_id = serializers.CharField(source='booking.id', read_only=True)
     space_name = serializers.CharField(source='booking.space.name', read_only=True)
     guest_email = serializers.CharField(source='booking.user.email', read_only=True)
-    qr_code_url = serializers.SerializerMethodField()
+    qr_code_url = serializers.CharField(source='qr_code_image_url', read_only=True)
     
     class Meta:
         model = BookingQRCode
         fields = [
             'id', 'booking_id', 'space_name', 'guest_email', 'qr_code_url',
-            'qr_code_image', 'verification_code', 'status', 'used', 
+            'verification_code', 'status', 'used', 
             'total_check_ins', 'max_check_ins', 'expires_at',
             'created_at', 'sent_at'
         ]
         read_only_fields = [
-            'id', 'qr_code_url', 'qr_code_image', 'status', 'used',
+            'id', 'qr_code_url', 'status', 'used',
             'total_check_ins', 'created_at', 'sent_at'
         ]
-    
-    @extend_schema_field(serializers.CharField())
-    def get_qr_code_url(self, obj):
-        """Get full URL for QR code image"""
-        if obj.qr_code_image:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.qr_code_image.url)
-            return obj.qr_code_image.url
-        return None
 
 
 class CheckInSerializer(serializers.ModelSerializer):

@@ -26,11 +26,18 @@ class OrderQRCode(models.Model):
     
     # QR Code data
     qr_code_data = models.TextField()  # The encoded QR data
-    qr_code_image = models.ImageField(
-        upload_to='qr_codes/',
+    
+    # Appwrite storage
+    qr_code_image_url = models.URLField(
         blank=True,
         null=True,
-        help_text="Generated QR code image"
+        help_text="URL to QR code image stored in Appwrite"
+    )
+    appwrite_file_id = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="File ID in Appwrite storage"
     )
     
     # Verification details
@@ -106,11 +113,18 @@ class BookingQRCode(models.Model):
     
     # QR Code data
     qr_code_data = models.TextField()  # The encoded QR data
-    qr_code_image = models.ImageField(
-        upload_to='qr_codes/bookings/',
+    
+    # Appwrite storage
+    qr_code_image_url = models.URLField(
         blank=True,
         null=True,
-        help_text="Generated QR code image"
+        help_text="URL to QR code image stored in Appwrite"
+    )
+    appwrite_file_id = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="File ID in Appwrite storage"
     )
     
     # Verification details

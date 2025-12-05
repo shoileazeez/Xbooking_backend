@@ -204,6 +204,7 @@ REST_FRAMEWORK = {
         'user': '1000/day',
         'public_list': '20/minute',
         'sensitive_action': '5/minute',
+        'file_upload': '50/day',
     }
 }
 
@@ -268,10 +269,6 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# Media files
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
-
 # Payment Gateway Configuration
 PAYSTACK_SECRET_KEY = config('PAYSTACK_SECRET_KEY', default='')
 PAYSTACK_PUBLIC_KEY = config('PAYSTACK_PUBLIC_KEY', default='')
@@ -292,6 +289,23 @@ APPWRITE_ENDPOINT = config('APPWRITE_ENDPOINT', default='https://cloud.appwrite.
 APPWRITE_PROJECT_ID = config('APPWRITE_PROJECT_ID', default='')
 APPWRITE_API_KEY = config('APPWRITE_API_KEY', default='')
 APPWRITE_BUCKET_ID = config('APPWRITE_BUCKET_ID', default='')
+
+# ============================================================================
+# FILE UPLOAD CONFIGURATION
+# ============================================================================
+
+# File upload API key for frontend authentication (unauthenticated endpoint)
+FILE_UPLOAD_KEY = config('FILE_UPLOAD_KEY', default='')
+
+# Max file size in MB for uploads
+MAX_FILE_SIZE_MB = config('MAX_FILE_SIZE_MB', default=50, cast=int)
+
+# Allowed file types for uploads
+ALLOWED_FILE_TYPES = config(
+    'ALLOWED_FILE_TYPES', 
+    default='png,jpg,jpeg,gif,pdf,doc,docx,xls,xlsx',
+    cast=lambda v: [s.strip().lower() for s in v.split(',')]
+)
 
 CSRF_TRUSTED_ORIGINS = [
     "https://d991097cf9a5.ngrok-free.app",

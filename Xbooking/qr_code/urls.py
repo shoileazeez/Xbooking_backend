@@ -3,7 +3,7 @@ QR Code and Notification URLs
 """
 from django.urls import path
 from qr_code.views import (
-    GenerateOrderQRCodeView, GetOrderQRCodeView, GetBookingQRCodeView
+    GenerateOrderQRCodeView, GetOrderQRCodeView, GetBookingQRCodeView, FileUploadView
 )
 from qr_code.admin_views import (
     AdminCheckInView, AdminCheckOutView, AdminCheckInListView,
@@ -22,6 +22,10 @@ urlpatterns = [
     # Booking QR Code URLs
     path('bookings/<uuid:booking_id>/qr-code/', 
          GetBookingQRCodeView.as_view(), name='get_booking_qr_code'),
+    
+    # File Upload URL (Unauthenticated - requires file_upload_key)
+    path('upload/file/', 
+         FileUploadView.as_view(), name='upload_file'),
     
     # Admin Check-In/Check-Out URLs (NEW)
     path('workspaces/<uuid:workspace_id>/admin/check-in/', 

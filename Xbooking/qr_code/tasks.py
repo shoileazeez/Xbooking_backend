@@ -9,6 +9,7 @@ from django.utils import timezone
 from notifications.models import Notification, NotificationPreference
 from payment.models import Order
 from Xbooking.mailjet_utils import send_mailjet_email
+from Xbooking.appwrite_storage import upload_qr_code_to_appwrite
 import qrcode
 import io
 import uuid
@@ -19,7 +20,7 @@ from datetime import timedelta
 @shared_task
 def generate_qr_code_for_order(order_id):
     """
-    Generate QR code for an order and save it
+    Generate QR code for an order and save it to Appwrite storage
     """
     try:
         from qr_code.models import OrderQRCode
@@ -44,10 +45,11 @@ def generate_qr_code_for_order(order_id):
         # Convert to image
         img = qr.make_image(fill_color="black", back_color="white")
         
-        # Save to file
+        # Save to bytes
         img_io = io.BytesIO()
         img.save(img_io, format='PNG')
         img_io.seek(0)
+        qr_image_bytes = img_io.getvalue()
         
         # Determine expiry based on the latest checkout time from order bookings
         latest_checkout = None
@@ -59,21 +61,30 @@ def generate_qr_code_for_order(order_id):
         # Fallback to 24 hours if no checkout time found
         expires_at = latest_checkout if latest_checkout else (timezone.now() + timedelta(hours=24))
         
+        # Upload to Appwrite
+        filename = f"qr_order_{order.order_number}_{verification_code}.png"
+        appwrite_result = upload_qr_code_to_appwrite(qr_image_bytes, filename)
+        
         # Create or update QR code record
+        update_data = {
+            'verification_code': verification_code,
+            'qr_code_data': qr_data,
+            'status': 'generated',
+            'expires_at': expires_at,
+        }
+        
+        # If Appwrite upload was successful, store the URL and file ID
+        if appwrite_result.get('success'):
+            update_data['qr_code_image_url'] = appwrite_result.get('file_url')
+            update_data['appwrite_file_id'] = appwrite_result.get('file_id')
+        else:
+            # Fallback to local storage if Appwrite fails
+            pass
+        
         qr_code, created = OrderQRCode.objects.update_or_create(
             order=order,
-            defaults={
-                'verification_code': verification_code,
-                'qr_code_data': qr_data,
-                'status': 'generated',
-                'expires_at': expires_at,
-            }
+            defaults=update_data
         )
-        
-        # Save image
-        filename = f"qr_{order.order_number}_{verification_code}.png"
-        qr_code.qr_code_image.save(filename, ContentFile(img_io.getvalue()))
-        qr_code.save()
         
         # Send QR code to user via email
         send_qr_code_email.delay(order_id, qr_code.id)
@@ -82,7 +93,8 @@ def generate_qr_code_for_order(order_id):
             'success': True,
             'qr_code_id': str(qr_code.id),
             'verification_code': verification_code,
-            'message': 'QR code generated successfully'
+            'message': 'QR code generated successfully',
+            'appwrite_uploaded': appwrite_result.get('success', False)
         }
     except Order.DoesNotExist:
         return {
@@ -421,7 +433,7 @@ def send_upcoming_booking_reminders():
 @shared_task
 def generate_booking_qr_codes_for_order(order_id):
     """
-    Generate QR code for each booking in an order (for the booker).
+    Generate QR code for each booking in an order and store in Appwrite.
     Each booking gets its own QR code stored in BookingQRCode model.
     After generating all QR codes, sends an email to the booker with all QR codes attached.
     
@@ -472,29 +484,35 @@ def generate_booking_qr_codes_for_order(order_id):
             # Convert to image
             img = qr.make_image(fill_color="black", back_color="white")
             
-            # Save to file
+            # Save to bytes
             img_io = io.BytesIO()
             img.save(img_io, format='PNG')
             img_io.seek(0)
+            qr_image_bytes = img_io.getvalue()
             
             # Set expiry to booking checkout time
             expires_at = booking.check_out if booking.check_out else (timezone.now() + timedelta(hours=24))
             
+            # Upload to Appwrite
+            filename = f"qr_booking_{booking.id}_{verification_code}.png"
+            appwrite_result = upload_qr_code_to_appwrite(qr_image_bytes, filename)
+            
             # Create BookingQRCode record
-            booking_qr = BookingQRCode.objects.create(
-                booking=booking,
-                order=order,
-                verification_code=verification_code,
-                qr_code_data=str(qr_data),
-                status='generated',
-                expires_at=expires_at,
-            )
+            create_data = {
+                'booking': booking,
+                'order': order,
+                'verification_code': verification_code,
+                'qr_code_data': str(qr_data),
+                'status': 'generated',
+                'expires_at': expires_at,
+            }
             
-            # Save image
-            filename = f"booking_qr_{booking.id}_{verification_code}.png"
-            booking_qr.qr_code_image.save(filename, ContentFile(img_io.getvalue()))
-            booking_qr.save()
+            # If Appwrite upload was successful, store the URL and file ID
+            if appwrite_result.get('success'):
+                create_data['qr_code_image_url'] = appwrite_result.get('file_url')
+                create_data['appwrite_file_id'] = appwrite_result.get('file_id')
             
+            booking_qr = BookingQRCode.objects.create(**create_data)
             booking_qr_codes.append(booking_qr)
         
         # Send email with all booking QR codes
