@@ -314,6 +314,7 @@ CSRF_TRUSTED_ORIGINS = [
     "https://6a63f43d1a91.ngrok-free.app ",
     "https://3e9d98bfbd96.ngrok-free.app",
     "https://backend.xbooking.dev",
+    "https://test-backend.xbooking.dev",
 ]
 
 # ============================================================================
