@@ -15,6 +15,9 @@ from workspace.views.public_space import (
 from workspace.views.public_workspace import (
     PublicWorkspaceListView, PublicWorkspaceDetailView
 )
+from workspace.views.public_branch import (
+    PublicBranchListView, PublicBranchDetailView
+)
 from workspace.views.members import (
     AdminRegisterView, AdminProfileView, AdminLoginView, AdminOnboardingView,
     AdminOnboardingStatusView, InviteMemberView,
@@ -54,6 +57,10 @@ urlpatterns = [
     # Public Workspace URLs (Unauthenticated)
     path('public/workspaces/', PublicWorkspaceListView.as_view(), name='public_workspace_list'),
     path('public/workspaces/<uuid:workspace_id>/', PublicWorkspaceDetailView.as_view(), name='public_workspace_detail'),
+    
+    # Public Branch URLs (Unauthenticated)
+    path('public/branches/', PublicBranchListView.as_view(), name='public_branch_list'),
+    path('public/branches/<uuid:branch_id>/', PublicBranchDetailView.as_view(), name='public_branch_detail'),
     
     # Workspace Member Management URLs
     path('workspaces/<uuid:workspace_id>/members/invite/', InviteMemberView.as_view(), name='invite_member'),
