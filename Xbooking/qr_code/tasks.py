@@ -696,9 +696,10 @@ Thank you for choosing XBooking!
 @shared_task
 def expire_booking_qr_codes():
     """
-    Mark BookingQRCode records as expired based on booking status:
+    Mark BookingQRCode records as expired based on booking status and type:
     - Booking is completed (checked in AND checked out)
-    - OR checkout date/time has passed
+    - OR checkout date/time has passed (for hourly/daily bookings)
+    - OR booking end date has passed (for monthly bookings using check_out date)
     """
     try:
         from qr_code.models import BookingQRCode
@@ -719,9 +720,23 @@ def expire_booking_qr_codes():
             if booking.status == 'completed':
                 should_expire = True
             
-            # Expire if checkout date/time has passed
-            elif booking.check_out and booking.check_out < now:
-                should_expire = True
+            # Handle expiry based on booking type
+            elif booking.booking_type == 'monthly':
+                # For monthly bookings: use check_out date (end date of monthly period)
+                # Check if current date is past the end date
+                if booking.check_out and booking.check_out < now:
+                    should_expire = True
+                # Also check if booking is marked as checked out
+                elif booking.is_checked_out:
+                    should_expire = True
+            
+            else:
+                # For hourly/daily bookings: use check_out datetime
+                # Also check is_checked_out for completion status
+                if booking.check_out and booking.check_out < now:
+                    should_expire = True
+                elif booking.is_checked_out:
+                    should_expire = True
             
             if should_expire:
                 qr_code.status = 'expired'

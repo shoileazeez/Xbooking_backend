@@ -11,10 +11,13 @@ class OrderQRCodeAdmin(admin.ModelAdmin):
     list_display = ['verification_code', 'order', 'status', 'verified', 'scan_count', 'created_at']
     list_filter = ['status', 'verified', 'created_at']
     search_fields = ['verification_code', 'order__order_number']
-    readonly_fields = ['id', 'verification_code', 'scan_count', 'created_at', 'updated_at']
+    readonly_fields = ['id', 'verification_code', 'scan_count', 'created_at', 'updated_at', 'appwrite_file_id']
     fieldsets = (
         ('QR Code Info', {
-            'fields': ('id', 'order', 'verification_code', 'qr_code_image')
+            'fields': ('id', 'order', 'verification_code')
+        }),
+        ('Appwrite Storage', {
+            'fields': ('qr_code_image_url', 'appwrite_file_id')
         }),
         ('Data', {
             'fields': ('qr_code_data',)
@@ -38,13 +41,16 @@ class OrderQRCodeAdmin(admin.ModelAdmin):
 class BookingQRCodeAdmin(admin.ModelAdmin):
     """Admin for BookingQRCode model"""
     list_display = ['verification_code', 'booking', 'status', 'used', 'total_check_ins', 'max_check_ins', 'created_at']
-    list_filter = ['status', 'used', 'created_at']
-    search_fields = ['verification_code', 'booking__id']
-    readonly_fields = ['id', 'verification_code', 'total_check_ins', 'created_at', 'sent_at']
+    list_filter = ['status', 'used', 'created_at', 'booking__booking_type']
+    search_fields = ['verification_code', 'booking__id', 'booking__user__email']
+    readonly_fields = ['id', 'verification_code', 'total_check_ins', 'created_at', 'sent_at', 'appwrite_file_id']
     
     fieldsets = (
         ('QR Code Info', {
-            'fields': ('id', 'booking', 'verification_code', 'qr_code_image')
+            'fields': ('id', 'booking', 'order', 'verification_code')
+        }),
+        ('Appwrite Storage', {
+            'fields': ('qr_code_image_url', 'appwrite_file_id')
         }),
         ('Status', {
             'fields': ('status', 'used')
@@ -54,6 +60,9 @@ class BookingQRCodeAdmin(admin.ModelAdmin):
         }),
         ('Scan Info', {
             'fields': ('scan_count', 'last_scanned_at', 'scanned_by_ip')
+        }),
+        ('Verification', {
+            'fields': ('verified', 'verified_at', 'verified_by')
         }),
         ('Expiry', {
             'fields': ('expires_at',)
