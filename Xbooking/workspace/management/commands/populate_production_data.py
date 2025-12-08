@@ -170,9 +170,24 @@ class Command(BaseCommand):
                 for space_idx in range(spaces_per_branch):
                     space_type = space_types[space_idx % len(space_types)]
                     capacity = random.randint(2, 50)
-                    hourly_price = Decimal(random.randint(5000, 50000))
-                    daily_price = hourly_price * Decimal(6)  # 6x hourly rate
-                    monthly_price = daily_price * Decimal(20)  # 20x daily rate
+
+                    # Pricing ranges per type (NGN)
+                    if space_type == 'meeting_room':
+                        hourly_price = Decimal(random.randint(5000, 15000))
+                    elif space_type == 'office':
+                        hourly_price = Decimal(random.randint(10000, 30000))
+                    elif space_type == 'coworking':
+                        hourly_price = Decimal(random.randint(3000, 8000))
+                    elif space_type == 'event_space':
+                        hourly_price = Decimal(random.randint(20000, 80000))
+                    elif space_type == 'desk':
+                        hourly_price = Decimal(random.randint(2000, 5000))
+                    else:  # lounge
+                        hourly_price = Decimal(random.randint(3000, 7000))
+
+                    # Derive daily and monthly rates
+                    daily_price = (hourly_price * Decimal(8)).quantize(Decimal('1'))
+                    monthly_price = (daily_price * Decimal(22)).quantize(Decimal('1'))
                     
                     space, created = Space.objects.get_or_create(
                         branch=branch,
@@ -204,7 +219,8 @@ Free Cancellation: Up to 7 days before booking
 No Refund: Same day or no-show
 Special circumstances may qualify for exceptions - contact support
                             ''',
-                            'image_url': f'https://images.unsplash.com/photo-1{random.randint(500000000, 600000000)}?w=500&h=400',
+                            # Deterministic, valid image URL per space using picsum.photos
+                            'image_url': f'https://picsum.photos/seed/{workspace_name.lower().replace(" ", "-")}-{branch_name.lower().replace(" ", "-")}-{space_idx}/800/600',
                             'amenities': random.sample(amenities, random.randint(5, 12))
                         }
                     )

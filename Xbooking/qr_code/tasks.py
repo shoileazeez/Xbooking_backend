@@ -9,7 +9,7 @@ from django.utils import timezone
 from notifications.models import Notification, NotificationPreference
 from payment.models import Order
 from Xbooking.mailjet_utils import send_mailjet_email
-from Xbooking.appwrite_storage import upload_qr_code_to_appwrite
+from Xbooking.cloudinary_storage import upload_qr_image_to_cloudinary
 import qrcode
 import io
 import uuid
@@ -61,9 +61,9 @@ def generate_qr_code_for_order(order_id):
         # Fallback to 24 hours if no checkout time found
         expires_at = latest_checkout if latest_checkout else (timezone.now() + timedelta(hours=24))
         
-        # Upload to Appwrite
+        # Upload to Cloudinary
         filename = f"qr_order_{order.order_number}_{verification_code}.png"
-        appwrite_result = upload_qr_code_to_appwrite(qr_image_bytes, filename)
+        cloud_result = upload_qr_image_to_cloudinary(qr_image_bytes, filename, public_id=f"qr_{order.order_number}_{verification_code}")
         
         # Create or update QR code record
         update_data = {
@@ -73,12 +73,13 @@ def generate_qr_code_for_order(order_id):
             'expires_at': expires_at,
         }
         
-        # If Appwrite upload was successful, store the URL and file ID
-        if appwrite_result.get('success'):
-            update_data['qr_code_image_url'] = appwrite_result.get('file_url')
-            update_data['appwrite_file_id'] = appwrite_result.get('file_id')
+        # If Cloudinary upload was successful, store the URL and public ID
+        if cloud_result.get('success'):
+            update_data['qr_code_image_url'] = cloud_result.get('file_url')
+            # Reuse appwrite_file_id field to store Cloudinary public_id
+            update_data['appwrite_file_id'] = cloud_result.get('file_id')
         else:
-            # Fallback to local storage if Appwrite fails
+            # Fallback: leave URL empty
             pass
         
         qr_code, created = OrderQRCode.objects.update_or_create(
@@ -94,7 +95,7 @@ def generate_qr_code_for_order(order_id):
             'qr_code_id': str(qr_code.id),
             'verification_code': verification_code,
             'message': 'QR code generated successfully',
-            'appwrite_uploaded': appwrite_result.get('success', False)
+            'cloudinary_uploaded': cloud_result.get('success', False)
         }
     except Order.DoesNotExist:
         return {
@@ -493,9 +494,13 @@ def generate_booking_qr_codes_for_order(order_id):
             # Set expiry to booking checkout time
             expires_at = booking.check_out if booking.check_out else (timezone.now() + timedelta(hours=24))
             
-            # Upload to Appwrite
+            # Upload to Cloudinary
             filename = f"qr_booking_{booking.id}_{verification_code}.png"
-            appwrite_result = upload_qr_code_to_appwrite(qr_image_bytes, filename)
+            cloud_result = upload_qr_image_to_cloudinary(
+                qr_image_bytes,
+                filename,
+                public_id=f"qr_booking_{booking.id}_{verification_code}"
+            )
             
             # Create BookingQRCode record
             create_data = {
@@ -507,10 +512,10 @@ def generate_booking_qr_codes_for_order(order_id):
                 'expires_at': expires_at,
             }
             
-            # If Appwrite upload was successful, store the URL and file ID
-            if appwrite_result.get('success'):
-                create_data['qr_code_image_url'] = appwrite_result.get('file_url')
-                create_data['appwrite_file_id'] = appwrite_result.get('file_id')
+            # If Cloudinary upload was successful, store the URL and public ID
+            if cloud_result.get('success'):
+                create_data['qr_code_image_url'] = cloud_result.get('file_url')
+                create_data['appwrite_file_id'] = cloud_result.get('file_id')
             
             booking_qr = BookingQRCode.objects.create(**create_data)
             booking_qr_codes.append(booking_qr)

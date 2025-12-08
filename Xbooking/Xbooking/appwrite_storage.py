@@ -70,23 +70,22 @@ class AppwriteStorage:
             # Prepare headers
             headers = self._get_headers()
             
-            # Prepare files for multipart upload
+            # Prepare multipart form fields
+            data = [('fileId', file_id)]
+            perms = permissions if permissions else ['read("any")']
+            for p in perms:
+                data.append(('permissions[]', p))
+
+            # Prepare file part
             files = {
-                'fileId': (None, file_id),
                 'file': (filename, io.BytesIO(file_data), 'image/png')
             }
-            
-            # Add permissions if provided
-            if permissions:
-                files['permissions'] = (None, str(permissions))
-            else:
-                # Default: allow anyone to read
-                files['permissions'] = (None, '["read(\\"any\\")"]')
             
             # Make the upload request
             response = requests.post(
                 upload_url,
                 headers=headers,
+                data=data,
                 files=files,
                 timeout=30
             )
@@ -106,7 +105,8 @@ class AppwriteStorage:
                     'file_url': file_url,
                     'bucket_id': self.bucket_id,
                     'filename': filename,
-                    'size': result.get('sizeOriginal', 0)
+                    'size': result.get('sizeOriginal', 0),
+                    'raw_response': result
                 }
             else:
                 error_msg = response.text

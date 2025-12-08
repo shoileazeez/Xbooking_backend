@@ -16,7 +16,7 @@ from drf_spectacular.utils import extend_schema
 from django.utils import timezone
 from django.db.models import Q
 from django.conf import settings
-from Xbooking.appwrite_storage import upload_file_to_appwrite
+from Xbooking.cloudinary_storage import upload_file_to_cloudinary
 import logging
 
 logger = logging.getLogger(__name__)
@@ -214,14 +214,16 @@ class FileUploadView(APIView):
             # Read file content
             file_content = file.read()
             
-            # Upload to Appwrite
-            result = upload_file_to_appwrite(
+            # Upload to Cloudinary
+            folder = settings.CLOUDINARY_UPLOAD_FOLDER
+            result = upload_file_to_cloudinary(
                 file_data=file_content,
-                filename=file.name
+                filename=file.name,
+                folder=folder
             )
             
             if not result.get('success'):
-                logger.error(f"File upload to Appwrite failed: {result.get('error')}")
+                logger.error(f"File upload to Cloudinary failed: {result.get('error')}")
                 return Response(
                     {"detail": f"File upload failed: {result.get('error')}"},
                     status=status.HTTP_400_BAD_REQUEST

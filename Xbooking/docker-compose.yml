@@ -1,22 +1,4 @@
 services:
-  # PostgreSQL Database
-  db:
-    image: postgres:15-alpine
-    container_name: xbooking_db
-    restart: always
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB:-xbooking}
-      POSTGRES_USER: ${POSTGRES_USER:-xbooking_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-xbooking_admin}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - xbooking_network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-xbooking_user} -d ${POSTGRES_DB:-xbooking}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   # Redis
   redis:
@@ -52,8 +34,6 @@ services:
     env_file:
       - .env.production
     depends_on:
-      db:
-        condition: service_healthy
       redis:
         condition: service_healthy
     networks:
@@ -70,8 +50,6 @@ services:
     env_file:
       - .env.production
     depends_on:
-      db:
-        condition: service_healthy
       redis:
         condition: service_healthy
     networks:
@@ -88,15 +66,12 @@ services:
     env_file:
       - .env.production
     depends_on:
-      db:
-        condition: service_healthy
       redis:
         condition: service_healthy
     networks:
       - xbooking_network
 
 volumes:
-  postgres_data:
   redis_data:
   static_volume:
   media_volume:

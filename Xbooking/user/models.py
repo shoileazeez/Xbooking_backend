@@ -36,7 +36,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     # password and last_login are provided by AbstractBaseUser
     
     avatar_url = models.URLField(blank=True, null=True)
-    phone = models.CharField(max_length=20, blank=True, null=True)
     google_id = models.CharField(max_length=255, blank=True, null=True)
     date_joined = models.DateTimeField(_("date joined"), default=timezone.now)
     
@@ -57,6 +56,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 
 class VerificationCode(models.Model):
+    id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     code = models.CharField(max_length=6)
     created_at = models.DateTimeField(_("created_at"), default=timezone.now)

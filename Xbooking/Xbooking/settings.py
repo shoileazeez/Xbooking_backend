@@ -331,3 +331,13 @@ SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
 # Note: We use Mailjet REST API instead of SMTP for better deliverability on VPS
 # All email sending is handled through Xbooking.mailjet_utils.MailjetEmailService
+
+# ============================================================================
+# CLOUDINARY CONFIGURATION
+# ============================================================================
+
+CLOUDINARY_CLOUD_NAME = config('CLOUDINARY_CLOUD_NAME', default='')
+CLOUDINARY_API_KEY = config('CLOUDINARY_API_KEY', default='')
+CLOUDINARY_API_SECRET = config('CLOUDINARY_API_SECRET', default='')
+CLOUDINARY_QR_FOLDER = config('CLOUDINARY_QR_FOLDER', default='xbooking/qr')
+CLOUDINARY_UPLOAD_FOLDER = config('CLOUDINARY_UPLOAD_FOLDER', default='xbooking/uploads')
