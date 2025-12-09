@@ -22,7 +22,7 @@ import time
 import uuid
 from datetime import datetime, timedelta
 
-BASE_URL = "https://6a63f43d1a91.ngrok-free.app"
+BASE_URL ="http://127.0.0.1:8000/"
 EMAIL = f"daily_test_{int(time.time())}@test.com"
 PASSWORD = "TestPassword123!"
 

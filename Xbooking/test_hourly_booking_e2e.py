@@ -22,7 +22,7 @@ import time
 import uuid
 from datetime import datetime, timedelta
 
-BASE_URL = "https://6a63f43d1a91.ngrok-free.app"
+BASE_URL = "http://localhost:8000"
 EMAIL = f"hourly_test_{int(time.time())}@test.com"
 PASSWORD = "TestPassword123!"
 
@@ -388,7 +388,7 @@ def run_test():
     # 10. GET BOOKING QR CODE
     # =========================================================================
     print_step("10. Get Booking QR Code")
-    response = do_request("GET", f"{BASE_URL}/api/qr-code/bookings/{booking_id}/qr-code/", headers=headers)
+    response = do_request("GET", f"{BASE_URL}/api/qr/bookings/{booking_id}/qr-code/", headers=headers)
     print(f"Status: {response.status_code}")
     
     verification_code = None
@@ -466,7 +466,7 @@ def run_test():
     print_step("Test Summary")
     print_success(f"Booking Type: HOURLY")
     print_success(f"Space: {space.get('name', 'Unknown')}")
-    print_success(f"Duration: 2 hours ({check_in.strftime('%H:%M')} - {check_out.strftime('%H:%M')})")
+    # print_success(f"Duration: 2 hours ({check_in.strftime('%H:%M')} - {check_out.strftime('%H:%M')})")
     print_success(f"Total Price: ₦{total_price}")
     print_success(f"Guests Added: 2")
     print_success(f"Order: {order_number}")

@@ -35,6 +35,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True, blank=False)
     # password and last_login are provided by AbstractBaseUser
     
+    phone = models.CharField(max_length=20, blank=True, null=True)
     avatar_url = models.URLField(blank=True, null=True)
     google_id = models.CharField(max_length=255, blank=True, null=True)
     date_joined = models.DateTimeField(_("date joined"), default=timezone.now)

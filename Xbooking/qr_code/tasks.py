@@ -14,6 +14,7 @@ import qrcode
 import io
 import uuid
 import base64
+import requests
 from datetime import timedelta
 
 
@@ -64,6 +65,10 @@ def generate_qr_code_for_order(order_id):
         # Upload to Cloudinary
         filename = f"qr_order_{order.order_number}_{verification_code}.png"
         cloud_result = upload_qr_image_to_cloudinary(qr_image_bytes, filename, public_id=f"qr_{order.order_number}_{verification_code}")
+        try:
+            logger.info(f"Order QR Cloudinary result: success={cloud_result.get('success')}, id={str(cloud_result.get('file_id', ''))}, url={str(cloud_result.get('file_url', ''))}")
+        except Exception:
+            pass
         
         # Create or update QR code record
         update_data = {
@@ -75,9 +80,8 @@ def generate_qr_code_for_order(order_id):
         
         # If Cloudinary upload was successful, store the URL and public ID
         if cloud_result.get('success'):
-            update_data['qr_code_image_url'] = cloud_result.get('file_url')
-            # Reuse appwrite_file_id field to store Cloudinary public_id
-            update_data['appwrite_file_id'] = cloud_result.get('file_id')
+            update_data['qr_code_image_url'] = str(cloud_result.get('file_url', '')).strip()
+            update_data['appwrite_file_id'] = str(cloud_result.get('file_id', '')).strip()
         else:
             # Fallback: leave URL empty
             pass
@@ -138,15 +142,18 @@ def send_qr_code_email(order_id, qr_code_id):
         
         # Prepare QR code image attachment (base64 encoded)
         attachments = []
-        if qr_code.qr_code_image:
-            with open(qr_code.qr_code_image.path, 'rb') as img_file:
-                img_data = img_file.read()
-                img_base64 = base64.b64encode(img_data).decode('utf-8')
-                attachments.append({
-                    'ContentType': 'image/png',
-                    'Filename': f'qr_{order.order_number}.png',
-                    'Base64Content': img_base64
-                })
+        if qr_code.qr_code_image_url:
+            try:
+                resp = requests.get(qr_code.qr_code_image_url, timeout=15)
+                if resp.status_code == 200:
+                    img_base64 = base64.b64encode(resp.content).decode('utf-8')
+                    attachments.append({
+                        'ContentType': 'image/png',
+                        'Filename': f'qr_{order.order_number}.png',
+                        'Base64Content': img_base64
+                    })
+            except Exception:
+                pass
         
         # Send email via Mailjet API
         result = send_mailjet_email(
@@ -452,9 +459,13 @@ def generate_booking_qr_codes_for_order(order_id):
         booking_qr_codes = []
         
         for booking in order.bookings.filter(status='confirmed'):
-            # Skip if QR code already exists for this booking
-            if hasattr(booking, 'qr_code') and booking.qr_code:
-                booking_qr_codes.append(booking.qr_code)
+            existing_qr = None
+            try:
+                existing_qr = booking.qr_code
+            except BookingQRCode.DoesNotExist:
+                existing_qr = None
+            if existing_qr:
+                booking_qr_codes.append(existing_qr)
                 continue
             
             # Generate unique verification code
@@ -501,6 +512,10 @@ def generate_booking_qr_codes_for_order(order_id):
                 filename,
                 public_id=f"qr_booking_{booking.id}_{verification_code}"
             )
+            try:
+                logger.info(f"Booking QR Cloudinary result: success={cloud_result.get('success')}, id={str(cloud_result.get('file_id', ''))}, url={str(cloud_result.get('file_url', ''))}")
+            except Exception:
+                pass
             
             # Create BookingQRCode record
             create_data = {
@@ -514,8 +529,8 @@ def generate_booking_qr_codes_for_order(order_id):
             
             # If Cloudinary upload was successful, store the URL and public ID
             if cloud_result.get('success'):
-                create_data['qr_code_image_url'] = cloud_result.get('file_url')
-                create_data['appwrite_file_id'] = cloud_result.get('file_id')
+                create_data['qr_code_image_url'] = str(cloud_result.get('file_url', '')).strip()
+                create_data['appwrite_file_id'] = str(cloud_result.get('file_id', '')).strip()
             
             booking_qr = BookingQRCode.objects.create(**create_data)
             booking_qr_codes.append(booking_qr)
@@ -636,18 +651,18 @@ Thank you for choosing XBooking!
         # Prepare attachments - convert all QR code images to base64
         attachments = []
         for qr in booking_qr_codes:
-            if qr.qr_code_image:
+            if qr.qr_code_image_url:
                 try:
                     filename = f"QR_{qr.booking.space.name.replace(' ', '_')}_{qr.verification_code}.png"
-                    with open(qr.qr_code_image.path, 'rb') as img_file:
-                        img_base64 = base64.b64encode(img_file.read()).decode('utf-8')
+                    resp = requests.get(qr.qr_code_image_url, timeout=15)
+                    if resp.status_code == 200:
+                        img_base64 = base64.b64encode(resp.content).decode('utf-8')
                         attachments.append({
                             'ContentType': 'image/png',
                             'Filename': filename,
                             'Base64Content': img_base64
                         })
-                except Exception as e:
-                    # If file not accessible, skip this attachment
+                except Exception:
                     pass
         
         # Send email via Mailjet API
