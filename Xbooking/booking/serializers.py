@@ -136,10 +136,11 @@ class BookingListSerializer(serializers.ModelSerializer):
     """Serializer for listing bookings"""
     space_name = serializers.CharField(source='space.name', read_only=True)
     branch_name = serializers.CharField(source='space.branch.name', read_only=True)
+    image_url = serializers.CharField(source='space.image_url', read_only=True)
     
     class Meta:
         model = Booking
-        fields = ['id', 'space', 'space_name', 'branch_name', 'booking_type', 
+        fields = ['id', 'space', 'space_name', 'branch_name', 'image_url', 'booking_type', 
                   'check_in', 'check_out', 'status', 'total_price', 'created_at']
         read_only_fields = fields
 
@@ -227,6 +228,5 @@ class CheckoutSerializer(serializers.Serializer):
     """Serializer for cart checkout"""
     coupon_code = serializers.CharField(required=False, allow_blank=True)
     notes = serializers.CharField(required=False, allow_blank=True)
-
 
 

@@ -31,7 +31,7 @@ def generate_qr_code_for_order(order_id):
         verification_code = f"ORD-{uuid.uuid4().hex[:12].upper()}"
         
         # QR code data - includes order number, verification code, and check-in URL
-        qr_data = f"https://xbooking.com/verify/{verification_code}?order={order.order_number}"
+        qr_data = f"https://app.xbooking.dev/verify/{verification_code}?order={order.order_number}"
         
         # Generate QR code image
         qr = qrcode.QRCode(
@@ -481,7 +481,7 @@ def generate_booking_qr_codes_for_order(order_id):
                 'check_in': booking.check_in.isoformat() if booking.check_in else None,
                 'check_out': booking.check_out.isoformat() if booking.check_out else None,
             }
-            qr_url = f"https://xbooking.com/verify-booking/{verification_code}?booking={booking.id}"
+            qr_url = f"https://app.xbooking.dev/verify-booking/{verification_code}?booking={booking.id}"
             
             # Generate QR code image
             qr = qrcode.QRCode(

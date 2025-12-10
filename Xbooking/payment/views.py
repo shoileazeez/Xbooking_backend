@@ -89,6 +89,10 @@ class CreateOrderView(APIView):
 
         # Add bookings to the new order
         order.bookings.set(bookings)
+        try:
+            send_order_confirmation_email.delay(str(order.id))
+        except Exception:
+            pass
 
         return Response({
             "success": True,
