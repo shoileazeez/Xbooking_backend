@@ -37,14 +37,14 @@ class BookingAdmin(admin.ModelAdmin):
     ]
     list_filter = ['status', 'booking_type', 'created_at', 'check_in', 'confirmed_at']
     search_fields = ['user__email', 'user__first_name', 'user__last_name', 'space__name', 'id']
-    readonly_fields = ['id', 'created_at', 'updated_at', 'confirmed_at', 'cancelled_at', 'pricing_summary']
+    readonly_fields = ['id', 'created_at', 'updated_at', 'confirmed_at', 'cancelled_at', 'pricing_summary', 'slot']
     
     fieldsets = (
         ('Booking Information', {
             'fields': ('id', 'user', 'space', 'workspace', 'booking_type', 'status')
         }),
         ('Reservation Details', {
-            'fields': ('check_in', 'check_out', 'special_requests')
+            'fields': ('check_in', 'check_out', 'slot', 'special_requests')
         }),
         ('Pricing', {
             'fields': ('base_price', 'discount_amount', 'tax_amount', 'total_price', 'pricing_summary'),
@@ -91,12 +91,14 @@ class BookingAdmin(admin.ModelAdmin):
     
     def booking_type_display(self, obj):
         badge_colors = {
-            'direct': '#E3F2FD',
-            'from_cart': '#F3E5F5'
+            'hourly': '#E3F2FD',
+            'daily': '#FFF3E0',
+            'monthly': '#F3E5F5'
         }
         text_colors = {
-            'direct': '#1976D2',
-            'from_cart': '#7B1FA2'
+            'hourly': '#1976D2',
+            'daily': '#EF6C00',
+            'monthly': '#7B1FA2'
         }
         color_bg = badge_colors.get(obj.booking_type, '#F5F5F5')
         color_text = text_colors.get(obj.booking_type, '#424242')
@@ -134,7 +136,8 @@ class BookingAdmin(admin.ModelAdmin):
     pricing_summary.short_description = 'Pricing Breakdown'
     
     def mark_confirmed(self, request, queryset):
-        updated = queryset.filter(status='pending').update(status='confirmed', confirmed_at=timedelta())
+        from django.utils import timezone
+        updated = queryset.filter(status='pending').update(status='confirmed', confirmed_at=timezone.now())
         self.message_user(request, f'{updated} booking(s) marked as confirmed.')
     mark_confirmed.short_description = 'Mark selected as Confirmed'
     

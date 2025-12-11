@@ -250,6 +250,7 @@ class CheckoutView(APIView):
                 workspace=item.space.branch.workspace,
                 space=item.space,
                 user=request.user,
+                booking_type=item.booking_type,
                 booking_date=item.check_in.date(),
                 start_time=item.check_in.time(),
                 end_time=item.check_out.time(),
