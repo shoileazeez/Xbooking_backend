@@ -59,6 +59,7 @@ class Booking(models.Model):
     # Full datetime fields (computed from date + time)
     check_in = models.DateTimeField(help_text='Check-in datetime')
     check_out = models.DateTimeField(help_text='Check-out datetime')
+    slot = models.ForeignKey('workspace.SpaceCalendarSlot', on_delete=models.SET_NULL, null=True, blank=True, related_name='bookings')
     
     number_of_guests = models.IntegerField(validators=[MinValueValidator(1)], default=1)
     
@@ -214,6 +215,7 @@ class CartItem(models.Model):
     # Full datetime fields
     check_in = models.DateTimeField()
     check_out = models.DateTimeField()
+    slot = models.ForeignKey('workspace.SpaceCalendarSlot', on_delete=models.SET_NULL, null=True, blank=True, related_name='cart_items')
     number_of_guests = models.IntegerField(validators=[MinValueValidator(1)], default=1)
     
     # Pricing
@@ -311,3 +313,17 @@ class Guest(models.Model):
     def __str__(self):
         return f"Guest {self.first_name} {self.last_name} - {self.booking.id}"
 
+
+class Checkout(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='checkout')
+    bookings = models.ManyToManyField(Booking, related_name='checkouts', blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'booking_checkout'
+        ordering = ['-updated_at']
+
+    def __str__(self):
+        return f"Checkout {self.id} - {self.user.email}"

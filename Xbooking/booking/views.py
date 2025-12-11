@@ -15,11 +15,11 @@ from booking.serializers import (
     CartSerializer, CartItemSerializer, AddToCartSerializer,
     BookingSerializer, CreateBookingSerializer, BookingListSerializer,
     BookingDetailSerializer, CancelBookingSerializer, BookingReviewSerializer,
-    CreateReviewSerializer, CheckoutSerializer
+    CreateReviewSerializer, CheckoutSerializer, CheckoutDetailSerializer
 )
 from workspace.models import Space, Workspace
 from workspace.permissions import check_workspace_member
-from booking.models import Reservation
+from booking.models import Reservation, Checkout
 from django.db import transaction
 from django.utils import timezone
 from datetime import timedelta
@@ -38,6 +38,7 @@ class CartView(APIView):
     def get(self, request):
         """Get cart for user"""
         cart, created = Cart.objects.get_or_create(user=request.user)
+        Reservation.objects.filter(user=request.user, status__in=['pending', 'held'], expires_at__lte=timezone.now()).delete()
         
         serializer = CartSerializer(cart)
         return Response({
@@ -109,6 +110,7 @@ class AddToCartView(APIView):
                     )
                     if not slots.exists():
                         return Response({'success': False, 'message': 'Selected time slot is not available on this date'}, status=status.HTTP_400_BAD_REQUEST)
+                    slot = slots.first()
 
                 # Check for overlapping bookings (scheduled)
                 if Booking.objects.filter(space=space, check_in__lt=check_out, check_out__gt=check_in).exists():
@@ -148,7 +150,8 @@ class AddToCartView(APIView):
                             'number_of_guests': serializer.validated_data.get('number_of_guests', 1),
                             'price': price,
                             'special_requests': serializer.validated_data.get('special_requests', ''),
-                            'reservation': reservation
+                            'reservation': reservation,
+                            'slot': slot
                         }
                     )
 
@@ -252,6 +255,7 @@ class CheckoutView(APIView):
                 end_time=item.check_out.time(),
                 check_in=item.check_in,
                 check_out=item.check_out,
+                slot=item.slot,
                 number_of_guests=item.number_of_guests,
                 base_price=item.price,
                 tax_amount=item.tax_amount,
@@ -268,6 +272,11 @@ class CheckoutView(APIView):
                 'message': 'No bookings could be created (spaces might be unavailable)'
             }, status=status.HTTP_400_BAD_REQUEST)
 
+        # Update checkout model
+        checkout, _ = Checkout.objects.get_or_create(user=request.user)
+        checkout.bookings.set(bookings)
+        checkout.save()
+
         # Clear cart
         cart.items.all().delete()
         cart.calculate_totals()
@@ -278,6 +287,22 @@ class CheckoutView(APIView):
             'message': f'{len(bookings)} booking(s) created',
             'bookings': serializer.data
         }, status=status.HTTP_201_CREATED)
+
+    @extend_schema(
+        responses={200: CheckoutDetailSerializer},
+        description="Get pending booking IDs from checkout"
+    )
+    def get(self, request):
+        checkout, _ = Checkout.objects.get_or_create(user=request.user)
+        qs = checkout.bookings.filter(user=request.user, status='pending').order_by('-created_at')
+        booking_ids = [str(b.id) for b in qs]
+        data = {
+            'booking_ids': booking_ids,
+            'count': len(booking_ids),
+            'type': 'multiple' if len(booking_ids) > 1 else 'single'
+        }
+        serializer = CheckoutDetailSerializer(data)
+        return Response({'success': True, 'checkout': serializer.data}, status=status.HTTP_200_OK)
 
 
 class CreateBookingView(APIView):
@@ -330,6 +355,7 @@ class CreateBookingView(APIView):
 
                 check_in = _dt.combine(booking_date, start_time)
                 check_out = _dt.combine(booking_date, end_time)
+                slot_obj = slot
             else:
                 # must provide date + start/end
                 if not (booking_date and start_time and end_time):
@@ -339,14 +365,16 @@ class CreateBookingView(APIView):
                 check_out = _dt.combine(booking_date, end_time)
 
                 # verify there's an available slot that covers this period
-                if not SpaceCalendarSlot.objects.filter(
+                slot = SpaceCalendarSlot.objects.filter(
                     calendar__space=space,
                     date=booking_date,
                     start_time__lte=start_time,
                     end_time__gte=end_time,
                     status='available'
-                ).exists():
+                ).first()
+                if not slot:
                     return Response({'success': False, 'message': 'Selected time slot is not available on this date'}, status=status.HTTP_400_BAD_REQUEST)
+                slot_obj = slot
 
             # basic ordering validation
             if check_out <= check_in:
@@ -382,6 +410,7 @@ class CreateBookingView(APIView):
                         end_time=end_time,
                         check_in=check_in,
                         check_out=check_out,
+                        slot=slot_obj,
                         number_of_guests=serializer.validated_data.get('number_of_guests', 1),
                         base_price=base_price,
                         tax_amount=Decimal('0'),

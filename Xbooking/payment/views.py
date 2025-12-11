@@ -506,29 +506,46 @@ class PaymentCallbackView(APIView):
                                     booking.confirmed_at = timezone.now()
                                     booking.save()
 
-                                # Mark matching calendar slot(s) as booked and attach booking reference
+                                # Mark slot as booked using booking.slot if available; otherwise match by date/time
                                 try:
                                     from workspace.models import SpaceCalendarSlot
-
-                                    slots_qs = SpaceCalendarSlot.objects.filter(
-                                        calendar__space=booking.space,
-                                        date=booking.booking_date,
-                                        start_time=booking.start_time,
-                                        end_time=booking.end_time
-                                    )
-                                    for slot in slots_qs:
-                                        # Only mark slots that are free or already assigned to this booking
-                                        try:
-                                            if slot.booking is None or slot.booking_id == booking.id:
-                                                # Avoid unnecessary writes if already marked
-                                                if slot.status != 'booked' or slot.booking_id != booking.id:
-                                                    slot.status = 'booked'
-                                                    slot.booking = booking
-                                                    slot.save()
-                                        except Exception:
-                                            continue
+                                    if booking.slot_id:
+                                        slot = SpaceCalendarSlot.objects.filter(id=booking.slot_id).first()
+                                        if slot and (slot.booking is None or slot.booking_id == booking.id):
+                                            if slot.status != 'booked' or slot.booking_id != booking.id:
+                                                slot.status = 'booked'
+                                                slot.booking = booking
+                                                slot.save()
+                                    else:
+                                        slots_qs = SpaceCalendarSlot.objects.filter(
+                                            calendar__space=booking.space,
+                                            date=booking.booking_date,
+                                            start_time=booking.start_time,
+                                            end_time=booking.end_time
+                                        )
+                                        for slot in slots_qs:
+                                            try:
+                                                if slot.booking is None or slot.booking_id == booking.id:
+                                                    if slot.status != 'booked' or slot.booking_id != booking.id:
+                                                        slot.status = 'booked'
+                                                        slot.booking = booking
+                                                        slot.save()
+                                            except Exception:
+                                                continue
                                 except Exception:
-                                    # Non-fatal: if slot model or matching slot not found, continue
+                                    pass
+
+                                # Mark matching reservations as purchased
+                                try:
+                                    from booking.models import Reservation
+                                    Reservation.objects.filter(
+                                        space=booking.space,
+                                        user=booking.user,
+                                        start__lte=booking.check_in,
+                                        end__gte=booking.check_out,
+                                        status__in=['pending', 'held']
+                                    ).update(status='purchased')
+                                except Exception:
                                     pass
 
                         except Exception:

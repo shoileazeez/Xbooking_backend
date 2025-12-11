@@ -2,7 +2,7 @@
 Booking and Cart Serializers
 """
 from rest_framework import serializers
-from booking.models import Booking, Cart, CartItem, BookingReview
+from booking.models import Booking, Cart, CartItem, BookingReview, Checkout
 from workspace.models import Space
 from workspace.serializers.workspace import SpaceSimpleSerializer
 from drf_spectacular.utils import extend_schema_field
@@ -229,4 +229,7 @@ class CheckoutSerializer(serializers.Serializer):
     coupon_code = serializers.CharField(required=False, allow_blank=True)
     notes = serializers.CharField(required=False, allow_blank=True)
 
-
+class CheckoutDetailSerializer(serializers.Serializer):
+    booking_ids = serializers.ListField(child=serializers.CharField(), read_only=True)
+    count = serializers.IntegerField(read_only=True)
+    type = serializers.ChoiceField(choices=['single', 'multiple'], read_only=True)

@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.db.models import Sum
 from datetime import timedelta
-from booking.models import Booking, Cart, CartItem, BookingReview
+from booking.models import Booking, Cart, CartItem, BookingReview, Reservation, Checkout
 
 
 class CartItemInline(admin.TabularInline):
@@ -379,3 +379,48 @@ class BookingReviewAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.select_related('booking', 'space', 'user')
+
+
+@admin.register(Reservation)
+class ReservationAdmin(admin.ModelAdmin):
+    list_display = ['reservation_id_display', 'space_display', 'user_display', 'status', 'start', 'end', 'expires_at', 'created_at']
+    list_filter = ['status', 'created_at']
+    search_fields = ['space__name', 'user__email']
+    readonly_fields = ['id', 'created_at', 'updated_at']
+    ordering = ['-created_at']
+
+    def reservation_id_display(self, obj):
+        return str(obj.id)[:8]
+    reservation_id_display.short_description = 'Reservation ID'
+
+    def space_display(self, obj):
+        return obj.space.name
+    space_display.short_description = 'Space'
+
+    def user_display(self, obj):
+        return obj.user.email
+    user_display.short_description = 'User'
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related('space', 'user')
+
+
+@admin.register(Checkout)
+class CheckoutAdmin(admin.ModelAdmin):
+    list_display = ['checkout_id_display', 'user_display', 'bookings_count', 'updated_at']
+    search_fields = ['user__email']
+    readonly_fields = ['id', 'created_at', 'updated_at']
+    ordering = ['-updated_at']
+
+    def checkout_id_display(self, obj):
+        return str(obj.id)[:8]
+    checkout_id_display.short_description = 'Checkout ID'
+
+    def user_display(self, obj):
+        return obj.user.email
+    user_display.short_description = 'User'
+
+    def bookings_count(self, obj):
+        return obj.bookings.count()
+    bookings_count.short_description = 'Bookings'
