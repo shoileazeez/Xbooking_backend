@@ -1,16 +1,22 @@
-from .registration import UserSerializers
-from .login import LoginSerializers
-from .forget_password import ForgetPasswordSerializer
-from .password_reset_confirm import PasswordResetConfirmSerializer
-from .resend_password_reset import ResendPasswordResetSerializer
-from .google_auth import GoogleAuthSerializer
-from .profile import ProfileSerializer
+"""
+User serializers package.
+Use v1 serializers for all new code.
+"""
+# Export v1 serializers as default
+from user.serializers.v1 import (
+    UserRegistrationSerializer,
+    UserLoginSerializer,
+    UserProfileSerializer,
+    PasswordChangeSerializer,
+    ForcePasswordChangeSerializer,
+    OnboardingSerializer,
+)
+
 __all__ = [
-    'UserSerializers',
-    'LoginSerializers',
-    'ForgetPasswordSerializer',
-    'PasswordResetConfirmSerializer',
-    'ResendPasswordResetSerializer',
-    'GoogleAuthSerializer',
-    'ProfileSerializer',
+    "UserRegistrationSerializer",
+    "UserLoginSerializer",
+    "UserProfileSerializer",
+    "PasswordChangeSerializer",
+    "ForcePasswordChangeSerializer",
+    "OnboardingSerializer",
 ]

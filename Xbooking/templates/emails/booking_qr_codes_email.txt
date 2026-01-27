@@ -1,36 +1,44 @@
-Your Booking QR Code{% if is_multiple %}s{% endif %} - XBooking
-==============================================
+YOUR BOOKING QR CODE{% if is_multiple %}S{% endif %} - XBOOKING
+================================================
+
+🎫 Ready for check-in
 
 Hello {{ user_name }}!
 
-Your payment has been confirmed! Please find your QR code{% if is_multiple %}s{% endif %} attached to this email for check-in.
+Your payment has been confirmed! {% if is_multiple %}Each of your bookings has its own QR code attached to this email.{% else %}Your QR code is attached to this email.{% endif %} Present {% if is_multiple %}the appropriate QR code{% else %}your QR code{% endif %} at the space entrance for quick check-in.
 
 ORDER DETAILS
--------------
+------------------------------------------------
 Order Number: {{ order_number }}
 Total Bookings: {{ bookings_count }}
 
-
 YOUR BOOKING{% if is_multiple %}S{% endif %}
--------------
+------------------------------------------------
 {% for booking in bookings %}
-{{ booking.space_name }}
-  Check-in: {{ booking.check_in }}
-  Check-out: {{ booking.check_out }}
-  QR Code: {{ booking.verification_code }}
+Booking {{ forloop.counter }}: {{ booking.space_name }} ({{ booking.booking_type|default:"standard"|upper }})
+📅 Check-in: {{ booking.check_in }}
+📅 Check-out: {{ booking.check_out }}
+📍 Location: {{ booking.workspace_name|default:"Main Location" }}
+{% if booking.number_of_guests %}👥 Guests: {{ booking.number_of_guests }}
+{% endif %}
+🔐 Verification Code: {{ booking.verification_code }}
+📎 QR Code Attached: booking_{{ booking.id }}_qr.png
 
 {% endfor %}
 
-IMPORTANT INFORMATION
----------------------
-* Keep your QR code{% if is_multiple %}s{% endif %} safe and accessible
-* Show the appropriate QR code to staff at check-in
-{% if is_multiple %}* Each space requires its own QR code
-{% endif %}* QR codes are valid until your checkout time
+IMPORTANT CHECK-IN INSTRUCTIONS
+------------------------------------------------
+⚠️ Keep your QR code{% if is_multiple %}s{% endif %} safe and accessible on your mobile device
+⚠️ Show the QR code to staff at the space entrance for instant check-in
+{% if is_multiple %}⚠️ Each space requires its own unique QR code - don't mix them up
+{% endif %}⚠️ Your QR code{% if is_multiple %}s are{% else %} is{% endif %} valid from check-in to check-out time
+⚠️ Arrive on time for your scheduled booking to avoid complications
+⚠️ The verification code can be used manually if QR scanning fails
 
+View all bookings: https://app.xbooking.dev/bookings
+Need help? https://app.xbooking.dev/help
 
-Thank you for choosing XBooking!
-
----
-XBooking - Space Booking Platform
+------------------------------------------------
+XBooking - Professional Space Booking Platform
 This is an automated email. Please do not reply.
+© 2026 XBooking. All rights reserved.

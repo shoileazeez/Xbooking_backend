@@ -5,17 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Booking Reminder - XBooking</title>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; }
-        .container { background-color: white; max-width: 600px; margin: 0 auto; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .header { background-color: #FF9800; color: white; padding: 30px; text-align: center; }
-        .header h1 { margin: 0; font-size: 24px; }
-        .content { padding: 30px; }
-        .content h2 { color: #333; margin-top: 0; }
-        .info-box { background-color: #fff3e0; border-left: 4px solid #FF9800; padding: 15px; margin: 20px 0; }
-        .info-row { margin: 10px 0; }
-        .info-label { font-weight: bold; color: #666; }
-        .reminder-icon { font-size: 40px; margin-bottom: 10px; }
-        .footer { background-color: #333; color: #aaa; padding: 20px; text-align: center; font-size: 12px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f8f7fc; line-height: 1.6; }
+        .container { background-color: white; max-width: 600px; margin: 0 auto; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(124, 58, 237, 0.15); }
+        .header { background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); color: white; padding: 40px 30px; text-align: center; }
+        .header h1 { margin: 0; font-size: 28px; font-weight: 700; }
+        .reminder-icon { font-size: 50px; margin-bottom: 12px; }
+        .content { padding: 40px 30px; }
+        .content h2 { color: #1e293b; margin-top: 0; font-size: 22px; font-weight: 600; }
+        .content p { color: #64748b; font-size: 16px; margin: 12px 0; }
+        .info-box { background-color: #f8f7fc; border-left: 4px solid #7c3aed; border-radius: 8px; padding: 20px; margin: 24px 0; }
+        .info-row { margin: 12px 0; font-size: 15px; }
+        .info-label { font-weight: 600; color: #1e293b; }
+        .info-value { color: #64748b; }
+        .reminders-box { background-color: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 8px; padding: 20px; margin: 24px 0; }
+        .reminders-box h3 { color: #78350f; font-size: 16px; margin-bottom: 12px; }
+        .reminders-box ul { margin: 0; padding-left: 20px; }
+        .reminders-box li { color: #78350f; font-size: 14px; margin: 8px 0; }
+        .cta-button { display: inline-block; background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px; margin: 24px 0; transition: transform 0.2s ease; }
+        .cta-button:hover { transform: translateY(-2px); }
+        .footer { background-color: #1e293b; color: #94a3b8; padding: 32px 30px; text-align: center; font-size: 13px; }
+        .footer p { margin: 8px 0; }
+        .footer-logo { font-size: 20px; font-weight: 700; color: #7c3aed; margin-bottom: 12px; }
+        @media only screen and (max-width: 600px) {
+            .content, .header, .footer { padding: 24px 20px; }
+            .info-box, .reminders-box { padding: 16px; }
+        }
     </style>
 </head>
 <body>
@@ -23,36 +38,50 @@
         <div class="header">
             <div class="reminder-icon">⏰</div>
             <h1>Booking Reminder</h1>
+            <p style="margin-top: 8px; opacity: 0.95;">Your booking is coming up soon</p>
         </div>
         <div class="content">
             <h2>Hello {{ user_name }}!</h2>
-            <p>This is a friendly reminder that your booking is coming up soon.</p>
+            <p>This is a friendly reminder that your booking is approaching. Make sure you're ready for your reservation.</p>
             
             <div class="info-box">
                 <div class="info-row">
-                    <span class="info-label">Space:</span> {{ space_name }}
+                    <span class="info-label">Space:</span> <span class="info-value">{{ space_name }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Location:</span> {{ location }}
+                    <span class="info-label">Location:</span> <span class="info-value">{{ location }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Check-in:</span> {{ check_in }}
+                    <span class="info-label">Check-in:</span> <span class="info-value">{{ check_in }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Check-out:</span> {{ check_out }}
+                    <span class="info-label">Check-out:</span> <span class="info-value">{{ check_out }}</span>
                 </div>
             </div>
             
-            <p><strong>Reminders:</strong></p>
-            <ul>
-                <li>Have your QR code ready for check-in</li>
-                <li>Arrive on time</li>
-                <li>Contact support if you need to reschedule</li>
-            </ul>
+            <div class="reminders-box">
+                <h3>📝 Important Reminders</h3>
+                <ul>
+                    <li>Have your QR code ready on your mobile device for quick check-in</li>
+                    <li>Arrive on time to make the most of your booking</li>
+                    <li>Contact support if you need to make any changes or reschedule</li>
+                    <li>Ensure you have all necessary items for your visit</li>
+                </ul>
+            </div>
+
+            <div style="text-align: center;">
+                <a href="https://app.xbooking.dev/bookings" class="cta-button">View Booking Details</a>
+            </div>
+
+            <p style="margin-top: 24px; text-align: center; color: #64748b; font-size: 14px;">
+                Need assistance? <a href="https://app.xbooking.dev/help" style="color: #7c3aed; text-decoration: none; font-weight: 600;">Contact Support</a>
+            </p>
         </div>
         <div class="footer">
-            <p>XBooking - Space Booking Platform</p>
-            <p>This is an automated email. Please do not reply.</p>
+            <div class="footer-logo">XBooking</div>
+            <p>Professional Space Booking Platform</p>
+            <p>This is an automated email. Please do not reply directly to this message.</p>
+            <p style="margin-top: 16px;">© 2026 XBooking. All rights reserved.</p>
         </div>
     </div>
 </body>

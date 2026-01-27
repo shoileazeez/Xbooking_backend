@@ -9,8 +9,8 @@ class CartItemInline(admin.TabularInline):
     """Inline admin for CartItems"""
     model = CartItem
     extra = 0
-    fields = ['space', 'check_in', 'check_out', 'price', 'added_at']
-    readonly_fields = ['added_at', 'updated_at']
+    fields = ['space', 'check_in', 'check_out', 'price', 'created_at']
+    readonly_fields = ['created_at', 'updated_at']
     can_delete = True
 
 
@@ -254,10 +254,10 @@ class CartAdmin(admin.ModelAdmin):
 
 @admin.register(CartItem)
 class CartItemAdmin(admin.ModelAdmin):
-    list_display = ['item_id_display', 'space_display', 'user_display', 'time_range', 'price_display', 'status_display', 'added_at']
-    list_filter = ['added_at', 'updated_at']
+    list_display = ['item_id_display', 'space_display', 'user_display', 'time_range', 'price_display', 'status_display', 'created_at']
+    list_filter = ['created_at', 'updated_at']
     search_fields = ['space__name', 'cart__user__email']
-    readonly_fields = ['id', 'added_at', 'updated_at']
+    readonly_fields = ['id', 'created_at', 'updated_at']
     
     fieldsets = (
         ('Item Information', {
@@ -271,13 +271,13 @@ class CartItemAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
         ('Timestamps', {
-            'fields': ('added_at', 'updated_at'),
+            'fields': ('created_at', 'updated_at'),
             'classes': ('collapse',)
         }),
     )
     
-    ordering = ['-added_at']
-    date_hierarchy = 'added_at'
+    ordering = ['-created_at']
+    date_hierarchy = 'created_at'
     
     def item_id_display(self, obj):
         return str(obj.id)[:8]

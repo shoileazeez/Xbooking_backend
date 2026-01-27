@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thank You - Checkout Receipt</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px; }
+        .thank-you-box { background: white; padding: 30px; margin: 20px 0; text-align: center; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .receipt-details { background: white; padding: 20px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #4facfe; }
+        .detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+        .detail-label { font-weight: bold; color: #4facfe; }
+        .total-row { background: #e3f2fd; padding: 15px; margin-top: 15px; border-radius: 5px; font-size: 18px; font-weight: bold; }
+        .feedback-section { background: #fff3e0; padding: 20px; margin: 20px 0; border-radius: 8px; text-align: center; }
+        .button { display: inline-block; padding: 12px 30px; background: #4facfe; color: white; text-decoration: none; border-radius: 5px; margin-top: 15px; }
+        .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid #4facfe; color: #666; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>✨ Thank You!</h1>
+        <p>We hope you enjoyed your stay</p>
+    </div>
+    
+    <div class="content">
+        <div class="thank-you-box">
+            <h2 style="color: #4facfe; margin-top: 0;">🎉 Checkout Complete</h2>
+            <p style="font-size: 18px;">Thank you for choosing <strong>{{ booking.workspace.name }}</strong></p>
+            <p style="color: #666;">We hope you had a productive and comfortable experience!</p>
+        </div>
+        
+        <p>Hello <strong>{{ guest.full_name }}</strong>,</p>
+        
+        <p>Your checkout has been completed successfully. Here's a summary of your booking:</p>
+        
+        <div class="receipt-details">
+            <h3 style="color: #4facfe; margin-top: 0;">📋 Booking Receipt</h3>
+            
+            <div class="detail-row">
+                <span class="detail-label">Booking ID:</span>
+                <span>{{ booking.id }}</span>
+            </div>
+            
+            <div class="detail-row">
+                <span class="detail-label">Workspace:</span>
+                <span>{{ booking.workspace.name }}</span>
+            </div>
+            
+            <div class="detail-row">
+                <span class="detail-label">Space:</span>
+                <span>{{ booking.space.name }} ({{ booking.space.space_type }})</span>
+            </div>
+            
+            <div class="detail-row">
+                <span class="detail-label">Guest Name:</span>
+                <span>{{ guest.full_name }}</span>
+            </div>
+            
+            <div class="detail-row">
+                <span class="detail-label">Check-in:</span>
+                <span>{{ booking.check_in_date|date:"F d, Y" }} at {{ booking.check_in_time|time:"g:i A" }}</span>
+            </div>
+            
+            <div class="detail-row">
+                <span class="detail-label">Check-out:</span>
+                <span>{{ booking.check_out_date|date:"F d, Y" }} at {{ booking.check_out_time|time:"g:i A" }}</span>
+            </div>
+            
+            <div class="detail-row">
+                <span class="detail-label">Duration:</span>
+                <span>{{ booking.duration_display }}</span>
+            </div>
+            
+            {% if booking.order %}
+            <div class="total-row">
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Total Amount:</span>
+                    <span>{{ booking.order.currency }} {{ booking.order.total_amount }}</span>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="feedback-section">
+            <h3 style="color: #ff9800; margin-top: 0;">💭 We Value Your Feedback</h3>
+            <p>Your opinion matters! Help us improve by sharing your experience.</p>
+            <a href="#" class="button" style="background: #ff9800;">Leave a Review</a>
+        </div>
+        
+        <div style="background: white; padding: 20px; margin: 20px 0; border-radius: 8px; text-align: center;">
+            <h3 style="color: #4facfe; margin-top: 0;">📱 Book Again</h3>
+            <p>Loved your experience? Book your next visit now!</p>
+            <a href="{{ booking_url }}" class="button">Book Again</a>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px;">
+            <p style="color: #666;">Have questions about your booking?</p>
+            {% if booking.workspace.email %}
+            <p><strong>Email:</strong> {{ booking.workspace.email }}</p>
+            {% endif %}
+            {% if booking.workspace.phone_number %}
+            <p><strong>Phone:</strong> {{ booking.workspace.phone_number }}</p>
+            {% endif %}
+        </div>
+        
+        <p style="text-align: center; margin-top: 30px; font-size: 18px;">
+            <strong>Thank you for choosing Xbooking!</strong> 🙏
+        </p>
+    </div>
+    
+    <div class="footer">
+        <p>© {{ current_year }} Xbooking. All rights reserved.</p>
+        <p>This is an automated receipt. Please do not reply to this message.</p>
+    </div>
+</body>
+</html>

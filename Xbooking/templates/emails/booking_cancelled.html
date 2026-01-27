@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Cancelled</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4; padding: 40px 20px;">
+        <tr>
+            <td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <!-- Header with Purple Background -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%); padding: 40px 30px; text-align: center;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">
+                                Booking Cancelled
+                            </h1>
+                            <p style="margin: 10px 0 0 0; color: #ffffff; font-size: 16px; opacity: 0.95;">
+                                Your booking has been cancelled
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 40px 30px;">
+                            <p style="margin: 0 0 20px 0; color: #333333; font-size: 16px; line-height: 1.6;">
+                                Hi <strong>{{ user_name }}</strong>,
+                            </p>
+                            
+                            <p style="margin: 0 0 30px 0; color: #555555; font-size: 15px; line-height: 1.6;">
+                                Your booking has been successfully cancelled. Below are the details of the cancelled booking:
+                            </p>
+                            
+                            <!-- Booking Details Card -->
+                            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f9fafb; border-radius: 8px; margin-bottom: 30px; border: 1px solid #e5e7eb;">
+                                <tr>
+                                    <td style="padding: 20px;">
+                                        <table width="100%" cellpadding="0" cellspacing="0">
+                                            <tr>
+                                                <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">
+                                                    <strong>Workspace:</strong>
+                                                </td>
+                                                <td style="padding: 8px 0; color: #111827; font-size: 14px; text-align: right;">
+                                                    {{ workspace_name }}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">
+                                                    <strong>Space:</strong>
+                                                </td>
+                                                <td style="padding: 8px 0; color: #111827; font-size: 14px; text-align: right;">
+                                                    {{ space_name }}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">
+                                                    <strong>Check-in Date:</strong>
+                                                </td>
+                                                <td style="padding: 8px 0; color: #111827; font-size: 14px; text-align: right;">
+                                                    {{ check_in_date }}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">
+                                                    <strong>Cancellation Date:</strong>
+                                                </td>
+                                                <td style="padding: 8px 0; color: #111827; font-size: 14px; text-align: right;">
+                                                    {{ cancellation_date }}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 8px 0; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 14px; padding-top: 15px;">
+                                                    <strong>Original Amount:</strong>
+                                                </td>
+                                                <td style="padding: 8px 0; border-top: 1px solid #e5e7eb; color: #111827; font-size: 14px; text-align: right; padding-top: 15px;">
+                                                    ₦{{ original_amount }}
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            {% if refund_amount > 0 %}
+                            <!-- Refund Details Card -->
+                            <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%); border-radius: 8px; margin-bottom: 30px;">
+                                <tr>
+                                    <td style="padding: 25px; text-align: center;">
+                                        <p style="margin: 0 0 10px 0; color: #ffffff; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9;">
+                                            Refund Amount
+                                        </p>
+                                        <p style="margin: 0 0 5px 0; color: #ffffff; font-size: 36px; font-weight: 700;">
+                                            ₦{{ refund_amount }}
+                                        </p>
+                                        <p style="margin: 0; color: #ffffff; font-size: 14px; opacity: 0.9;">
+                                            {{ refund_percentage }}% refund ({{ penalty_text }})
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Refund Info -->
+                            <div style="background-color: #f0fdf4; border-left: 4px solid #10b981; padding: 15px 20px; border-radius: 6px; margin-bottom: 25px;">
+                                <p style="margin: 0; color: #065f46; font-size: 14px; line-height: 1.6;">
+                                    <strong>✓ Refund Processed</strong><br>
+                                    The refund of ₦{{ refund_amount }} has been credited to your wallet. You can use this balance for future bookings or request a withdrawal to your bank account.
+                                </p>
+                                {% if refund_reference %}
+                                <p style="margin: 10px 0 0 0; color: #065f46; font-size: 12px;">
+                                    Reference: <strong>{{ refund_reference }}</strong>
+                                </p>
+                                {% endif %}
+                            </div>
+                            {% else %}
+                            <!-- No Refund Info -->
+                            <div style="background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 15px 20px; border-radius: 6px; margin-bottom: 25px;">
+                                <p style="margin: 0; color: #991b1b; font-size: 14px; line-height: 1.6;">
+                                    <strong>No Refund</strong><br>
+                                    Unfortunately, no refund is available as this booking was cancelled less than 6 hours before check-in. Please review our cancellation policy for more details.
+                                </p>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Cancellation Policy -->
+                            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fefce8; border-radius: 8px; margin-bottom: 30px; border: 1px solid #fde047;">
+                                <tr>
+                                    <td style="padding: 20px;">
+                                        <p style="margin: 0 0 10px 0; color: #854d0e; font-size: 14px; font-weight: 600;">
+                                            📋 Cancellation Policy
+                                        </p>
+                                        <p style="margin: 0; color: #713f12; font-size: 13px; line-height: 1.6;">
+                                            • <strong>24+ hours</strong> before check-in: 100% refund<br>
+                                            • <strong>6-24 hours</strong> before check-in: 50% refund<br>
+                                            • <strong>Less than 6 hours</strong> before check-in: No refund
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Action Button -->
+                            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
+                                <tr>
+                                    <td align="center">
+                                        <a href="{{ dashboard_url }}" style="display: inline-block; background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%); color: #ffffff; text-decoration: none; padding: 14px 35px; border-radius: 8px; font-size: 15px; font-weight: 600; box-shadow: 0 4px 6px rgba(124, 58, 237, 0.3);">
+                                            View My Bookings
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <p style="margin: 0; color: #6b7280; font-size: 14px; line-height: 1.6;">
+                                If you have any questions about this cancellation, please contact our support team.
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #f9fafb; padding: 30px; text-align: center; border-top: 1px solid #e5e7eb;">
+                            <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 13px;">
+                                Best regards,<br>
+                                <strong style="color: #7c3aed;">The Xbooking Team</strong>
+                            </p>
+                            <p style="margin: 0; color: #9ca3af; font-size: 12px;">
+                                © 2026 Xbooking. All rights reserved.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

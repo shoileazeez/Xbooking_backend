@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cancellation Request - Admin Notification</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 650px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(124, 58, 237, 0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);
+            color: #ffffff;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 26px;
+            font-weight: 600;
+        }
+        .urgent-banner {
+            background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+            color: #ffffff;
+            padding: 15px 20px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 16px;
+        }
+        .content {
+            padding: 30px 20px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+            margin: 15px 0;
+        }
+        .status-urgent {
+            background-color: #fee2e2;
+            color: #dc2626;
+        }
+        .status-normal {
+            background-color: #dbeafe;
+            color: #2563eb;
+        }
+        .booking-card {
+            background-color: #f9fafb;
+            border: 2px solid #7c3aed;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        .detail-label {
+            font-weight: 600;
+            color: #6b7280;
+            flex: 1;
+        }
+        .detail-value {
+            color: #111827;
+            font-weight: 500;
+            flex: 2;
+            text-align: right;
+        }
+        .highlight {
+            background-color: #fef3c7;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: 700;
+        }
+        .customer-info {
+            background-color: #ede9fe;
+            border-left: 4px solid #7c3aed;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .reason-box {
+            background-color: #f3f4f6;
+            border: 2px solid #d1d5db;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .reason-box h4 {
+            margin: 0 0 10px 0;
+            color: #7c3aed;
+        }
+        .reason-text {
+            color: #374151;
+            font-size: 15px;
+            line-height: 1.6;
+            font-style: italic;
+        }
+        .financial-summary {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 2px solid #f59e0b;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .financial-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 16px;
+        }
+        .financial-total {
+            border-top: 2px solid #f59e0b;
+            padding-top: 10px;
+            margin-top: 10px;
+            font-weight: 700;
+            font-size: 18px;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        .btn {
+            flex: 1;
+            min-width: 200px;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            text-align: center;
+            font-size: 16px;
+            display: inline-block;
+        }
+        .btn-approve {
+            background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+            color: #ffffff;
+        }
+        .btn-reject {
+            background: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
+            color: #ffffff;
+        }
+        .btn-view {
+            background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);
+            color: #ffffff;
+        }
+        .policy-note {
+            background-color: #e0e7ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-size: 14px;
+            color: #3730a3;
+        }
+        .footer {
+            background-color: #f9fafb;
+            padding: 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #6b7280;
+            border-top: 1px solid #e5e7eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        {% if requires_approval %}
+        <div class="urgent-banner">
+            ⚠️ ACTION REQUIRED: Late Cancellation Request
+        </div>
+        {% endif %}
+        
+        <div class="header">
+            <h1>📋 Booking Cancellation Request</h1>
+        </div>
+        
+        <div class="content">
+            <p>Hi <strong>{{ workspace_admin_name }}</strong>,</p>
+            
+            {% if requires_approval %}
+                <span class="status-badge status-urgent">🔥 URGENT - Requires Approval</span>
+                <p>A customer has requested to cancel their booking with <strong>only {{ hours_until_checkin }} hours</strong> until check-in. This requires your approval.</p>
+            {% else %}
+                <span class="status-badge status-normal">ℹ️ Auto-Approved</span>
+                <p>A booking has been automatically cancelled according to your cancellation policy.</p>
+            {% endif %}
+            
+            <div class="customer-info">
+                <h3 style="margin: 0 0 10px 0; color: #7c3aed;">👤 Customer Information</h3>
+                <div class="detail-row">
+                    <span class="detail-label">Name:</span>
+                    <span class="detail-value">{{ user_name }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Email:</span>
+                    <span class="detail-value">{{ user_email }}</span>
+                </div>
+            </div>
+            
+            <div class="booking-card">
+                <h3 style="margin-top: 0; color: #7c3aed;">📅 Booking Details</h3>
+                <div class="detail-row">
+                    <span class="detail-label">Workspace:</span>
+                    <span class="detail-value">{{ workspace_name }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Space:</span>
+                    <span class="detail-value">{{ space_name }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Check-in:</span>
+                    <span class="detail-value">{{ check_in_date }} at {{ check_in_time }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Check-out:</span>
+                    <span class="detail-value">{{ check_out_date }} at {{ check_out_time }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Booking ID:</span>
+                    <span class="detail-value">{{ booking_id }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Time Until Check-in:</span>
+                    <span class="detail-value"><span class="highlight">{{ hours_until_checkin }} hours</span></span>
+                </div>
+            </div>
+            
+            <div class="reason-box">
+                <h4>💬 Customer's Cancellation Reason:</h4>
+                <p class="reason-text">"{{ reason_description }}"</p>
+            </div>
+            
+            <div class="financial-summary">
+                <h3 style="margin: 0 0 15px 0; color: #92400e;">💰 Financial Impact</h3>
+                <div class="financial-row">
+                    <span>Original Booking Amount:</span>
+                    <span>₦{{ original_amount }}</span>
+                </div>
+                <div class="financial-row">
+                    <span>Refund to Customer:</span>
+                    <span style="color: #dc2626;">-₦{{ refund_amount }} ({{ refund_percentage }}%)</span>
+                </div>
+                <div class="financial-row">
+                    <span>Cancellation Fee (Your Earnings):</span>
+                    <span style="color: #059669;">+₦{{ penalty_amount }}</span>
+                </div>
+                <div class="financial-row financial-total">
+                    <span>Net Impact to Workspace:</span>
+                    <span style="color: {% if penalty_amount > 0 %}#059669{% else %}#dc2626{% endif %};">
+                        {% if penalty_amount > 0 %}+{% endif %}₦{{ penalty_amount }}
+                    </span>
+                </div>
+            </div>
+            
+            {% if requires_approval %}
+                <div class="policy-note">
+                    <strong>📋 Cancellation Policy Applied:</strong><br>
+                    Since the customer is cancelling with less than 6 hours notice, they would normally receive <strong>{{ refund_percentage }}% refund</strong> (₦{{ refund_amount }}).
+                    You can approve this, adjust the refund amount, or reject the cancellation entirely.
+                </div>
+                
+                <div class="action-buttons">
+                    <a href="{{ approve_url }}" class="btn btn-approve">
+                        ✓ Approve Cancellation
+                    </a>
+                    <a href="{{ reject_url }}" class="btn btn-reject">
+                        ✗ Reject Request
+                    </a>
+                </div>
+                
+                <a href="{{ admin_dashboard_url }}" class="btn btn-view" style="width: 100%; margin-top: 10px;">
+                    View in Admin Dashboard
+                </a>
+                
+                <p style="font-size: 14px; color: #6b7280; text-align: center; margin-top: 20px;">
+                    <strong>Please respond within 2 hours</strong> to ensure good customer experience
+                </p>
+            {% else %}
+                <div class="policy-note">
+                    <strong>✓ Automatically Processed:</strong><br>
+                    This cancellation was made {{ hours_until_checkin }} hours before check-in, which meets the automatic cancellation criteria.
+                    The customer has been refunded {{ refund_percentage }}% (₦{{ refund_amount }}) to their wallet.
+                </div>
+                
+                <a href="{{ admin_dashboard_url }}" class="btn btn-view" style="width: 100%; margin-top: 20px;">
+                    View Booking Details
+                </a>
+            {% endif %}
+            
+            <p style="margin-top: 30px; font-size: 14px; color: #6b7280;">
+                This notification helps you track bookings and customer satisfaction. Consider reaching out to the customer to understand their concerns and improve your service.
+            </p>
+        </div>
+        
+        <div class="footer">
+            <p><strong>Xbooking Admin Notifications</strong></p>
+            <p style="font-size: 12px; margin-top: 10px;">
+                Manage your notification preferences in your admin dashboard
+            </p>
+        </div>
+    </div>
+</body>
+</html>

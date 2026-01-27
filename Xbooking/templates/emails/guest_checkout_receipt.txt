@@ -1,0 +1,38 @@
+THANK YOU - CHECKOUT RECEIPT
+============================
+
+Hello {{ guest.full_name }},
+
+Your checkout has been completed successfully. Thank you for choosing {{ booking.workspace.name }}!
+
+BOOKING RECEIPT
+---------------
+Booking ID: {{ booking.id }}
+Workspace: {{ booking.workspace.name }}
+Space: {{ booking.space.name }} ({{ booking.space.space_type }})
+Guest Name: {{ guest.full_name }}
+Check-in: {{ booking.check_in_date|date:"F d, Y" }} at {{ booking.check_in_time|time:"g:i A" }}
+Check-out: {{ booking.check_out_date|date:"F d, Y" }} at {{ booking.check_out_time|time:"g:i A" }}
+Duration: {{ booking.duration_display }}
+{% if booking.order %}
+Total Amount: {{ booking.order.currency }} {{ booking.order.total_amount }}
+{% endif %}
+
+WE VALUE YOUR FEEDBACK
+----------------------
+Your opinion matters! Help us improve by sharing your experience.
+
+BOOK AGAIN
+----------
+Loved your experience? Visit {{ booking_url }} to book your next stay!
+
+HAVE QUESTIONS?
+---------------
+{% if booking.workspace.email %}Email: {{ booking.workspace.email }}{% endif %}
+{% if booking.workspace.phone_number %}Phone: {{ booking.workspace.phone_number }}{% endif %}
+
+Thank you for choosing Xbooking!
+
+---
+© {{ current_year }} Xbooking. All rights reserved.
+This is an automated receipt. Please do not reply to this message.

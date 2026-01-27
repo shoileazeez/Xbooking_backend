@@ -1,9 +1,10 @@
 """
 Workspace serializers module
 """
-from .workspace import *
-from .members import *
-from .admin_user_management import *
+# Import from v1 for backwards compatibility
+from .v1.workspace import *
+from .v1.members import *
+from .v1.admin import *
 
 __all__ = [
     # Workspace serializers

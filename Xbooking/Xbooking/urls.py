@@ -18,21 +18,21 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from user.view import LandingPageView
-from user.views import ProfileView
+from django.views.generic import TemplateView
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', LandingPageView.as_view(), name='landing_page'),
-    path("api/user/", include("user.urls")),
-    path("api/users/", include("user.views.password_change_urls")),
-    path("api/workspace/", include("workspace.urls")),
-    path("api/booking/", include("booking.urls")),
-    path("api/payment/", include("payment.urls")),
-    path("api/qr/", include("qr_code.urls")),
-    path("api/notifications/", include("notifications.urls")),
-    path("api/user/profile/", ProfileView.as_view(), name="profile"),
+    path('', TemplateView.as_view(template_name='index.html'), name='landing_page'),
+    
+    # API v1 Routes (Production)
+    path("api/v1/workspace/", include("workspace.urls_v1")),
+    path("api/v1/user/", include("user.urls_v1")),
+    path("api/v1/booking/", include("booking.urls_v1")),
+    path("api/v1/payment/", include("payment.urls_v1")),
+    path("api/v1/bank/", include("bank.urls")),
+    path("api/v1/qr/", include("qr_code.urls")),
+    path("api/v1/notifications/", include("notifications.urls")),
     
     # API Documentation
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),

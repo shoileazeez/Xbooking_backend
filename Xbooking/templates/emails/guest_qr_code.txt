@@ -1,0 +1,32 @@
+YOUR QR CODE FOR {{ booking.workspace.name }}
+================================================
+
+Hello {{ guest.full_name }},
+
+Thank you for your booking! Your QR code is attached to this email. Please save it and present it at check-in.
+
+BOOKING DETAILS
+---------------
+Workspace: {{ booking.workspace.name }}
+Space: {{ booking.space.name }} ({{ booking.space.space_type }})
+Check-in: {{ booking.check_in_date|date:"F d, Y" }} at {{ booking.check_in_time|time:"g:i A" }}
+Check-out: {{ booking.check_out_date|date:"F d, Y" }} at {{ booking.check_out_time|time:"g:i A" }}
+Guest Name: {{ guest.full_name }}
+{% if guest.email %}Email: {{ guest.email }}{% endif %}
+{% if guest.phone_number %}Phone: {{ guest.phone_number }}{% endif %}
+
+IMPORTANT NOTES
+---------------
+- Keep this QR code safe and accessible on your device
+- Present it at check-in for quick verification
+- Do not share this QR code with others
+- If you lose access, contact workspace support
+
+NEED HELP?
+----------
+{% if booking.workspace.email %}Email: {{ booking.workspace.email }}{% endif %}
+{% if booking.workspace.phone_number %}Phone: {{ booking.workspace.phone_number }}{% endif %}
+
+---
+© {{ current_year }} Xbooking. All rights reserved.
+This is an automated email. Please do not reply to this message.

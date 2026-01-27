@@ -1,27 +1,38 @@
-Order Confirmation - XBooking
-==============================
+ORDER CONFIRMATION - XBOOKING
+================================================
+
+📋 Your order has been created
 
 Hello {{ user_name }}!
 
 Thank you for your order. Here are your booking details:
 
+ORDER DETAILS
+------------------------------------------------
 Order Number: {{ order_number }}
 
-Your Bookings:
+YOUR BOOKINGS
+------------------------------------------------
 {% for booking in bookings %}
-- {{ booking.space.name }}
-  Check-in: {{ booking.check_in }}
-  Check-out: {{ booking.check_out }}
-  Price: ₦{{ booking.total_price }}
+Booking {{ forloop.counter }}: {{ booking.space.name }}
+📅 Check-in: {{ booking.check_in }}
+📅 Check-out: {{ booking.check_out }}
+💰 Price: ₦{{ booking.total_price }}
+
 {% endfor %}
 
-Total: ₦{{ total_amount }}
+TOTAL: ₦{{ total_amount }}
 
-Next Steps:
-- Complete payment to confirm your booking
-- You'll receive a QR code after payment
-- Show QR code at check-in
+NEXT STEPS
+------------------------------------------------
+📧 Complete payment to confirm your booking
+📧 You'll receive a confirmation email after payment
+📧 Individual QR codes will be sent for each booking
+🎫 Present your QR code at the space entrance for check-in
 
----
-XBooking - Space Booking Platform
+Complete payment: https://app.xbooking.dev/bookings
+
+------------------------------------------------
+XBooking - Professional Space Booking Platform
 This is an automated email. Please do not reply.
+© 2026 XBooking. All rights reserved.

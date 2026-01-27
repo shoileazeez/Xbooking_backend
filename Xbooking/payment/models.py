@@ -9,9 +9,6 @@ from workspace.models import Workspace
 from booking.models import Booking
 import uuid
 
-# Import withdrawal models
-from .withdrawal_models import BankAccount, Withdrawal, WithdrawalLog
-
 
 class Order(models.Model):
     """Model for orders created from bookings"""
@@ -43,7 +40,7 @@ class Order(models.Model):
     status = models.CharField(max_length=20, choices=ORDER_STATUS_CHOICES, default='pending')
     
     # Payment reference
-    payment_method = models.CharField(max_length=50, blank=True, null=True)  # paystack, flutterwave, etc
+    payment_method = models.CharField(max_length=50, blank=True, null=True)  # wallet, paystack, flutterwave, etc
     payment_reference = models.CharField(max_length=255, blank=True, null=True)  # transaction ID from payment gateway
     
     # Notes
@@ -93,6 +90,7 @@ class Payment(models.Model):
     ]
     
     PAYMENT_METHOD_CHOICES = [
+        ('wallet', 'Wallet'),
         ('paystack', 'Paystack'),
         ('flutterwave', 'Flutterwave'),
         ('stripe', 'Stripe'),

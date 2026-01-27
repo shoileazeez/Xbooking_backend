@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Receipt - XBooking</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f8f7fc; line-height: 1.6; }
+        .email-wrapper { max-width: 600px; margin: 0 auto; background-color: #ffffff; }
+        .header { background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); color: white; padding: 40px 30px; text-align: center; }
+        .header h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+        .header p { font-size: 16px; opacity: 0.95; }
+        .icon { font-size: 48px; margin-bottom: 16px; }
+        .content { padding: 40px 30px; }
+        .greeting { font-size: 20px; color: #1e293b; font-weight: 600; margin-bottom: 16px; }
+        .message { font-size: 16px; color: #64748b; margin-bottom: 32px; }
+        .receipt-box { background-color: #f8f7fc; border: 2px solid #e9d5ff; border-radius: 12px; padding: 24px; margin: 24px 0; }
+        .receipt-header { font-size: 18px; font-weight: 600; color: #7c3aed; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid #e9d5ff; }
+        .receipt-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f1f0f5; }
+        .receipt-row:last-child { border-bottom: none; }
+        .receipt-label { font-size: 14px; color: #64748b; font-weight: 500; }
+        .receipt-value { font-size: 15px; color: #1e293b; font-weight: 600; }
+        .bookings-section { margin: 32px 0; }
+        .section-title { font-size: 18px; font-weight: 600; color: #1e293b; margin-bottom: 16px; }
+        .booking-card { background: white; border: 1px solid #e9d5ff; border-radius: 8px; padding: 20px; margin-bottom: 16px; transition: all 0.3s ease; }
+        .booking-card:hover { box-shadow: 0 4px 12px rgba(124, 58, 237, 0.1); }
+        .booking-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .space-name { font-size: 16px; font-weight: 600; color: #7c3aed; }
+        .booking-type { display: inline-block; background-color: #ede9fe; color: #7c3aed; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; text-transform: capitalize; }
+        .booking-details { font-size: 14px; color: #64748b; }
+        .booking-details p { margin: 6px 0; }
+        .booking-details strong { color: #1e293b; font-weight: 600; }
+        .total-section { background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); color: white; border-radius: 12px; padding: 24px; margin-top: 32px; text-align: right; }
+        .total-label { font-size: 16px; opacity: 0.95; margin-bottom: 8px; }
+        .total-amount { font-size: 32px; font-weight: 700; }
+        .info-box { background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px 20px; border-radius: 8px; margin: 24px 0; }
+        .info-box-icon { color: #f59e0b; font-size: 20px; margin-bottom: 8px; }
+        .info-box p { font-size: 14px; color: #78350f; margin: 6px 0; }
+        .cta-section { text-align: center; margin: 32px 0; }
+        .cta-button { display: inline-block; background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px; transition: transform 0.2s ease; }
+        .cta-button:hover { transform: translateY(-2px); }
+        .footer { background-color: #1e293b; color: #94a3b8; padding: 32px 30px; text-align: center; }
+        .footer-logo { font-size: 20px; font-weight: 700; color: #7c3aed; margin-bottom: 12px; }
+        .footer p { font-size: 13px; margin: 8px 0; }
+        .footer-links { margin-top: 16px; }
+        .footer-links a { color: #7c3aed; text-decoration: none; margin: 0 12px; font-size: 13px; }
+        @media only screen and (max-width: 600px) {
+            .content, .header, .footer { padding: 24px 20px; }
+            .receipt-box { padding: 16px; }
+            .booking-card { padding: 16px; }
+            .total-amount { font-size: 24px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-wrapper">
+        <!-- Header -->
+        <div class="header">
+            <div class="icon">📄</div>
+            <h1>Order Receipt</h1>
+            <p>Your booking confirmation and payment receipt</p>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <p class="greeting">Hello {{ user_name }}!</p>
+            <p class="message">Thank you for your payment. Your order has been successfully processed and your bookings are now confirmed.</p>
+
+            <!-- Receipt Details -->
+            <div class="receipt-box">
+                <div class="receipt-header">📋 Order Details</div>
+                <div class="receipt-row">
+                    <span class="receipt-label">Order Number</span>
+                    <span class="receipt-value">#{{ order_number }}</span>
+                </div>
+                <div class="receipt-row">
+                    <span class="receipt-label">Payment Method</span>
+                    <span class="receipt-value">{{ payment_method|upper }}</span>
+                </div>
+                <div class="receipt-row">
+                    <span class="receipt-label">Payment Reference</span>
+                    <span class="receipt-value">{{ payment_reference }}</span>
+                </div>
+                <div class="receipt-row">
+                    <span class="receipt-label">Number of Bookings</span>
+                    <span class="receipt-value">{{ bookings_count }}</span>
+                </div>
+            </div>
+
+            <!-- Bookings List -->
+            <div class="bookings-section">
+                <h2 class="section-title">🎫 Your Confirmed Bookings</h2>
+                {% for booking in bookings %}
+                <div class="booking-card">
+                    <div class="booking-header">
+                        <span class="space-name">{{ booking.space.name }}</span>
+                        <span class="booking-type">{{ booking.booking_type }}</span>
+                    </div>
+                    <div class="booking-details">
+                        <p><strong>📍 Location:</strong> {{ booking.workspace.name }}</p>
+                        <p><strong>📅 Check-in:</strong> {{ booking.check_in|date:"F d, Y - g:i A" }}</p>
+                        <p><strong>📅 Check-out:</strong> {{ booking.check_out|date:"F d, Y - g:i A" }}</p>
+                        {% if booking.number_of_guests %}
+                        <p><strong>👥 Guests:</strong> {{ booking.number_of_guests }}</p>
+                        {% endif %}
+                        <p><strong>💰 Amount:</strong> ₦{{ booking.total_price|floatformat:2 }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Total Amount -->
+            <div class="total-section">
+                <div class="total-label">Total Amount Paid</div>
+                <div class="total-amount">₦{{ total_amount|floatformat:2 }}</div>
+            </div>
+
+            <!-- Important Information -->
+            <div class="info-box">
+                <div class="info-box-icon">ℹ️</div>
+                <p><strong>What's Next?</strong></p>
+                <p>• Individual QR codes for each booking will be sent in separate emails</p>
+                <p>• Present your QR code at the space entrance for check-in</p>
+                <p>• Arrive on time for your scheduled booking</p>
+                <p>• Contact support if you have any questions</p>
+            </div>
+
+            <!-- CTA Button -->
+            <div class="cta-section">
+                <a href="https://app.xbooking.dev/bookings" class="cta-button">View My Bookings</a>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <div class="footer-logo">XBooking</div>
+            <p>Professional Space Booking Platform</p>
+            <p>This is an automated email. Please do not reply directly to this message.</p>
+            <div class="footer-links">
+                <a href="https://app.xbooking.dev/help">Help Center</a>
+                <a href="https://app.xbooking.dev/contact">Contact Us</a>
+                <a href="https://app.xbooking.dev/terms">Terms</a>
+            </div>
+            <p style="margin-top: 16px; font-size: 12px;">© 2026 XBooking. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -41,10 +41,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.staticfiles',
     'django.contrib.messages',
+    "core.apps.CoreConfig",  # Core utilities (must be before other apps)
     "user",
     "workspace",
     "booking",
     "payment",
+    "bank",
     "qr_code",
     "notifications",
     "rest_framework",
@@ -59,6 +61,7 @@ MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'core.middleware.DisableCSRFForAPIMiddleware',  # Disable CSRF for /api/ endpoints
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -90,8 +93,8 @@ WSGI_APPLICATION = 'Xbooking.wsgi.application'
 
 # Use DATABASE_URL from environment variable, fallback to SQLite for development
 DATABASES = {
-    'default': dj_database_url.config(
-        default=f'sqlite:///{str(BASE_DIR / "db.sqlite3")}',
+    "default": dj_database_url.config(
+        default=config("DATABASE_URL"),
         conn_max_age=600,
         conn_health_checks=True,
     )
@@ -193,19 +196,30 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    # Use our custom pagination classes from core
+    'DEFAULT_PAGINATION_CLASS': 'core.pagination.StandardResultsSetPagination',
     'PAGE_SIZE': 20,
+    # Use our custom throttle classes from core
     'DEFAULT_THROTTLE_CLASSES': [
-        'rest_framework.throttling.AnonRateThrottle',
-        'rest_framework.throttling.UserRateThrottle'
+        'core.throttling.AnonSustainedThrottle',
+        'core.throttling.UserSustainedThrottle',
     ],
     'DEFAULT_THROTTLE_RATES': {
-        'anon': '100/day',
-        'user': '1000/day',
+        'anon_sustained': '100/day',
+        'anon_burst': '10/minute',
+        'user_sustained': '1000/day',
+        'user_burst': '60/minute',
         'public_list': '20/minute',
         'sensitive_action': '5/minute',
         'file_upload': '50/day',
-    }
+    },
+    # Default renderer classes
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+    ],
+    # Exception handling
+    'EXCEPTION_HANDLER': 'rest_framework.views.exception_handler',
 }
 
 # drf-spectacular Configuration
@@ -264,6 +278,11 @@ CACHES =  {
     }
 }
 
+# Redis Configuration for EventBus
+REDIS_HOST = config('REDIS_HOST', default='localhost')
+REDIS_PORT = config('REDIS_PORT', default=6379, cast=int)
+REDIS_DB = config('REDIS_DB', default=1, cast=int)
+
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
@@ -279,6 +298,10 @@ FLUTTERWAVE_PUBLIC_KEY = config('FLUTTERWAVE_PUBLIC_KEY', default='')
 # Payment settings
 PAYMENT_CURRENCY = 'NGN'
 PAYMENT_TIMEOUT = 3600  # 1 hour in seconds
+
+# Redirect URLs for payment and deposit (set in .env)
+DEPOSIT_REDIRECT_URL = config('DEPOSIT_REDIRECT_URL', default='')
+PAYMENT_REDIRECT_URL = config('PAYMENT_REDIRECT_URL', default='')
 
 # ============================================================================
 # APPWRITE CLOUD STORAGE CONFIGURATION

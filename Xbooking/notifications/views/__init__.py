@@ -1,0 +1,3 @@
+"""
+Notifications Views Package
+"""

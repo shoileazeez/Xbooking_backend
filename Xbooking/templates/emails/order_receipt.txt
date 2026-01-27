@@ -1,0 +1,47 @@
+ORDER RECEIPT - XBOOKING
+================================================
+
+Hello {{ user_name }}!
+
+Thank you for your payment. Your order has been successfully processed and your bookings are now confirmed.
+
+ORDER DETAILS
+------------------------------------------------
+Order Number: #{{ order_number }}
+Payment Method: {{ payment_method|upper }}
+Payment Reference: {{ payment_reference }}
+Number of Bookings: {{ bookings_count }}
+
+YOUR CONFIRMED BOOKINGS
+------------------------------------------------
+{% for booking in bookings %}
+Booking {{ forloop.counter }}:
+- Space: {{ booking.space.name }}
+- Type: {{ booking.booking_type|upper }}
+- Location: {{ booking.workspace.name }}
+- Check-in: {{ booking.check_in|date:"F d, Y - g:i A" }}
+- Check-out: {{ booking.check_out|date:"F d, Y - g:i A" }}
+{% if booking.number_of_guests %}- Guests: {{ booking.number_of_guests }}{% endif %}
+- Amount: ₦{{ booking.total_price }}
+
+{% endfor %}
+
+TOTAL AMOUNT PAID
+------------------------------------------------
+₦{{ total_amount }}
+
+WHAT'S NEXT?
+------------------------------------------------
+• Individual QR codes for each booking will be sent in separate emails
+• Present your QR code at the space entrance for check-in
+• Arrive on time for your scheduled booking
+• Contact support if you have any questions
+
+View your bookings: https://app.xbooking.dev/bookings
+
+Need help? Visit our Help Center: https://app.xbooking.dev/help
+
+------------------------------------------------
+XBooking - Professional Space Booking Platform
+This is an automated email. Please do not reply.
+© 2026 XBooking. All rights reserved.

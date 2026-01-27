@@ -15,91 +15,28 @@ import io
 import uuid
 import base64
 import requests
+import logging
 from datetime import timedelta
+
+logger = logging.getLogger(__name__)
 
 
 @shared_task
-def generate_qr_code_for_order(order_id):
+def generate_order_receipt(order_id):
     """
-    Generate QR code for an order and save it to Appwrite storage
+    Generate order receipt with booking details and send via email.
+    This replaces the deprecated OrderQRCode - we now only generate QR codes per booking.
     """
     try:
-        from qr_code.models import OrderQRCode
         order = Order.objects.get(id=order_id)
         
-        # Generate unique verification code
-        verification_code = f"ORD-{uuid.uuid4().hex[:12].upper()}"
-        
-        # QR code data - includes order number, verification code, and check-in URL
-        qr_data = f"https://app.xbooking.dev/verify/{verification_code}?order={order.order_number}"
-        
-        # Generate QR code image
-        qr = qrcode.QRCode(
-            version=1,
-            error_correction=qrcode.constants.ERROR_CORRECT_L,
-            box_size=10,
-            border=4,
-        )
-        qr.add_data(qr_data)
-        qr.make(fit=True)
-        
-        # Convert to image
-        img = qr.make_image(fill_color="black", back_color="white")
-        
-        # Save to bytes
-        img_io = io.BytesIO()
-        img.save(img_io, format='PNG')
-        img_io.seek(0)
-        qr_image_bytes = img_io.getvalue()
-        
-        # Determine expiry based on the latest checkout time from order bookings
-        latest_checkout = None
-        for booking in order.bookings.all():
-            if booking.check_out:
-                if latest_checkout is None or booking.check_out > latest_checkout:
-                    latest_checkout = booking.check_out
-        
-        # Fallback to 24 hours if no checkout time found
-        expires_at = latest_checkout if latest_checkout else (timezone.now() + timedelta(hours=24))
-        
-        # Upload to Cloudinary
-        filename = f"qr_order_{order.order_number}_{verification_code}.png"
-        cloud_result = upload_qr_image_to_cloudinary(qr_image_bytes, filename, public_id=f"qr_{order.order_number}_{verification_code}")
-        try:
-            logger.info(f"Order QR Cloudinary result: success={cloud_result.get('success')}, id={str(cloud_result.get('file_id', ''))}, url={str(cloud_result.get('file_url', ''))}")
-        except Exception:
-            pass
-        
-        # Create or update QR code record
-        update_data = {
-            'verification_code': verification_code,
-            'qr_code_data': qr_data,
-            'status': 'generated',
-            'expires_at': expires_at,
-        }
-        
-        # If Cloudinary upload was successful, store the URL and public ID
-        if cloud_result.get('success'):
-            update_data['qr_code_image_url'] = str(cloud_result.get('file_url', '')).strip()
-            update_data['appwrite_file_id'] = str(cloud_result.get('file_id', '')).strip()
-        else:
-            # Fallback: leave URL empty
-            pass
-        
-        qr_code, created = OrderQRCode.objects.update_or_create(
-            order=order,
-            defaults=update_data
-        )
-        
-        # Send QR code to user via email
-        send_qr_code_email.delay(order_id, qr_code.id)
+        # Send order receipt email with booking summary
+        send_order_receipt_email.delay(order_id)
         
         return {
             'success': True,
-            'qr_code_id': str(qr_code.id),
-            'verification_code': verification_code,
-            'message': 'QR code generated successfully',
-            'cloudinary_uploaded': cloud_result.get('success', False)
+            'order_id': str(order.id),
+            'message': 'Order receipt generated and email queued'
         }
     except Order.DoesNotExist:
         return {
@@ -114,57 +51,44 @@ def generate_qr_code_for_order(order_id):
 
 
 @shared_task
-def send_qr_code_email(order_id, qr_code_id):
+def send_order_receipt_email(order_id):
     """
-    Send QR code to user via email
+    Send order receipt email with summary of all bookings.
+    Individual booking QR codes are sent separately per booking.
     """
     try:
-        from qr_code.models import OrderQRCode
         order = Order.objects.get(id=order_id)
-        qr_code = OrderQRCode.objects.get(id=qr_code_id)
         
         # Check user notification preference
         if hasattr(order.user, 'notification_preferences'):
-            if not order.user.notification_preferences.email_qr_code:
+            if not order.user.notification_preferences.email_order_confirmation:
                 return {'success': True, 'message': 'User disabled email notifications'}
         
-        # Prepare email content
+        # Prepare email content with all booking details
+        bookings = order.bookings.all().select_related('space', 'workspace')
         context = {
             'order_number': order.order_number,
             'user_name': order.user.full_name or order.user.email,
             'total_amount': order.total_amount,
-            'bookings_count': order.bookings.count(),
+            'bookings': bookings,
+            'bookings_count': bookings.count(),
+            'payment_method': order.payment_method,
+            'payment_reference': order.payment_reference,
         }
         
-        # Render HTML template
-        html_content = render_to_string('emails/qr_code_email.html', context)
-        text_content = render_to_string('emails/qr_code_email.txt', context)
+        # Render HTML template - using order receipt template
+        html_content = render_to_string('emails/order_receipt.html', context)
+        text_content = render_to_string('emails/order_receipt.txt', context)
         
-        # Prepare QR code image attachment (base64 encoded)
-        attachments = []
-        if qr_code.qr_code_image_url:
-            try:
-                resp = requests.get(qr_code.qr_code_image_url, timeout=15)
-                if resp.status_code == 200:
-                    img_base64 = base64.b64encode(resp.content).decode('utf-8')
-                    attachments.append({
-                        'ContentType': 'image/png',
-                        'Filename': f'qr_{order.order_number}.png',
-                        'Base64Content': img_base64
-                    })
-            except Exception:
-                pass
-        
-        # Send email via Mailjet API
+        # Send email via Mailjet API - no attachments, QR codes sent per booking
         result = send_mailjet_email(
-            subject=f'Your QR Code for Order {order.order_number}',
+            subject=f'Order Receipt #{order.order_number} - Booking Confirmation',
             to_email=order.user.email,
             to_name=order.user.full_name or order.user.email,
             html_content=html_content,
             text_content=text_content,
             from_email=settings.DEFAULT_FROM_EMAIL,
-            from_name='XBooking',
-            attachments=attachments if attachments else None
+            from_name='XBooking'
         )
         
         if not result.get('success'):
@@ -173,30 +97,25 @@ def send_qr_code_email(order_id, qr_code_id):
                 'error': result.get('error', 'Failed to send email')
             }
         
-        # Update QR code status
-        qr_code.status = 'sent'
-        qr_code.sent_at = timezone.now()
-        qr_code.save()
-        
         # Log notification
         Notification.objects.create(
             user=order.user,
-            notification_type='qr_code_generated',
+            notification_type='order_receipt',
             channel='email',
-            title='QR Code Generated',
-            message=f'QR code for order {order.order_number} has been sent to your email',
+            title='Order Receipt Sent',
+            message=f'Receipt for order {order.order_number} has been sent to your email',
             is_sent=True,
             sent_at=timezone.now(),
             data={
                 'order_id': str(order.id),
-                'qr_code_id': str(qr_code.id),
-                'verification_code': qr_code.verification_code
+                'order_number': order.order_number,
+                'bookings_count': order.bookings.count()
             }
         )
         
         return {
             'success': True,
-            'message': 'QR code email sent successfully'
+            'message': 'Order receipt email sent successfully'
         }
     except Exception as e:
         return {

@@ -12,10 +12,13 @@ import string
 from django.utils import timezone
 from datetime import time
 
+from core.mixins import UUIDModelMixin, TimestampedModelMixin, CachedModelMixin, ActiveModelMixin
+
 def generate_verification_code():
     """Generate a unique verification code for guests"""
     chars = string.ascii_uppercase + string.digits
     return 'G-' + ''.join(secrets.choice(chars) for _ in range(10))
+
 
 def default_start_time():
     """Default start time for bookings"""
@@ -26,7 +29,7 @@ def default_end_time():
     return time(17, 0)  # 5:00 PM
 
 
-class Booking(models.Model):
+class Booking(UUIDModelMixin, TimestampedModelMixin, CachedModelMixin, models.Model):
     """Model for space bookings"""
     
     BOOKING_STATUS_CHOICES = [
@@ -42,8 +45,6 @@ class Booking(models.Model):
         ('daily', 'Daily'),
         ('monthly', 'Monthly'),
     ]
-    
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, related_name='bookings')
     space = models.ForeignKey(Space, on_delete=models.CASCADE, related_name='bookings')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='bookings')
@@ -79,9 +80,7 @@ class Booking(models.Model):
     # Special requests
     special_requests = models.TextField(blank=True, null=True)
     
-    # Tracking
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    # Additional tracking
     confirmed_at = models.DateTimeField(blank=True, null=True)
     cancelled_at = models.DateTimeField(blank=True, null=True)
     
@@ -127,29 +126,37 @@ class Booking(models.Model):
         return total_days - used
 
 
-class Reservation(models.Model):
+class Reservation(UUIDModelMixin, TimestampedModelMixin, models.Model):
     """Temporary reservation/hold for a specific space slot.
 
     Reservations are used to hold a slot while a user completes payment.
-    They should be created when a user selects a slot and expire after a short period.
+    They should be created when a user selects a slot and expire after 15 minutes.
     """
     STATUS_CHOICES = [
-        ('pending', 'Pending'),
-        ('held', 'Held'),
-        ('purchased', 'Purchased'),
+        ('active', 'Active'),
+        ('expired', 'Expired'),
+        ('confirmed', 'Confirmed'),
         ('cancelled', 'Cancelled'),
     ]
 
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     space = models.ForeignKey(Space, on_delete=models.CASCADE, related_name='reservations')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reservations')
-    start = models.DateTimeField()
-    end = models.DateTimeField()
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-    expires_at = models.DateTimeField(blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
+    start = models.DateTimeField(help_text='Reservation start datetime')
+    end = models.DateTimeField(help_text='Reservation end datetime')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+    expires_at = models.DateTimeField(help_text='When this reservation expires')
+    
+    def is_expired(self):
+        """Check if reservation has expired"""
+        from django.utils import timezone
+        return timezone.now() > self.expires_at and self.status == 'active'
+    
+    def expire(self):
+        """Mark reservation as expired"""
+        if self.status == 'active':
+            self.status = 'expired'
+            self.save(update_fields=['status', 'updated_at'])
+    
     class Meta:
         db_table = 'booking_reservation'
         ordering = ['-created_at']
@@ -158,9 +165,8 @@ class Reservation(models.Model):
         return f"Reservation {self.id} - {self.space.name} ({self.start} - {self.end})"
 
 
-class Cart(models.Model):
+class Cart(UUIDModelMixin, TimestampedModelMixin, CachedModelMixin, models.Model):
     """Model for shopping cart"""
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='cart')
     # Cart is now per-user (can contain items from multiple workspaces)
     
@@ -171,9 +177,6 @@ class Cart(models.Model):
     total = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0'))
     
     item_count = models.IntegerField(default=0)
-    
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
         db_table = 'booking_cart'
@@ -193,10 +196,9 @@ class Cart(models.Model):
         self.save()
 
 
-class CartItem(models.Model):
+class CartItem(UUIDModelMixin, TimestampedModelMixin, models.Model):
     """Model for items in shopping cart"""
     
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
     space = models.ForeignKey(Space, on_delete=models.CASCADE, related_name='cart_items')
     # Optional reservation hold for this cart item
@@ -226,9 +228,6 @@ class CartItem(models.Model):
     # Special requests
     special_requests = models.TextField(blank=True, null=True)
     
-    added_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
     class Meta:
         db_table = 'booking_cart_item'
         unique_together = ('cart', 'space', 'booking_date', 'start_time', 'end_time', 'booking_type')
@@ -237,18 +236,14 @@ class CartItem(models.Model):
         return f"CartItem - {self.space.name} on {self.booking_date}"
 
 
-class BookingReview(models.Model):
+class BookingReview(UUIDModelMixin, TimestampedModelMixin, CachedModelMixin, models.Model):
     """Model for booking reviews and ratings"""
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     booking = models.OneToOneField(Booking, on_delete=models.CASCADE, related_name='review')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='booking_reviews')
     space = models.ForeignKey(Space, on_delete=models.CASCADE, related_name='reviews')
     
     rating = models.IntegerField(validators=[MinValueValidator(1)], help_text='Rating from 1-5')
     comment = models.TextField(blank=True, null=True)
-    
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
         db_table = 'booking_review'
@@ -258,7 +253,7 @@ class BookingReview(models.Model):
         return f"Review for {self.space.name} - {self.rating}★"
 
 
-class Guest(models.Model):
+class Guest(UUIDModelMixin, TimestampedModelMixin, models.Model):
     """Model for booking guests with QR code verification"""
     
     GUEST_STATUS_CHOICES = [
@@ -267,9 +262,6 @@ class Guest(models.Model):
         ('checked_out', 'Checked Out'),
     ]
     
-
-    
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     booking = models.ForeignKey(Booking, on_delete=models.CASCADE, related_name='guests')
     
     # Guest information
@@ -297,10 +289,6 @@ class Guest(models.Model):
     checked_out_at = models.DateTimeField(blank=True, null=True)
     checked_in_by = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True, related_name='checked_in_guests')
     
-    # Tracking
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
     class Meta:
         db_table = 'booking_guest'
         ordering = ['created_at']
@@ -314,13 +302,10 @@ class Guest(models.Model):
         return f"Guest {self.first_name} {self.last_name} - {self.booking.id}"
 
 
-class Checkout(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+class Checkout(UUIDModelMixin, TimestampedModelMixin, models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='checkout')
     bookings = models.ManyToManyField(Booking, related_name='checkouts', blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
+    
     class Meta:
         db_table = 'booking_checkout'
         ordering = ['-updated_at']

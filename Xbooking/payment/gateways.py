@@ -20,7 +20,7 @@ class PaystackGateway:
             "Content-Type": "application/json"
         }
     
-    def initialize_transaction(self, email, amount, reference, metadata=None):
+    def initialize_transaction(self, email, amount, reference, metadata=None, redirect_url=None):
         """
         Initialize a transaction on Paystack
         
@@ -29,6 +29,7 @@ class PaystackGateway:
             amount (Decimal): Amount in Naira
             reference (str): Unique transaction reference
             metadata (dict): Additional metadata
+            redirect_url (str): Optional redirect URL for Paystack callback
             
         Returns:
             dict: Response containing authorization_url and access_code
@@ -40,6 +41,8 @@ class PaystackGateway:
                 "reference": reference,
                 "metadata": metadata or {}
             }
+            if redirect_url:
+                data["callback_url"] = redirect_url
             
             response = requests.post(
                 f"{self.base_url}/transaction/initialize",
@@ -234,19 +237,21 @@ class FlutterwaveGateway:
             "Content-Type": "application/json"
         }
     
-    def initialize_transaction(self, email, amount, tx_ref, metadata=None):
+    def initialize_transaction(self, email, amount, reference, metadata=None, redirect_url=None):
         """
         Initialize a transaction on Flutterwave
         
         Args:
             email (str): Customer email
             amount (Decimal): Amount in Naira
-            tx_ref (str): Unique transaction reference
+            reference (str): Unique transaction reference (aliased as tx_ref internally)
             metadata (dict): Additional metadata
+            redirect_url (str): Optional redirect URL for Flutterwave callback
             
         Returns:
             dict: Response containing payment link
         """
+        tx_ref = reference  # Use reference parameter for consistency with Paystack
         try:
             data = {
                 "tx_ref": tx_ref,
@@ -261,6 +266,8 @@ class FlutterwaveGateway:
                     "description": metadata.get('description', 'Workspace Booking Payment') if metadata else 'Workspace Booking Payment'
                 }
             }
+            if redirect_url:
+                data["redirect_url"] = redirect_url
             
             response = requests.post(
                 f"{self.base_url}/payments",
@@ -274,8 +281,9 @@ class FlutterwaveGateway:
                 if response_data.get('status') == 'success':
                     return {
                         'success': True,
+                        'authorization_url': response_data['data']['link'],  # Standardize to authorization_url
                         'payment_link': response_data['data']['link'],
-                        'reference': response_data['data']['id']
+                        'reference': tx_ref  # Return the reference we passed in
                     }
             
             return {
@@ -296,40 +304,54 @@ class FlutterwaveGateway:
                 'error': str(e)
             }
     
-    def verify_transaction(self, transaction_id):
+    def verify_transaction(self, reference):
         """
         Verify a transaction on Flutterwave
         
         Args:
-            transaction_id (str): Transaction ID
+            refernce (str): refernce 
             
         Returns:
             dict: Response containing transaction details and status
         """
+        tx_ref = reference
+        
         try:
             response = requests.get(
-                f"{self.base_url}/transactions/{transaction_id}/verify",
+                f"{self.base_url}/transactions/verify_by_reference?tx_ref={tx_ref}",
                 headers=self.headers,
                 timeout=30
             )
-            
+            # Log the raw response for debugging
+            logger.error(f"Flutterwave verify response status: {response.status_code}")
+            logger.error(f"Flutterwave verify response text: {response.text}")
             if response.status_code == 200:
                 response_data = response.json()
                 if response_data.get('status') == 'success':
                     data = response_data['data']
+                    # Use 'charged_amount' if 'amount' is missing
+                    amount_val = data.get('amount')
+                    if amount_val is None:
+                        amount_val = data.get('charged_amount')
+                    # Accept both 'success' and 'successful' as status
+                    status_val = data.get('status')
                     return {
                         'success': True,
-                        'status': data['status'],
-                        'amount': Decimal(str(data['amount'])),
+                        'status': status_val,
+                        'amount': Decimal(str(amount_val)) if amount_val is not None else None,
                         'customer_email': data.get('customer', {}).get('email', ''),
                         'payment_method': data.get('payment_type', 'unknown'),
                         'reference': data.get('tx_ref'),
                         'currency': data.get('currency')
                     }
-            
+            # Try to parse error message if possible
+            try:
+                error_message = response.json().get('message', 'Failed to verify transaction')
+            except Exception:
+                error_message = response.text
             return {
                 'success': False,
-                'error': response.json().get('message', 'Failed to verify transaction'),
+                'error': error_message,
                 'status_code': response.status_code
             }
         except Exception as e:
@@ -351,3 +373,55 @@ class FlutterwaveGateway:
         """
         # Flutterwave payment link format
         return f"https://checkout.flutterwave.com/?txref={reference}"
+    
+    def initiate_transfer(self, account_bank, account_number, amount, narration, beneficiary_name):
+        """
+        Initiate a transfer/payout via Flutterwave
+        
+        Args:
+            account_bank (str): Bank code
+            account_number (str): Recipient account number
+            amount (Decimal): Amount in Naira
+            narration (str): Transfer description
+            beneficiary_name (str): Recipient name
+            
+        Returns:
+            dict: Response containing transfer details
+        """
+        try:
+            data = {
+                "account_bank": account_bank,
+                "account_number": account_number,
+                "amount": float(amount),
+                "currency": "NGN",
+                "narration": narration,
+                "beneficiary_name": beneficiary_name
+            }
+            
+            response = requests.post(
+                f"{self.base_url}/transfers",
+                json=data,
+                headers=self.headers,
+                timeout=30
+            )
+            
+            if response.status_code == 200:
+                response_data = response.json()
+                if response_data.get('status') == 'success':
+                    return {
+                        'success': True,
+                        'transfer_id': response_data['data']['id'],
+                        'reference': response_data['data']['reference']
+                    }
+            
+            return {
+                'success': False,
+                'error': response.json().get('message', 'Failed to initiate transfer'),
+                'status_code': response.status_code
+            }
+        except Exception as e:
+            logger.error(f"Flutterwave transfer error: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e)
+            }

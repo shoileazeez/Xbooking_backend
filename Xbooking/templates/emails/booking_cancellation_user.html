@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Cancellation Confirmation</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(124, 58, 237, 0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);
+            color: #ffffff;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .content {
+            padding: 30px 20px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+            margin: 15px 0;
+        }
+        .status-approved {
+            background-color: #dcfce7;
+            color: #16a34a;
+        }
+        .status-pending {
+            background-color: #fef3c7;
+            color: #d97706;
+        }
+        .booking-details {
+            background-color: #f9fafb;
+            border-left: 4px solid #7c3aed;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        .detail-label {
+            font-weight: 600;
+            color: #6b7280;
+        }
+        .detail-value {
+            color: #111827;
+            font-weight: 500;
+        }
+        .refund-box {
+            background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+            border: 2px solid #10b981;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .refund-amount {
+            font-size: 32px;
+            font-weight: 700;
+            color: #059669;
+            margin: 10px 0;
+        }
+        .refund-percentage {
+            font-size: 18px;
+            color: #047857;
+            font-weight: 600;
+        }
+        .alert-box {
+            background-color: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .alert-box p {
+            margin: 5px 0;
+            color: #92400e;
+        }
+        .footer {
+            background-color: #f9fafb;
+            padding: 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #6b7280;
+            border-top: 1px solid #e5e7eb;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            margin: 15px 0;
+        }
+        .reason-box {
+            background-color: #f3f4f6;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            font-style: italic;
+            color: #4b5563;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔔 Booking Cancellation</h1>
+        </div>
+        
+        <div class="content">
+            <p>Hi <strong>{{ user_name }}</strong>,</p>
+            
+            {% if requires_approval %}
+                <span class="status-badge status-pending">⏳ Pending Admin Approval</span>
+                <p>Your cancellation request has been submitted and is pending approval from the workspace admin.</p>
+                
+                <div class="alert-box">
+                    <p><strong>⚠️ Late Cancellation Notice</strong></p>
+                    <p>Your booking is scheduled to begin in <strong>{{ hours_until_checkin }} hours</strong>. Since this is less than 6 hours away, it requires admin approval.</p>
+                </div>
+            {% else %}
+                <span class="status-badge status-approved">✓ Cancellation Confirmed</span>
+                <p>Your booking has been cancelled successfully.</p>
+            {% endif %}
+            
+            <div class="booking-details">
+                <h3 style="margin-top: 0; color: #7c3aed;">📋 Booking Details</h3>
+                <div class="detail-row">
+                    <span class="detail-label">Workspace:</span>
+                    <span class="detail-value">{{ workspace_name }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Space:</span>
+                    <span class="detail-value">{{ space_name }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Check-in:</span>
+                    <span class="detail-value">{{ check_in_date }} at {{ check_in_time }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Booking ID:</span>
+                    <span class="detail-value">{{ booking_id }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Original Amount:</span>
+                    <span class="detail-value">₦{{ original_amount }}</span>
+                </div>
+            </div>
+            
+            {% if reason_description %}
+            <div class="reason-box">
+                <strong>Cancellation Reason:</strong><br>
+                {{ reason_description }}
+            </div>
+            {% endif %}
+            
+            {% if refund_amount > 0 %}
+                {% if not requires_approval %}
+                    <div class="refund-box">
+                        <h3 style="margin: 0; color: #059669;">💰 Refund Information</h3>
+                        <div class="refund-amount">₦{{ refund_amount }}</div>
+                        <div class="refund-percentage">{{ refund_percentage }}% Refund</div>
+                        <p style="margin: 10px 0 0 0; color: #047857; font-size: 14px;">
+                            Credited to your wallet
+                        </p>
+                    </div>
+                    
+                    <p>✅ The refund of <strong>₦{{ refund_amount }}</strong> has been credited to your wallet and is available for use immediately.</p>
+                {% else %}
+                    <div class="alert-box">
+                        <p><strong>Potential Refund:</strong> ₦{{ refund_amount }} ({{ refund_percentage }}%)</p>
+                        <p>This amount will be refunded to your wallet if the admin approves your cancellation request.</p>
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="alert-box">
+                    <p><strong>❌ No Refund Available</strong></p>
+                    <p>Unfortunately, this booking was cancelled less than {{ minimum_hours }} hours before check-in, so no refund is available according to our cancellation policy.</p>
+                </div>
+            {% endif %}
+            
+            {% if penalty_amount > 0 %}
+                <p style="font-size: 14px; color: #6b7280;">
+                    <strong>Cancellation Fee:</strong> ₦{{ penalty_amount }}
+                </p>
+            {% endif %}
+            
+            {% if requires_approval %}
+                <p>You will receive another email once the workspace admin has reviewed your cancellation request.</p>
+            {% else %}
+                <p>You can view your booking history and wallet balance in your account dashboard.</p>
+                <a href="{{ dashboard_url }}" class="btn">View Dashboard</a>
+            {% endif %}
+            
+            <p style="margin-top: 30px; font-size: 14px; color: #6b7280;">
+                If you have any questions or concerns, please don't hesitate to contact us.
+            </p>
+        </div>
+        
+        <div class="footer">
+            <p><strong>Xbooking</strong></p>
+            <p>Your Workspace Booking Platform</p>
+            <p style="font-size: 12px; margin-top: 10px;">
+                This is an automated email. Please do not reply directly to this message.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

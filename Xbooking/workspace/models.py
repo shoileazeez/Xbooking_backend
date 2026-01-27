@@ -3,11 +3,11 @@ from django.core.validators import MinValueValidator, URLValidator
 from decimal import Decimal
 from user.models import User
 import uuid
+from core.mixins import UUIDModelMixin, TimestampedModelMixin, CachedModelMixin, ActiveModelMixin
 
 
-class Workspace(models.Model):
+class Workspace(UUIDModelMixin, TimestampedModelMixin, CachedModelMixin, ActiveModelMixin, models.Model):
     """Model for workspace/organization"""
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField(blank=True, null=True)
     admin = models.ForeignKey(User, on_delete=models.CASCADE, related_name='owned_workspaces')
@@ -21,9 +21,6 @@ class Workspace(models.Model):
     state = models.CharField(max_length=100, blank=True, null=True)
     country = models.CharField(max_length=100, blank=True, null=True)
     postal_code = models.CharField(max_length=20, blank=True, null=True)
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'workspace'
@@ -31,11 +28,14 @@ class Workspace(models.Model):
 
     def __str__(self):
         return self.name
+    
+    def get_cache_key(self):
+        """Generate cache key for this workspace"""
+        return f"workspace:{self.id}"
 
 
-class Branch(models.Model):
+class Branch(UUIDModelMixin, TimestampedModelMixin, CachedModelMixin, ActiveModelMixin, models.Model):
     """Model for workspace branches in different locations"""
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, related_name='branches')
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
@@ -51,9 +51,6 @@ class Branch(models.Model):
     postal_code = models.CharField(max_length=20, blank=True, null=True)
     latitude = models.FloatField(blank=True, null=True)
     longitude = models.FloatField(blank=True, null=True)
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'workspace_branch'
@@ -62,9 +59,13 @@ class Branch(models.Model):
 
     def __str__(self):
         return f"{self.workspace.name} - {self.name}"
+    
+    def get_cache_key(self):
+        """Generate cache key for this branch"""
+        return f"branch:{self.id}"
 
 
-class WorkspaceUser(models.Model):
+class WorkspaceUser(UUIDModelMixin, TimestampedModelMixin, ActiveModelMixin, models.Model):
     """Model for workspace member relationships"""
     ROLE_CHOICES = (
         ('admin', 'Admin'),
@@ -73,13 +74,10 @@ class WorkspaceUser(models.Model):
         ('user', 'User'),  # Regular user who books spaces
     )
 
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, related_name='members')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='workspace_memberships')
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='staff')
-    is_active = models.BooleanField(default=True)
     joined_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'workspace_user'
@@ -90,7 +88,7 @@ class WorkspaceUser(models.Model):
         return f"{self.user.full_name} - {self.workspace.name} ({self.role})"
 
 
-class Space(models.Model):
+class Space(UUIDModelMixin, TimestampedModelMixin, CachedModelMixin, models.Model):
     """Model for bookable spaces within a workspace"""
     SPACE_TYPE_CHOICES = (
         ('meeting_room', 'Meeting Room'),
@@ -101,7 +99,6 @@ class Space(models.Model):
         ('lounge', 'Lounge'),
     )
 
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE, related_name='spaces')
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
@@ -115,8 +112,6 @@ class Space(models.Model):
     image_url = models.URLField(blank=True, null=True)
     amenities = models.JSONField(default=list, blank=True)  # List of amenities
     is_available = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'workspace_space'
@@ -125,9 +120,13 @@ class Space(models.Model):
 
     def __str__(self):
         return f"{self.branch.name} - {self.name}"
+    
+    def get_cache_key(self):
+        """Generate cache key for this space"""
+        return f"space:{self.id}"
 
 
-class SpaceCalendar(models.Model):
+class SpaceCalendar(UUIDModelMixin, TimestampedModelMixin, models.Model):
     """Model to manage space availability calendar"""
     
     BOOKING_TYPE_CHOICES = [
@@ -136,7 +135,6 @@ class SpaceCalendar(models.Model):
         ('monthly', 'Monthly'),
     ]
     
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     space = models.OneToOneField(Space, on_delete=models.CASCADE, related_name='calendar')
     
     # Availability configuration
@@ -187,10 +185,6 @@ class SpaceCalendar(models.Model):
         help_text='Maximum days in advance to book'
     )
     
-    # Timestamps
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
     class Meta:
         db_table = 'workspace_space_calendar'
     
@@ -198,17 +192,17 @@ class SpaceCalendar(models.Model):
         return f"Calendar for {self.space.name}"
 
 
-class SpaceCalendarSlot(models.Model):
+class SpaceCalendarSlot(UUIDModelMixin, TimestampedModelMixin, models.Model):
     """Model to track individual calendar slots and their availability"""
     
     STATUS_CHOICES = [
         ('available', 'Available'),
+        ('reserved', 'Reserved'),  # Temporarily reserved during checkout
         ('booked', 'Booked'),
         ('blocked', 'Blocked'),
         ('maintenance', 'Maintenance'),
     ]
     
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     calendar = models.ForeignKey(
         SpaceCalendar,
         on_delete=models.CASCADE,
@@ -243,10 +237,6 @@ class SpaceCalendarSlot(models.Model):
     
     # Notes
     notes = models.TextField(blank=True, null=True, help_text='Reason for blocking/maintenance')
-    
-    # Timestamps
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
         db_table = 'workspace_space_calendar_slot'

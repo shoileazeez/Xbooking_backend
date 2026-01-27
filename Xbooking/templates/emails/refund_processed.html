@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Refund Processed</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4; padding: 40px 20px;">
+        <tr>
+            <td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <!-- Header with Green Gradient -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #10b981 0%, #34d399 100%); padding: 40px 30px; text-align: center;">
+                            <div style="width: 60px; height: 60px; background-color: rgba(255,255,255,0.2); border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;">
+                                <span style="font-size: 36px; color: #ffffff;">✓</span>
+                            </div>
+                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">
+                                Refund Processed
+                            </h1>
+                            <p style="margin: 10px 0 0 0; color: #ffffff; font-size: 16px; opacity: 0.95;">
+                                Your refund has been successfully credited
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 40px 30px;">
+                            <p style="margin: 0 0 20px 0; color: #333333; font-size: 16px; line-height: 1.6;">
+                                Hi <strong>{{ user_name }}</strong>,
+                            </p>
+                            
+                            <p style="margin: 0 0 30px 0; color: #555555; font-size: 15px; line-height: 1.6;">
+                                Great news! Your refund has been successfully processed and credited to your wallet.
+                            </p>
+                            
+                            <!-- Refund Amount Card -->
+                            <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%); border-radius: 12px; margin-bottom: 30px;">
+                                <tr>
+                                    <td style="padding: 30px; text-align: center;">
+                                        <p style="margin: 0 0 10px 0; color: #ffffff; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9;">
+                                            Refund Amount
+                                        </p>
+                                        <p style="margin: 0 0 15px 0; color: #ffffff; font-size: 42px; font-weight: 700;">
+                                            ₦{{ refund_amount }}
+                                        </p>
+                                        <p style="margin: 0; color: #ffffff; font-size: 14px; opacity: 0.9;">
+                                            Transaction: <strong>{{ refund_reference }}</strong>
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Transaction Details -->
+                            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f9fafb; border-radius: 8px; margin-bottom: 30px; border: 1px solid #e5e7eb;">
+                                <tr>
+                                    <td style="padding: 20px;">
+                                        <p style="margin: 0 0 15px 0; color: #111827; font-size: 16px; font-weight: 600;">
+                                            Transaction Details
+                                        </p>
+                                        <table width="100%" cellpadding="0" cellspacing="0">
+                                            <tr>
+                                                <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">
+                                                    Reference:
+                                                </td>
+                                                <td style="padding: 8px 0; color: #111827; font-size: 14px; text-align: right; font-family: monospace;">
+                                                    {{ refund_reference }}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">
+                                                    Booking ID:
+                                                </td>
+                                                <td style="padding: 8px 0; color: #111827; font-size: 14px; text-align: right; font-family: monospace;">
+                                                    {{ booking_id }}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">
+                                                    Processed Date:
+                                                </td>
+                                                <td style="padding: 8px 0; color: #111827; font-size: 14px; text-align: right;">
+                                                    {{ processed_date }}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">
+                                                    Reason:
+                                                </td>
+                                                <td style="padding: 8px 0; color: #111827; font-size: 14px; text-align: right;">
+                                                    {{ reason }}
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Wallet Info -->
+                            <div style="background-color: #f0fdf4; border-left: 4px solid #10b981; padding: 20px; border-radius: 6px; margin-bottom: 30px;">
+                                <p style="margin: 0 0 10px 0; color: #065f46; font-size: 15px; font-weight: 600;">
+                                    💰 Wallet Updated
+                                </p>
+                                <p style="margin: 0; color: #065f46; font-size: 14px; line-height: 1.6;">
+                                    Your wallet balance has been updated. You can use this balance for future bookings or request a withdrawal to your bank account.
+                                </p>
+                            </div>
+                            
+                            <!-- Action Buttons -->
+                            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
+                                <tr>
+                                    <td align="center">
+                                        <table cellpadding="0" cellspacing="0">
+                                            <tr>
+                                                <td style="padding: 0 10px;">
+                                                    <a href="{{ wallet_url }}" style="display: inline-block; background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%); color: #ffffff; text-decoration: none; padding: 14px 30px; border-radius: 8px; font-size: 15px; font-weight: 600; box-shadow: 0 4px 6px rgba(124, 58, 237, 0.3);">
+                                                        View Wallet
+                                                    </a>
+                                                </td>
+                                                <td style="padding: 0 10px;">
+                                                    <a href="{{ bookings_url }}" style="display: inline-block; background-color: #f3f4f6; color: #374151; text-decoration: none; padding: 14px 30px; border-radius: 8px; font-size: 15px; font-weight: 600;">
+                                                        My Bookings
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <p style="margin: 0; color: #6b7280; font-size: 14px; line-height: 1.6; text-align: center;">
+                                Thank you for using Xbooking!
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #f9fafb; padding: 30px; text-align: center; border-top: 1px solid #e5e7eb;">
+                            <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 13px;">
+                                Best regards,<br>
+                                <strong style="color: #7c3aed;">The Xbooking Team</strong>
+                            </p>
+                            <p style="margin: 0; color: #9ca3af; font-size: 12px;">
+                                © 2026 Xbooking. All rights reserved.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

@@ -108,15 +108,15 @@ class UserAdmin(admin.ModelAdmin):
     inlines = [VerificationCodeInline]
     
     list_display = ["id", "full_name", "email", "last_login", "is_active", "verification_code_status", "password_reset_button"]
-    list_filter = ("is_active", "date_joined")
+    list_filter = ("is_active", "created_at")
     search_fields = ("full_name", "email", "id")
     ordering = ("full_name",)
-    readonly_fields = ("id", "date_joined", "last_login")
+    readonly_fields = ("id", "created_at", "last_login")
     
     fieldsets = (
         (None, {"fields": ("id", "full_name", "password")}),
         (_("Personal info"), {"fields": ("avatar_url", "email", "is_active")}),
-        (_("Important dates"), {"fields": ("last_login", "date_joined")}),
+        (_("Important dates"), {"fields": ("last_login", "created_at")}),
     )
     
     add_fieldsets = (
