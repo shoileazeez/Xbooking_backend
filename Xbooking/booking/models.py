@@ -62,7 +62,7 @@ class Booking(UUIDModelMixin, TimestampedModelMixin, CachedModelMixin, models.Mo
     check_out = models.DateTimeField(help_text='Check-out datetime')
     slot = models.ForeignKey('workspace.SpaceCalendarSlot', on_delete=models.SET_NULL, null=True, blank=True, related_name='bookings')
     
-    number_of_guests = models.IntegerField(validators=[MinValueValidator(1)], default=1)
+    number_of_guests = models.IntegerField(validators=[MinValueValidator(0)], default=0)
     
     # Check-in/out tracking
     is_checked_in = models.BooleanField(default=False, help_text='Whether user has checked in')

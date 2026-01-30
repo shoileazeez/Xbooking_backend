@@ -473,23 +473,34 @@ class PaymentService:
                 for booking in order.bookings.all():
                     generate_guest_qr_codes_for_booking.delay(str(booking.id))
 
-                # Send in-app notification for payment completion
+                # Send in-app notification for payment completion (prevent duplicates)
                 try:
                     from notifications.models import Notification
-                    notification = Notification.objects.create(
+                    # Check if notification already exists for this order
+                    existing_notification = Notification.objects.filter(
                         user=order.user,
                         notification_type='payment_completed',
-                        channel='in_app',
-                        title='Payment Successful',
-                        message=f'Your payment for order {order.order_number} was successful. Total: {order.total_amount} {payment.currency}',
-                        data={
-                            'order_id': str(order.id),
-                            'order_number': order.order_number,
-                            'amount': str(order.total_amount),
-                            'payment_method': payment.payment_method
-                        }
-                    )
-                    send_notification.delay(str(notification.id))
+                        data__order_id=str(order.id)
+                    ).first()
+
+                    if not existing_notification:
+                        notification = Notification.objects.create(
+                            user=order.user,
+                            notification_type='payment_completed',
+                            channel='in_app',
+                            title='Payment Successful',
+                            message=f'Your payment for order {order.order_number} was successful. Total: {order.total_amount} {payment.currency}',
+                            data={
+                                'order_id': str(order.id),
+                                'order_number': order.order_number,
+                                'amount': str(order.total_amount),
+                                'payment_method': payment.payment_method
+                            }
+                        )
+                        send_notification.delay(str(notification.id))
+                        logger.info(f"Created payment completion notification for order {order.id}")
+                    else:
+                        logger.info(f"Payment completion notification already exists for order {order.id}, skipping")
                 except Exception as notif_error:
                     logger.error(f"Failed to create payment notification: {str(notif_error)}")
 

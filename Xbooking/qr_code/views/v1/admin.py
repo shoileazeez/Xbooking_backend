@@ -5,7 +5,9 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from drf_spectacular.utils import extend_schema, extend_schema_view
+from django.db.models import Q, Count
 from django.utils import timezone
+from datetime import datetime, time
 
 from core.views import CachedModelViewSet
 from core.responses import SuccessResponse, ErrorResponse
@@ -184,4 +186,62 @@ class AdminQRCodeViewSet(CachedModelViewSet):
         return SuccessResponse(
             message='QR codes retrieved successfully',
             data=serializer.data
+        )
+    
+    @extend_schema(
+        responses={200: dict}
+    )
+    @action(detail=False, methods=['get'], url_path='workspaces/(?P<workspace_id>[^/.]+)/check-in-dashboard')
+    def check_in_dashboard(self, request, workspace_id=None):
+        """Get check-in dashboard statistics for a workspace"""
+        if not check_workspace_member(request.user, workspace_id, ['staff', 'manager', 'admin']):
+            return ErrorResponse(
+                message="You don't have permission to view dashboard",
+                status_code=403
+            )
+        
+        today = timezone.now().date()
+        today_start = timezone.make_aware(datetime.combine(today, time.min))
+        today_end = timezone.make_aware(datetime.combine(today, time.max))
+        
+        # Get bookings for this workspace
+        workspace_bookings = Booking.objects.filter(workspace_id=workspace_id)
+        
+        # Pending check-ins: confirmed bookings that haven't been checked in yet
+        # and are for today or future dates
+        pending_check_ins = workspace_bookings.filter(
+            Q(status='confirmed') &
+            Q(start_date__gte=today) &
+            ~Q(status='active')  # Not already checked in
+        ).count()
+        
+        # Checked in today: bookings that became active today
+        checked_in_today = workspace_bookings.filter(
+            status='active',
+            updated_at__date=today
+        ).count()
+        
+        # Checked out today: bookings that were completed/cancelled today
+        checked_out_today = workspace_bookings.filter(
+            Q(status__in=['completed', 'cancelled']) &
+            Q(updated_at__date=today)
+        ).count()
+        
+        # Active bookings: confirmed bookings that are currently in progress
+        # (checked in but not yet completed/cancelled) and end date is today or future
+        active_bookings = workspace_bookings.filter(
+            Q(status='active') &
+            Q(end_date__gte=today)
+        ).count()
+        
+        dashboard_data = {
+            'pending_check_ins': pending_check_ins,
+            'checked_in_today': checked_in_today,
+            'checked_out_today': checked_out_today,
+            'active_bookings': active_bookings
+        }
+        
+        return SuccessResponse(
+            message='Dashboard data retrieved successfully',
+            data=dashboard_data
         )

@@ -105,6 +105,19 @@ class BookingViewSet(CachedModelViewSet):
                 id=data['space_id']
             )
             
+            # Validate guests based on space type
+            space_type = space.space_type.lower()
+            if space_type != 'office' and data['number_of_guests'] > 0:
+                return ErrorResponse(
+                    message='Guests are only allowed for private office spaces',
+                    status_code=400
+                )
+            elif space_type == 'office' and data['number_of_guests'] == 0:
+                return ErrorResponse(
+                    message='At least 1 guest is required for private office spaces',
+                    status_code=400
+                )
+            
             # Combine date and time to create check_in and check_out
             check_in = datetime.combine(data['booking_date'], data['start_time'])
             check_out = datetime.combine(data['booking_date'], data['end_time'])

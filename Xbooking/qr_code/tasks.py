@@ -197,11 +197,23 @@ def send_payment_confirmation_email(order_id):
     try:
         order = Order.objects.get(id=order_id)
         payment = order.payment
-        
+
         # Check user notification preference
         if hasattr(order.user, 'notification_preferences'):
             if not order.user.notification_preferences.email_payment_confirmation:
                 return {'success': True, 'message': 'User disabled email notifications'}
+
+        # Check if email notification already sent for this order
+        existing_email_notification = Notification.objects.filter(
+            user=order.user,
+            notification_type='payment_successful',
+            channel='email',
+            data__order_id=str(order.id)
+        ).first()
+
+        if existing_email_notification:
+            logger.info(f"Payment confirmation email already sent for order {order.id}, skipping")
+            return {'success': True, 'message': 'Email already sent'}
         
         # Prepare email content
         context = {

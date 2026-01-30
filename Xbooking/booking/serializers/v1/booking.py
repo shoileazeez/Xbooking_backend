@@ -133,8 +133,8 @@ class DirectBookingSerializer(serializers.Serializer):
         help_text='Type of booking'
     )
     number_of_guests = serializers.IntegerField(
-        default=1,
-        min_value=1,
+        default=0,
+        min_value=0,
         help_text='Number of guests'
     )
     special_requests = serializers.CharField(

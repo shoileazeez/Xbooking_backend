@@ -60,6 +60,7 @@ class BankAccountViewSet(CachedModelViewSet):
         
         bank_account = BankAccount.objects.create(
             user=request.user,
+            is_verified=True,  # Set as verified since using resolve
             **data
         )
         
