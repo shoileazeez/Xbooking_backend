@@ -79,6 +79,20 @@ class CartViewSet(CachedModelViewSet):
                 status_code=404
             )
         
+        # Validate guests based on space type
+        space_type = space.space_type.lower()
+        number_of_guests = data.get('number_of_guests', 0)
+        if space_type == 'office' and number_of_guests == 0:
+            return ErrorResponse(
+                message='At least 1 guest is required for private office spaces',
+                status_code=400
+            )
+        elif space_type != 'office' and number_of_guests > 0:
+            return ErrorResponse(
+                message='Guests are only allowed for private office spaces',
+                status_code=400
+            )
+        
         # Calculate check-in/out times
         if data.get('slot_id'):
             # TODO: Implement slot-based booking
@@ -155,7 +169,7 @@ class CartViewSet(CachedModelViewSet):
                 check_in=check_in,
                 check_out=check_out,
                 booking_type=booking_type,
-                number_of_guests=data.get('number_of_guests', 1),
+                number_of_guests=number_of_guests,
                 price=price,
                 special_requests=data.get('special_requests', ''),
                 reservation=reservation

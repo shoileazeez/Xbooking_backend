@@ -45,6 +45,16 @@ class AddGuestsSerializer(serializers.Serializer):
     )
 
 
+class AddGuestsWithBookingSerializer(serializers.Serializer):
+    """Serializer for adding multiple guests to booking with booking ID in body"""
+    booking = serializers.IntegerField(help_text="Booking ID")
+    guests = serializers.ListField(
+        child=AddGuestSerializer(),
+        min_length=1,
+        help_text="List of guests to add"
+    )
+
+
 class GuestCheckInSerializer(serializers.Serializer):
     """Serializer for guest check-in"""
     verification_code = serializers.CharField(
@@ -66,6 +76,7 @@ __all__ = [
     'GuestSerializer',
     'AddGuestSerializer',
     'AddGuestsSerializer',
+    'AddGuestsWithBookingSerializer',
     'GuestCheckInSerializer',
     'GuestCheckOutSerializer',
 ]

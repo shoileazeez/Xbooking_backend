@@ -58,7 +58,7 @@ class AddToCartSerializer(serializers.Serializer):
         choices=['hourly', 'daily', 'monthly'],
         default='daily'
     )
-    number_of_guests = serializers.IntegerField(min_value=1, default=1)
+    number_of_guests = serializers.IntegerField(min_value=0, default=0)
     special_requests = serializers.CharField(
         required=False,
         allow_blank=True,
