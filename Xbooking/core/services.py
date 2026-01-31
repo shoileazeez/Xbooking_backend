@@ -57,6 +57,7 @@ class EventBus:
     _redis_client: Optional[redis.Redis] = None
     _pubsub = None
     _listener_thread = None
+    _processed_events: set = set()  # Track processed event IDs to prevent duplicates
     
     @classmethod
     def _get_redis_client(cls):
@@ -91,9 +92,9 @@ class EventBus:
                 message = json.dumps(event.to_dict())
                 redis_client.publish(channel, message)
                 logger.debug(f"Published to Redis: {event.event_type}")
-            
-            # Also trigger local subscribers immediately (same process)
-            cls._notify_local_subscribers(event)
+            else:
+                # No Redis, handle locally
+                cls._notify_local_subscribers(event)
             
             logger.info(f"Event published: {event.event_type} from {event.source_module}")
         except Exception as e:
@@ -120,6 +121,18 @@ class EventBus:
         """
         Notify local subscribers of an event
         """
+        # Prevent duplicate processing of the same event
+        if event.event_id in cls._processed_events:
+            logger.debug(f"Skipping duplicate event: {event.event_id}")
+            return
+        
+        cls._processed_events.add(event.event_id)
+        
+        # Limit processed events cache to prevent memory leaks
+        if len(cls._processed_events) > 10000:
+            # Remove oldest 1000 events
+            cls._processed_events = set(list(cls._processed_events)[1000:])
+        
         if event.event_type in cls._subscribers:
             for handler in cls._subscribers[event.event_type]:
                 try:

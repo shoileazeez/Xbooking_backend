@@ -34,13 +34,26 @@ class NotificationService:
             
             user = User.objects.get(id=user_id)
             
+            # Define notification types that should be unique per user (no duplicates ever)
+            unique_notifications = {
+                'user_registered',  # Welcome message - only once per user
+                'wallet_created',   # Wallet creation - only once per user
+            }
+            
             # Check for existing notification to prevent duplicates
-            existing_notification = Notification.objects.filter(
-                user=user,
-                notification_type=notification_type,
-                data=data or {},
-                created_at__gte=timezone.now() - timedelta(minutes=5)  # Within last 5 minutes
-            ).first()
+            if notification_type in unique_notifications:
+                # For unique notifications, check if user has ever received this type
+                existing_notification = Notification.objects.filter(
+                    user=user,
+                    notification_type=notification_type
+                ).first()
+            else:
+                # For other notifications, check within last 24 hours to prevent spam
+                existing_notification = Notification.objects.filter(
+                    user=user,
+                    notification_type=notification_type,
+                    created_at__gte=timezone.now() - timedelta(hours=24)
+                ).first()
             
             if existing_notification:
                 logger.info(f"Duplicate notification prevented for user {user.email}: {title}")
