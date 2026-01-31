@@ -315,6 +315,26 @@ class CartViewSet(CachedModelViewSet):
                 status_code=400
             )
         
+        # Check for expired reservations before proceeding
+        expired_items = []
+        for item in cart.items.all():
+            if item.reservation and item.reservation.is_expired():
+                expired_items.append({
+                    'id': item.id,
+                    'space_name': item.space.name,
+                    'booking_date': item.booking_date,
+                    'start_time': item.start_time,
+                    'end_time': item.end_time,
+                    'reservation_expires_at': item.reservation.expires_at
+                })
+        
+        if expired_items:
+            return ErrorResponse(
+                message='Some cart items have expired reservations. Please refresh your cart and try again.',
+                data={'expired_items': expired_items},
+                status_code=400
+            )
+        
         # Create bookings from cart items
         from booking.models import Booking
         from booking.services import BookingService
@@ -324,13 +344,7 @@ class CartViewSet(CachedModelViewSet):
             # Confirm reservation if it exists and is still active
             if item.reservation:
                 try:
-                    if not item.reservation.is_expired():
-                        BookingService.confirm_reservation(item.reservation)
-                    else:
-                        return ErrorResponse(
-                            message=f'Reservation for {item.space.name} has expired',
-                            status_code=400
-                        )
+                    BookingService.confirm_reservation(item.reservation)
                 except ValueError as e:
                     return ErrorResponse(
                         message=str(e),

@@ -13,6 +13,9 @@ from workspace.serializers.v1 import SpaceMinimalSerializer
 class CartItemSerializer(serializers.ModelSerializer):
     """Serializer for cart items"""
     space_details = SpaceMinimalSerializer(source='space', read_only=True)
+    reservation_status = serializers.SerializerMethodField()
+    reservation_expired = serializers.SerializerMethodField()
+    reservation_expires_at = serializers.SerializerMethodField()
     
     class Meta:
         model = CartItem
@@ -20,9 +23,28 @@ class CartItemSerializer(serializers.ModelSerializer):
             'id', 'space', 'space_details', 'booking_date', 'start_time',
             'end_time', 'check_in', 'check_out', 'booking_type',
             'number_of_guests', 'price', 'discount_amount', 'tax_amount',
-            'special_requests', 'created_at', 'updated_at'
+            'special_requests', 'reservation_status', 'reservation_expired',
+            'reservation_expires_at', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
+    
+    def get_reservation_status(self, obj):
+        """Get reservation status"""
+        if obj.reservation:
+            return obj.reservation.status
+        return None
+    
+    def get_reservation_expired(self, obj):
+        """Check if reservation is expired"""
+        if obj.reservation:
+            return obj.reservation.is_expired()
+        return False
+    
+    def get_reservation_expires_at(self, obj):
+        """Get reservation expiry time"""
+        if obj.reservation:
+            return obj.reservation.expires_at
+        return None
 
 
 class CartSerializer(serializers.ModelSerializer):
