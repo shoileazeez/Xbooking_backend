@@ -52,13 +52,22 @@ class NotificationService:
                     user=user,
                     notification_type=notification_type
                 ).first()
-            elif notification_type in booking_notifications and 'booking_id' in data:
+            elif notification_type in booking_notifications and data and 'booking_id' in data:
                 # For booking notifications, check if user has received this type for this booking
+                # Check both channels to prevent duplicates across email and in-app
                 existing_notification = Notification.objects.filter(
                     user=user,
                     notification_type=notification_type,
                     data__booking_id=data['booking_id']
-                ).first()
+                ).order_by('-created_at').first()
+                
+                if existing_notification:
+                    # Check if notification was created very recently (within last 30 seconds)
+                    # This prevents duplicate sends due to event bus issues
+                    time_since_creation = (timezone.now() - existing_notification.created_at).total_seconds()
+                    if time_since_creation < 30:
+                        logger.warning(f"Duplicate {notification_type} notification prevented for user {user.email}, booking {data['booking_id']} (created {time_since_creation:.1f}s ago)")
+                        return existing_notification
             else:
                 # For other notifications, check within last 24 hours to prevent spam
                 existing_notification = Notification.objects.filter(
