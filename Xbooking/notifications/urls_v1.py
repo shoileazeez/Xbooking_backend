@@ -22,8 +22,10 @@ router.register(r'preferences', NotificationPreferenceViewSet, basename='prefere
 router.register(r'broadcasts', BroadcastNotificationViewSet, basename='broadcast')
 
 urlpatterns = [
-    path('', include(router.urls)),
+    # Push notification endpoints - must come before router.urls
     path('push-subscribe/', push_subscribe, name='push-subscribe'),
     path('push-unsubscribe/', push_unsubscribe, name='push-unsubscribe'),
     path('push-subscriptions/', get_push_subscriptions, name='push-subscriptions'),
+    # Router URLs (catch-all)
+    path('', include(router.urls)),
 ]
