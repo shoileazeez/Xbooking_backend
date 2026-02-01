@@ -252,6 +252,8 @@ class BookingService:
         CacheService.delete_pattern(f'booking:{booking.id}:*')
         CacheService.delete_pattern(f'bookings:user:{booking.user.id}:*')
         CacheService.delete_pattern(f'bookings:workspace:{booking.workspace.id}:*')
+        CacheService.delete_pattern(f'upcoming-bookings:user:{booking.user.id}')
+        CacheService.delete_pattern(f'dashboard:user:{booking.user.id}')
         
         return booking, cancellation
     

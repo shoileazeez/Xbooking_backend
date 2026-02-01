@@ -94,7 +94,7 @@ class BookingCancellationViewSet(CachedModelViewSet):
             )
             
             # Update cancellation with additional feedback
-            cancellation.workspace_issues = serializer.validated_data.get('workspace_issues', [])
+            cancellation.workspace_issues = list(serializer.validated_data.get('workspace_issues', []))
             cancellation.found_alternative = serializer.validated_data.get('found_alternative', False)
             cancellation.alternative_reason = serializer.validated_data.get('alternative_reason', '')
             cancellation.would_book_again = serializer.validated_data.get('would_book_again', None)

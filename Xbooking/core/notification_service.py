@@ -40,12 +40,24 @@ class NotificationService:
                 'wallet_created',   # Wallet creation - only once per user
             }
             
+            # For booking-related notifications, check for duplicates based on booking_id
+            booking_notifications = {
+                'booking_created', 'booking_confirmed', 'booking_cancelled'
+            }
+            
             # Check for existing notification to prevent duplicates
             if notification_type in unique_notifications:
                 # For unique notifications, check if user has ever received this type
                 existing_notification = Notification.objects.filter(
                     user=user,
                     notification_type=notification_type
+                ).first()
+            elif notification_type in booking_notifications and 'booking_id' in data:
+                # For booking notifications, check if user has received this type for this booking
+                existing_notification = Notification.objects.filter(
+                    user=user,
+                    notification_type=notification_type,
+                    data__booking_id=data['booking_id']
                 ).first()
             else:
                 # For other notifications, check within last 24 hours to prevent spam
