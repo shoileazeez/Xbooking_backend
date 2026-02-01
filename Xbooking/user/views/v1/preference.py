@@ -10,17 +10,27 @@ from user.models import UserPreference
 from user.serializers.v1 import UserPreferenceSerializer, UpdateUserPreferenceSerializer
 
 
-class UserPreferenceViewSet(viewsets.ViewSet):
+class UserPreferenceViewSet(viewsets.ModelViewSet):
     """
     ViewSet for managing user preferences
     """
     permission_classes = [IsAuthenticated]
+    serializer_class = UserPreferenceSerializer
+    
+    def get_queryset(self):
+        """Return only the current user's preference"""
+        return UserPreference.objects.filter(user=self.request.user)
+    
+    def get_object(self):
+        """Get or create the user's preference"""
+        preference, created = UserPreference.objects.get_or_create(
+            user=self.request.user
+        )
+        return preference
     
     def list(self, request):
         """Get current user's preferences"""
-        preference, created = UserPreference.objects.get_or_create(
-            user=request.user
-        )
+        preference = self.get_object()
         serializer = UserPreferenceSerializer(preference)
         return Response({
             'success': True,
@@ -28,14 +38,39 @@ class UserPreferenceViewSet(viewsets.ViewSet):
             'data': serializer.data
         })
     
-    def update(self, request, pk=None):
-        """Update user preferences"""
-        preference, created = UserPreference.objects.get_or_create(
-            user=request.user
-        )
+    def update(self, request, *args, **kwargs):
+        """Update user preferences - allow PUT on list endpoint"""
+        # If no pk is provided, treat it as updating the user's preference
+        if 'pk' not in kwargs or kwargs['pk'] is None:
+            instance = self.get_object()
+            serializer = UpdateUserPreferenceSerializer(
+                instance,
+                data=request.data,
+                partial=True
+            )
+            
+            if serializer.is_valid():
+                serializer.save()
+                return Response({
+                    'success': True,
+                    'message': 'Preferences updated successfully',
+                    'data': UserPreferenceSerializer(instance).data
+                })
+            
+            return Response({
+                'success': False,
+                'message': 'Validation failed',
+                'errors': serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
         
+        # Otherwise, use the default ModelViewSet behavior
+        return super().update(request, *args, **kwargs)
+    
+    def create(self, request):
+        """Create or update user preferences"""
+        instance = self.get_object()
         serializer = UpdateUserPreferenceSerializer(
-            preference,
+            instance,
             data=request.data,
             partial=True
         )
@@ -45,7 +80,7 @@ class UserPreferenceViewSet(viewsets.ViewSet):
             return Response({
                 'success': True,
                 'message': 'Preferences updated successfully',
-                'data': UserPreferenceSerializer(preference).data
+                'data': UserPreferenceSerializer(instance).data
             })
         
         return Response({
@@ -54,19 +89,26 @@ class UserPreferenceViewSet(viewsets.ViewSet):
             'errors': serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
     
-    @action(detail=False, methods=['post'])
-    def reset(self, request):
-        """Reset preferences to default"""
-        try:
-            preference = UserPreference.objects.get(user=request.user)
-            preference.delete()
-            # Will be recreated with defaults on next access
+    @action(detail=False, methods=['put'])
+    def update_preferences(self, request):
+        """Update user preferences via PUT on list endpoint"""
+        instance = self.get_object()
+        serializer = UpdateUserPreferenceSerializer(
+            instance,
+            data=request.data,
+            partial=True
+        )
+        
+        if serializer.is_valid():
+            serializer.save()
             return Response({
                 'success': True,
-                'message': 'Preferences reset to default successfully'
+                'message': 'Preferences updated successfully',
+                'data': UserPreferenceSerializer(instance).data
             })
-        except UserPreference.DoesNotExist:
-            return Response({
-                'success': True,
-                'message': 'No preferences to reset'
-            })
+        
+        return Response({
+            'success': False,
+            'message': 'Validation failed',
+            'errors': serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
