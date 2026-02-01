@@ -139,23 +139,52 @@ def _send_sms_notification(notification):
 
 
 def _send_push_notification(notification):
-    """Send push notification (stub for push gateway integration)"""
+    """Send web push notification to user's subscribed devices"""
     try:
+        from notifications.services.push_service import PushNotificationService
+        
         user = notification.user
         
-        # Push notification gateway integration would go here
-        # For now, just mark as sent
-        notification.is_sent = True
-        notification.sent_at = timezone.now()
-        notification.save()
-        
-        NotificationLog.objects.create(
-            notification=notification,
-            status='sent',
-            delivered_at=timezone.now()
+        # Format notification data for push
+        notification_data = PushNotificationService.format_notification_data(
+            title=notification.title,
+            message=notification.message,
+            notification_id=str(notification.id),
+            url=notification.data.get('url', '/notifications') if notification.data else '/notifications',
+            icon='/xbookinglogonew1.png',
+            notification_type=notification.notification_type,
+            **notification.data if notification.data else {}
         )
         
-        return {'success': True, 'message': 'Push notification sent successfully'}
+        # Send push notification
+        result = PushNotificationService.send_push_to_user(
+            user_id=str(user.id),
+            notification_data=notification_data
+        )
+        
+        if result.get('success') and result.get('sent', 0) > 0:
+            # Mark as sent if at least one push was delivered
+            notification.is_sent = True
+            notification.sent_at = timezone.now()
+            notification.save()
+            
+            NotificationLog.objects.create(
+                notification=notification,
+                status='sent',
+                delivered_at=timezone.now(),
+                metadata={'push_results': result}
+            )
+            
+            return {'success': True, 'message': f'Push sent to {result.get("sent")} device(s)'}
+        else:
+            # No active subscriptions or all failed
+            NotificationLog.objects.create(
+                notification=notification,
+                status='failed',
+                error_message=result.get('error', 'No active subscriptions')
+            )
+            return {'success': False, 'error': result.get('error', 'No active subscriptions')}
+            
     except Exception as e:
         NotificationLog.objects.create(
             notification=notification,

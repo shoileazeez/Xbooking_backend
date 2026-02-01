@@ -8,6 +8,9 @@ import uuid
 
 User = get_user_model()
 
+# Import push models so Django can detect them for migrations
+from .models_push import PushSubscription
+
 
 class NotificationPreference(models.Model):
     """User notification preferences"""

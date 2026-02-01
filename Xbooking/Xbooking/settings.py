@@ -364,3 +364,10 @@ CLOUDINARY_API_KEY = config('CLOUDINARY_API_KEY', default='')
 CLOUDINARY_API_SECRET = config('CLOUDINARY_API_SECRET', default='')
 CLOUDINARY_QR_FOLDER = config('CLOUDINARY_QR_FOLDER', default='xbooking/qr')
 CLOUDINARY_UPLOAD_FOLDER = config('CLOUDINARY_UPLOAD_FOLDER', default='xbooking/uploads')
+# ============================================================================
+# WEB PUSH NOTIFICATIONS (VAPID) CONFIGURATION
+# ============================================================================
+
+VAPID_PUBLIC_KEY = config('VAPID_PUBLIC_KEY', default='')
+VAPID_PRIVATE_KEY = config('VAPID_PRIVATE_KEY', default='')
+VAPID_ADMIN_EMAIL = config('VAPID_ADMIN_EMAIL', default='admin@xbooking.dev')

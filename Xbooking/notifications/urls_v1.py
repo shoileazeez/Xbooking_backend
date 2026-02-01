@@ -8,6 +8,11 @@ from notifications.views.v1 import (
     NotificationPreferenceViewSet,
     BroadcastNotificationViewSet
 )
+from notifications.views.v1.push import (
+    push_subscribe,
+    push_unsubscribe,
+    get_push_subscriptions
+)
 
 app_name = 'notifications_v1'
 
@@ -18,4 +23,7 @@ router.register(r'broadcasts', BroadcastNotificationViewSet, basename='broadcast
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('push-subscribe/', push_subscribe, name='push-subscribe'),
+    path('push-unsubscribe/', push_unsubscribe, name='push-unsubscribe'),
+    path('push-subscriptions/', get_push_subscriptions, name='push-subscriptions'),
 ]
