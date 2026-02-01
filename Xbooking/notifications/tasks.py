@@ -9,14 +9,22 @@ from notifications.models import Notification, NotificationPreference, Broadcast
 from workspace.models import WorkspaceUser
 from Xbooking.mailjet_utils import send_mailjet_email
 
-@shared_task
-def send_notification(notification_id):
+@shared_task(bind=True, max_retries=3)
+def send_notification(self, notification_id):
     """
-    Send a notification via specified channel
+    Send a notification via specified channel (idempotent - safe to retry)
     """
+    import logging
+    logger = logging.getLogger(__name__)
+    
     try:
         notification = Notification.objects.get(id=notification_id)
         user = notification.user
+        
+        # Idempotency check - if already sent, skip
+        if notification.is_sent:
+            logger.info(f"Notification {notification_id} already sent, skipping")
+            return {'success': True, 'message': 'Notification already sent', 'duplicate_prevented': True}
         
         # Check user preferences
         if hasattr(user, 'notification_preferences'):
@@ -44,8 +52,10 @@ def send_notification(notification_id):
         
         return {'success': False, 'error': 'Unknown channel'}
     except Notification.DoesNotExist:
+        logger.warning(f"Notification {notification_id} not found - may have been deleted")
         return {'success': False, 'error': f'Notification {notification_id} not found'}
     except Exception as e:
+        logger.error(f"Error sending notification {notification_id}: {str(e)}")
         return {'success': False, 'error': str(e)}
 
 

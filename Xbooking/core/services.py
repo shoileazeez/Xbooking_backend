@@ -119,19 +119,32 @@ class EventBus:
     @classmethod
     def _notify_local_subscribers(cls, event: Event):
         """
-        Notify local subscribers of an event
+        Notify local subscribers of an event with distributed deduplication
         """
-        # Prevent duplicate processing of the same event
+        # First check local cache (fast)
         if event.event_id in cls._processed_events:
-            logger.debug(f"Skipping duplicate event: {event.event_id}")
+            logger.debug(f"Skipping duplicate event (local cache): {event.event_id}")
             return
         
+        # Then check Redis for distributed deduplication (prevents multiple workers)
+        redis_client = cls._get_redis_client()
+        if redis_client:
+            lock_key = f"xbooking:event:processed:{event.event_id}"
+            # Try to set the key with NX (only if not exists) and 300 second expiry
+            was_set = redis_client.set(lock_key, "1", nx=True, ex=300)
+            if not was_set:
+                logger.info(f"Skipping duplicate event (Redis lock): {event.event_id} - already processed by another worker")
+                return
+        
+        # Mark as processed locally
         cls._processed_events.add(event.event_id)
         
         # Limit processed events cache to prevent memory leaks
-        if len(cls._processed_events) > 10000:
-            # Remove oldest 1000 events
-            cls._processed_events = set(list(cls._processed_events)[1000:])
+        if len(cls._processed_events) > 50000:
+            # Remove oldest 5000 events
+            cls._processed_events = set(list(cls._processed_events)[5000:])
+        
+        logger.info(f"Processing event: {event.event_id} ({event.event_type})")
         
         if event.event_type in cls._subscribers:
             for handler in cls._subscribers[event.event_type]:

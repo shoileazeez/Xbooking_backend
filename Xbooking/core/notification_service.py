@@ -28,6 +28,8 @@ class NotificationService:
             message: Notification message
             data: Additional data (optional)
         """
+        from django.db import transaction
+        
         try:
             from notifications.models import Notification
             from user.models import User
@@ -80,25 +82,42 @@ class NotificationService:
                 logger.info(f"Duplicate notification prevented for user {user.email}: {title}")
                 return existing_notification
             
-            # Create in-app notification
-            in_app_notification = Notification.objects.create(
-                user=user,
-                notification_type=notification_type,
-                channel='in_app',
-                title=title,
-                message=message,
-                data=data or {}
-            )
-            
-            # Create email notification for the same event
-            email_notification = Notification.objects.create(
-                user=user,
-                notification_type=notification_type,
-                channel='email',
-                title=title,
-                message=message,
-                data=data or {}
-            )
+            # Use atomic transaction to prevent race conditions
+            with transaction.atomic():
+                # Double-check within transaction to handle race conditions
+                if notification_type in booking_notifications and data and 'booking_id' in data:
+                    recent_duplicate = Notification.objects.filter(
+                        user=user,
+                        notification_type=notification_type,
+                        data__booking_id=data['booking_id'],
+                        created_at__gte=timezone.now() - timedelta(seconds=60)
+                    ).first()
+                    
+                    if recent_duplicate:
+                        logger.warning(f"Race condition prevented duplicate {notification_type} for user {user.email}, booking {data['booking_id']}")
+                        return recent_duplicate
+                
+                # Create in-app notification
+                in_app_notification = Notification.objects.create(
+                    user=user,
+                    notification_type=notification_type,
+                    channel='in_app',
+                    title=title,
+                    message=message,
+                    data=data or {}
+                )
+                
+                # Create email notification for the same event
+                email_notification = Notification.objects.create(
+                    user=user,
+                    notification_type=notification_type,
+                    channel='email',
+                    title=title,
+                    message=message,
+                    data=data or {}
+                )
+                
+                logger.info(f"Created notifications (in-app: {in_app_notification.id}, email: {email_notification.id}) for {notification_type}")
             
             # Trigger async notification delivery tasks
             try:
