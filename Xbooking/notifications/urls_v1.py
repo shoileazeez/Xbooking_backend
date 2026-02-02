@@ -13,6 +13,7 @@ from notifications.views.v1.push import (
     push_unsubscribe,
     get_push_subscriptions
 )
+from notifications.views.v1.test_push import send_test_push
 
 app_name = 'notifications_v1'
 
@@ -26,6 +27,7 @@ urlpatterns = [
     path('push-subscribe/', push_subscribe, name='push-subscribe'),
     path('push-unsubscribe/', push_unsubscribe, name='push-unsubscribe'),
     path('push-subscriptions/', get_push_subscriptions, name='push-subscriptions'),
+    path('test-push/', send_test_push, name='test-push'),
     # Router URLs (catch-all)
     path('', include(router.urls)),
 ]
