@@ -50,7 +50,15 @@ def push_subscribe(request):
         # Get user agent for tracking
         user_agent = request.META.get('HTTP_USER_AGENT', '')
         
-        # Create or update subscription
+        # First, deactivate any existing subscriptions for this endpoint from other users
+        # (in case device changed hands or user logged out/in)
+        PushSubscription.objects.filter(
+            endpoint=endpoint
+        ).exclude(
+            user=request.user
+        ).update(is_active=False)
+        
+        # Create or update subscription for current user
         subscription, created = PushSubscription.objects.update_or_create(
             endpoint=endpoint,
             defaults={
@@ -62,6 +70,12 @@ def push_subscribe(request):
                 'last_used_at': timezone.now()
             }
         )
+        
+        # Ensure user field is set even if record existed
+        if subscription.user != request.user:
+            subscription.user = request.user
+            subscription.is_active = True
+            subscription.save()
         
         logger.info(f"Push subscription {'created' if created else 'updated'} for user {request.user.email}")
         
