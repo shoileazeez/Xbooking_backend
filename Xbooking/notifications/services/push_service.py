@@ -93,17 +93,23 @@ class PushNotificationService:
                 except WebPushException as e:
                     logger.error(f"WebPush error for subscription {subscription.id}: {str(e)}")
                     
+                    status_code = None
+                    try:
+                        status_code = e.response.status_code if hasattr(e, 'response') and e.response else None
+                    except:
+                        pass
+                    
                     # If subscription is expired/invalid (410), mark as inactive
-                    if e.response and e.response.status_code == 410:
+                    if status_code == 410 or '410' in str(e) or 'expired' in str(e).lower() or 'unsubscribed' in str(e).lower():
                         subscription.is_active = False
                         subscription.save(update_fields=['is_active'])
-                        logger.info(f"Marked subscription {subscription.id} as inactive (410 Gone)")
+                        logger.warning(f"Marked subscription {subscription.id} as inactive (expired/unsubscribed)")
                     
                     results.append({
                         'subscription_id': subscription.id,
                         'success': False,
                         'error': str(e),
-                        'status_code': e.response.status_code if e.response else None
+                        'status_code': status_code
                     })
                     
                 except Exception as e:

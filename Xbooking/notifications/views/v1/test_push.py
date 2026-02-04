@@ -29,15 +29,30 @@ def send_test_push(request):
         
         user = request.user
         
+        logger.info(f"=== Test Push Request from user: {user.email} ===")
+        
         # Check if user has active subscriptions
         subscriptions = PushSubscription.objects.filter(user=user, is_active=True)
+        sub_count = subscriptions.count()
+        
+        logger.info(f"Found {sub_count} active subscription(s) for user")
         
         if not subscriptions.exists():
+            logger.warning(f"No active subscriptions found for user {user.email}")
+            # Also check for inactive subscriptions
+            inactive_count = PushSubscription.objects.filter(user=user, is_active=False).count()
+            logger.info(f"User has {inactive_count} inactive subscription(s)")
+            
             return Response({
                 'success': False,
                 'error': 'No active push subscriptions found for your account',
-                'subscriptions_count': 0
+                'subscriptions_count': 0,
+                'inactive_subscriptions': inactive_count
             }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Log subscription details
+        for idx, sub in enumerate(subscriptions, 1):
+            logger.info(f"Subscription {idx}: ID={sub.id}, Endpoint={sub.endpoint[:80]}..., LastUsed={sub.last_used_at}")
         
         # Format test notification
         notification_data = PushNotificationService.format_notification_data(
